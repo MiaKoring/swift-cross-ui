@@ -21,17 +21,18 @@ struct ControlsApp: App {
     var body: some Scene {
         WindowGroup("ControlsApp") {
             #hotReloadable {
-                VStack(spacing: 30) {
-                    VStack {
-                        Text("Button")
-                        Button("Click me!") {
-                            count += 1
+                ScrollView {
+                    VStack(spacing: 30) {
+                        VStack {
+                            Text("Button")
+                            Button("Click me!") {
+                                count += 1
+                            }
+                            Text("Count: \(count)")
                         }
-                        Text("Count: \(count)")
-                    }
-                    .padding(.bottom, 20)
-
-                    #if !canImport(UIKitBackend)
+                        .padding(.bottom, 20)
+                        
+#if !canImport(UIKitBackend)
                         VStack {
                             Text("Toggle button")
                             Toggle("Toggle me!", active: $exampleButtonState)
@@ -39,58 +40,59 @@ struct ControlsApp: App {
                             Text("Currently enabled: \(exampleButtonState)")
                         }
                         .padding(.bottom, 20)
-                    #endif
-
-                    VStack {
-                        Text("Toggle switch")
-                        Toggle("Toggle me:", active: $exampleSwitchState)
-                            .toggleStyle(.switch)
-                        Text("Currently enabled: \(exampleSwitchState)")
-                    }
-
-                    #if !canImport(UIKitBackend)
+#endif
+                        
+                        VStack {
+                            Text("Toggle switch")
+                            Toggle("Toggle me:", active: $exampleSwitchState)
+                                .toggleStyle(.switch)
+                            Text("Currently enabled: \(exampleSwitchState)")
+                        }
+                        
+#if !canImport(UIKitBackend)
                         VStack {
                             Text("Checkbox")
                             Toggle("Toggle me:", active: $exampleCheckboxState)
                                 .toggleStyle(.checkbox)
                             Text("Currently enabled: \(exampleCheckboxState)")
                         }
-                    #endif
-
-                    VStack {
-                        Text("Slider")
-                        Slider($sliderValue, minimum: 0, maximum: 10)
-                            .frame(maxWidth: 200)
-                        Text("Value: \(String(format: "%.02f", sliderValue))")
-                    }
-
-                    VStack {
-                        Text("Text field")
-                        TextField("Text field", text: $text)
-                        Text("Value: \(text)")
-                    }
-
-                    VStack {
-                        Text("Drop down")
-                        HStack {
-                            Text("Flavor: ")
-                            Picker(of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
+#endif
+                        
+                        VStack {
+                            Text("Slider")
+                            Slider($sliderValue, minimum: 0, maximum: 10)
+                                .frame(maxWidth: 200)
+                            Text("Value: \(String(format: "%.02f", sliderValue))")
                         }
-                        Text("You chose: \(flavor ?? "Nothing yet!")")
-                    }
-                }.padding().disabled(!enabled)
-                    .focusable(isFocusable)
-
-                Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
+                        
+                        VStack {
+                            Text("Text field")
+                            TextField("Text field", text: $text)
+                            Text("Value: \(text)")
+                        }
+                        
+                        VStack {
+                            Text("Drop down")
+                            HStack {
+                                Text("Flavor: ")
+                                Picker(of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
+                            }
+                            Text("You chose: \(flavor ?? "Nothing yet!")")
+                        }
+                    }.padding().disabled(!enabled)
+                        .focusable(isFocusable)
+                    
+                    Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
+                        .padding()
+                        .focusable(isFocusable)
+                    
+                    Toggle(
+                        isFocusable ? "Disable focusability for all" : "Enable focusability for all",
+                        active: $isFocusable
+                    )
                     .padding()
                     .focusable(isFocusable)
-
-                Toggle(
-                    isFocusable ? "Disable focusability for all" : "Enable focusability for all",
-                    active: $isFocusable
-                )
-                .padding()
-                .focusable(isFocusable)
+                }
             }
 
         }.defaultSize(width: 400, height: 600)

@@ -1783,6 +1783,7 @@ extension EnvironmentValues {
         control.fontWeight.weight = resolvedFont.winUIFontWeight
         control.foreground = winUIForegroundBrush
         control.isEnabled = isEnabled
+        control.isTabStop = isFocusable
         if resolvedFont.isItalic {
             control.fontStyle = .italic
         }
