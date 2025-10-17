@@ -131,7 +131,7 @@ open class Widget: GObject {
 
     /// Set to -1 for no min height request
     @GObjectProperty(named: "height-request") public var minHeight: Int
-    
+
     /// Wether a Widget is focusable
     public var focusable: Bool {
         get {

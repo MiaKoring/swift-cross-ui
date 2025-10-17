@@ -31,66 +31,68 @@ struct ControlsApp: App {
                             Text("Count: \(count)")
                         }
                         .padding(.bottom, 20)
-                        
-#if !canImport(UIKitBackend)
-                        VStack {
-                            Text("Toggle button")
-                            Toggle("Toggle me!", active: $exampleButtonState)
-                                .toggleStyle(.button)
-                            Text("Currently enabled: \(exampleButtonState)")
-                        }
-                        .padding(.bottom, 20)
-#endif
-                        
+
+                        #if !canImport(UIKitBackend)
+                            VStack {
+                                Text("Toggle button")
+                                Toggle("Toggle me!", active: $exampleButtonState)
+                                    .toggleStyle(.button)
+                                Text("Currently enabled: \(exampleButtonState)")
+                            }
+                            .padding(.bottom, 20)
+                        #endif
+
                         VStack {
                             Text("Toggle switch")
                             Toggle("Toggle me:", active: $exampleSwitchState)
                                 .toggleStyle(.switch)
                             Text("Currently enabled: \(exampleSwitchState)")
                         }
-                        
-#if !canImport(UIKitBackend)
-                        VStack {
-                            Text("Checkbox")
-                            Toggle("Toggle me:", active: $exampleCheckboxState)
-                                .toggleStyle(.checkbox)
-                            Text("Currently enabled: \(exampleCheckboxState)")
-                        }
-#endif
-#if !os(tvOS)
-                        VStack {
-                            Text("Slider")
-                            Slider($sliderValue, minimum: 0, maximum: 10)
-                                .frame(maxWidth: 200)
-                            Text("Value: \(String(format: "%.02f", sliderValue))")
-                        }
-#endif
-                        
+
+                        #if !canImport(UIKitBackend)
+                            VStack {
+                                Text("Checkbox")
+                                Toggle("Toggle me:", active: $exampleCheckboxState)
+                                    .toggleStyle(.checkbox)
+                                Text("Currently enabled: \(exampleCheckboxState)")
+                            }
+                        #endif
+                        #if !os(tvOS)
+                            VStack {
+                                Text("Slider")
+                                Slider($sliderValue, minimum: 0, maximum: 10)
+                                    .frame(maxWidth: 200)
+                                Text("Value: \(String(format: "%.02f", sliderValue))")
+                            }
+                        #endif
+
                         VStack {
                             Text("Text field")
                             TextField("Text field", text: $text)
                             Text("Value: \(text)")
                         }
-                        
+
                         VStack {
                             Text("Drop down")
                             HStack {
                                 Text("Flavor: ")
-                                Picker(of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
+                                Picker(
+                                    of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
                             }
                             Text("You chose: \(flavor ?? "Nothing yet!")")
                         }
                     }
-                        .padding()
-                        .disabled(!enabled)
-                        .focusable(isFocusable)
-                    
+                    .padding()
+                    .disabled(!enabled)
+                    .focusable(isFocusable)
+
                     Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
                         .padding()
                         .focusable(isFocusable)
-                    
+
                     Toggle(
-                        isFocusable ? "Disable focusability for all" : "Enable focusability for all",
+                        isFocusable
+                            ? "Disable focusability for all" : "Enable focusability for all",
                         active: $isFocusable
                     )
                     .padding()

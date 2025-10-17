@@ -42,22 +42,22 @@ struct ControlsFocusabilityApp: App {
                                 .focusable(false)
                         }
                         .padding(.bottom, 20)
-                        
-#if !canImport(UIKitBackend)
-                        HStack {
-                            VStack {
-                                Text("Toggle button")
-                                Toggle("Toggle me!", active: $exampleButtonState)
-                                    .toggleStyle(.button)
-                                    .focusable(isToggleButtonFocusable)
-                                Text("Currently enabled: \(exampleButtonState)")
+
+                        #if !canImport(UIKitBackend)
+                            HStack {
+                                VStack {
+                                    Text("Toggle button")
+                                    Toggle("Toggle me!", active: $exampleButtonState)
+                                        .toggleStyle(.button)
+                                        .focusable(isToggleButtonFocusable)
+                                    Text("Currently enabled: \(exampleButtonState)")
+                                }
+                                Toggle("focusable", active: $isToggleButtonFocusable)
+                                    .focusable(false)
                             }
-                            Toggle("focusable", active: $isToggleButtonFocusable)
-                                .focusable(false)
-                        }
-                        .padding(.bottom, 20)
-#endif
-                        
+                            .padding(.bottom, 20)
+                        #endif
+
                         HStack {
                             VStack {
                                 Text("Toggle switch")
@@ -69,32 +69,32 @@ struct ControlsFocusabilityApp: App {
                             Toggle("focusable", active: $isToggleSwitchFocusable)
                                 .focusable(false)
                         }
-                        
-#if !canImport(UIKitBackend)
-                        HStack {
-                            VStack {
-                                Text("Checkbox")
-                                Toggle("Toggle me:", active: $exampleCheckboxState)
-                                    .toggleStyle(.checkbox)
-                                    .focusable(isCheckboxFocusable)
-                                Text("Currently enabled: \(exampleCheckboxState)")
+
+                        #if !canImport(UIKitBackend)
+                            HStack {
+                                VStack {
+                                    Text("Checkbox")
+                                    Toggle("Toggle me:", active: $exampleCheckboxState)
+                                        .toggleStyle(.checkbox)
+                                        .focusable(isCheckboxFocusable)
+                                    Text("Currently enabled: \(exampleCheckboxState)")
+                                }
+                                Toggle("focusable", active: $isCheckboxFocusable)
+                                    .focusable(false)
                             }
-                            Toggle("focusable", active: $isCheckboxFocusable)
-                                .focusable(false)
-                        }
-#endif
+                        #endif
                         #if !os(tvOS)
-                        HStack {
-                            VStack {
-                                Text("Slider")
-                                Slider($sliderValue, minimum: 0, maximum: 10)
-                                    .frame(maxWidth: 200)
-                                    .focusable(isSliderFocusable)
-                                Text("Value: \(String(format: "%.02f", sliderValue))")
+                            HStack {
+                                VStack {
+                                    Text("Slider")
+                                    Slider($sliderValue, minimum: 0, maximum: 10)
+                                        .frame(maxWidth: 200)
+                                        .focusable(isSliderFocusable)
+                                    Text("Value: \(String(format: "%.02f", sliderValue))")
+                                }
+                                Toggle("focusable", active: $isSliderFocusable)
+                                    .focusable(false)
                             }
-                            Toggle("focusable", active: $isSliderFocusable)
-                                .focusable(false)
-                        }
                         #endif
                         HStack {
                             VStack {
@@ -106,14 +106,17 @@ struct ControlsFocusabilityApp: App {
                             Toggle("focusable", active: $isTextFieldFocusable)
                                 .focusable(false)
                         }
-                        
+
                         HStack {
                             VStack {
                                 Text("Drop down")
                                 HStack {
                                     Text("Flavor: ")
-                                    Picker(of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
-                                        .focusable(isPickerFocusable)
+                                    Picker(
+                                        of: ["Vanilla", "Chocolate", "Strawberry"],
+                                        selection: $flavor
+                                    )
+                                    .focusable(isPickerFocusable)
                                 }
                                 Text("You chose: \(flavor ?? "Nothing yet!")")
                             }
@@ -121,9 +124,9 @@ struct ControlsFocusabilityApp: App {
                                 .focusable(false)
                         }
                     }
-                        .padding()
-                        .disabled(!enabled)
-                    
+                    .padding()
+                    .disabled(!enabled)
+
                     Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
                         .padding()
                         .focusable(false)

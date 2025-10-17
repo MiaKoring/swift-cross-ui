@@ -879,7 +879,7 @@ public final class GtkBackend: AppBackend {
             onSubmit()
         }
         textField.focusable = environment.isFocusable
-        
+
         textField.css.clear()
         textField.css.set(properties: Self.cssProperties(for: environment, isControl: true))
     }

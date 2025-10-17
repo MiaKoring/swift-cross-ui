@@ -3,13 +3,13 @@ import UIKit
 
 final class ButtonWidget: WrapperWidget<UIButton> {
     private let event: UIControl.Event
-    
+
     var canBeFocused: Bool = true
-    
+
     override var canBecomeFocused: Bool {
         canBeFocused
     }
-    
+
     var onTap: (() -> Void)? {
         didSet {
             if oldValue == nil {
@@ -39,9 +39,9 @@ final class ButtonWidget: WrapperWidget<UIButton> {
 final class TextFieldWidget: WrapperWidget<UITextField>, UITextFieldDelegate {
     var onChange: ((String) -> Void)?
     var onSubmit: (() -> Void)?
-    
+
     var canBeFocused: Bool = true
-    
+
     override var canBecomeFocused: Bool {
         canBeFocused
     }
@@ -71,9 +71,9 @@ final class TextFieldWidget: WrapperWidget<UITextField>, UITextFieldDelegate {
 
 final class TextEditorWidget: WrapperWidget<UITextView>, UITextViewDelegate {
     var onChange: ((String) -> Void)?
-    
+
     var canBeFocused: Bool = true
-    
+
     override var canBecomeFocused: Bool {
         canBeFocused
     }
@@ -91,9 +91,9 @@ final class TextEditorWidget: WrapperWidget<UITextView>, UITextViewDelegate {
 #if os(tvOS)
     final class SwitchWidget: WrapperWidget<UISegmentedControl> {
         var onChange: ((Bool) -> Void)?
-        
+
         var canBeFocused: Bool = true
-        
+
         override var canBecomeFocused: Bool {
             canBeFocused
         }
@@ -121,13 +121,13 @@ final class TextEditorWidget: WrapperWidget<UITextView>, UITextViewDelegate {
 #else
     final class SwitchWidget: WrapperWidget<UISwitch> {
         var onChange: ((Bool) -> Void)?
-        
+
         var canBeFocused: Bool = true
-        
+
         override var canBecomeFocused: Bool {
             canBeFocused
         }
-        
+
         @objc
         func switchFlipped() {
             onChange?(child.isOn)
@@ -232,9 +232,9 @@ final class HoverableWidget: ContainerWidget {
 @available(tvOS, unavailable)
 final class SliderWidget: WrapperWidget<UISlider> {
     var onChange: ((Double) -> Void)?
-    
+
     var canBeFocused: Bool = true
-    
+
     override var canBecomeFocused: Bool {
         canBeFocused
     }
@@ -300,9 +300,9 @@ extension UIKitBackend {
         action: @escaping () -> Void
     ) {
         let buttonWidget = button as! ButtonWidget
-        
+
         setButtonTitle(buttonWidget, label, environment: environment)
-        
+
         buttonWidget.onTap = action
         buttonWidget.child.isEnabled = environment.isEnabled
         buttonWidget.canBeFocused = environment.isFocusable
