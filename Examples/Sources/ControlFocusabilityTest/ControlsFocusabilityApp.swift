@@ -83,7 +83,7 @@ struct ControlsFocusabilityApp: App {
                                 .focusable(false)
                         }
 #endif
-                        
+                        #if !os(tvOS)
                         HStack {
                             VStack {
                                 Text("Slider")
@@ -95,6 +95,7 @@ struct ControlsFocusabilityApp: App {
                             Toggle("focusable", active: $isSliderFocusable)
                                 .focusable(false)
                         }
+                        #endif
                         HStack {
                             VStack {
                                 Text("Text field")

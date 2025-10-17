@@ -57,13 +57,14 @@ struct ControlsApp: App {
                             Text("Currently enabled: \(exampleCheckboxState)")
                         }
 #endif
-                        
+#if !os(tvOS)
                         VStack {
                             Text("Slider")
                             Slider($sliderValue, minimum: 0, maximum: 10)
                                 .frame(maxWidth: 200)
                             Text("Value: \(String(format: "%.02f", sliderValue))")
                         }
+#endif
                         
                         VStack {
                             Text("Text field")
