@@ -576,7 +576,7 @@ public final class AppKitBackend: AppBackend {
     }
 
     public func createButton() -> Widget {
-        return NSButton(title: "", target: nil, action: nil)
+        return NSCustomButton(title: "", target: nil, action: nil)
     }
 
     public func updateButton(
@@ -585,7 +585,7 @@ public final class AppKitBackend: AppBackend {
         environment: EnvironmentValues,
         action: @escaping () -> Void
     ) {
-        let button = button as! NSButton
+        let button = button as! NSCustomButton
         button.attributedTitle = Self.attributedString(
             for: label,
             in: environment.with(\.multilineTextAlignment, .center)
@@ -593,13 +593,14 @@ public final class AppKitBackend: AppBackend {
         button.bezelStyle = .regularSquare
         button.appearance = environment.colorScheme.nsAppearance
         button.isEnabled = environment.isEnabled
+        button.canBeFocused = environment.isFocusable
         button.onAction = { _ in
             action()
         }
     }
 
     public func createSwitch() -> Widget {
-        return NSSwitch()
+        return NSCustomSwitch()
     }
 
     public func updateSwitch(
@@ -607,21 +608,22 @@ public final class AppKitBackend: AppBackend {
         environment: EnvironmentValues,
         onChange: @escaping (Bool) -> Void
     ) {
-        let toggleSwitch = toggleSwitch as! NSSwitch
+        let toggleSwitch = toggleSwitch as! NSCustomSwitch
         toggleSwitch.isEnabled = environment.isEnabled
+        toggleSwitch.canBeFocused = environment.isFocusable
         toggleSwitch.onAction = { toggleSwitch in
-            let toggleSwitch = toggleSwitch as! NSSwitch
+            let toggleSwitch = toggleSwitch as! NSCustomSwitch
             onChange(toggleSwitch.state == .on)
         }
     }
 
     public func setState(ofSwitch toggleSwitch: Widget, to state: Bool) {
-        let toggleSwitch = toggleSwitch as! NSSwitch
+        let toggleSwitch = toggleSwitch as! NSCustomSwitch
         toggleSwitch.state = state ? .on : .off
     }
 
     public func createToggle() -> Widget {
-        let toggle = NSButton()
+        let toggle = NSCustomButton()
         toggle.setButtonType(.pushOnPushOff)
         return toggle
     }
@@ -632,25 +634,26 @@ public final class AppKitBackend: AppBackend {
         environment: EnvironmentValues,
         onChange: @escaping (Bool) -> Void
     ) {
-        let toggle = toggle as! NSButton
+        let toggle = toggle as! NSCustomButton
         toggle.attributedTitle = Self.attributedString(
             for: label,
             in: environment.with(\.multilineTextAlignment, .center)
         )
         toggle.isEnabled = environment.isEnabled
+        toggle.canBeFocused = environment.isFocusable
         toggle.onAction = { toggle in
-            let toggle = toggle as! NSButton
+            let toggle = toggle as! NSCustomButton
             onChange(toggle.state == .on)
         }
     }
 
     public func setState(ofToggle toggle: Widget, to state: Bool) {
-        let toggle = toggle as! NSButton
+        let toggle = toggle as! NSCustomButton
         toggle.state = state ? .on : .off
     }
 
     public func createCheckbox() -> Widget {
-        NSButton(checkboxWithTitle: "", target: nil, action: nil)
+        NSCustomButton(checkboxWithTitle: "", target: nil, action: nil)
     }
 
     public func updateCheckbox(
@@ -658,21 +661,22 @@ public final class AppKitBackend: AppBackend {
         environment: EnvironmentValues,
         onChange: @escaping (Bool) -> Void
     ) {
-        let checkbox = checkbox as! NSButton
+        let checkbox = checkbox as! NSCustomButton
         checkbox.isEnabled = environment.isEnabled
+        checkbox.canBeFocused = environment.isFocusable
         checkbox.onAction = { toggle in
-            let checkbox = toggle as! NSButton
+            let checkbox = toggle as! NSCustomButton
             onChange(checkbox.state == .on)
         }
     }
 
     public func setState(ofCheckbox checkbox: Widget, to state: Bool) {
-        let toggle = checkbox as! NSButton
+        let toggle = checkbox as! NSCustomButton
         toggle.state = state ? .on : .off
     }
 
     public func createSlider() -> Widget {
-        return NSSlider()
+        return NSCustomSlider()
     }
 
     public func updateSlider(
@@ -684,23 +688,24 @@ public final class AppKitBackend: AppBackend {
         onChange: @escaping (Double) -> Void
     ) {
         // TODO: Implement decimalPlaces
-        let slider = slider as! NSSlider
+        let slider = slider as! NSCustomSlider
         slider.minValue = minimum
         slider.maxValue = maximum
         slider.onAction = { slider in
-            let slider = slider as! NSSlider
+            let slider = slider as! NSCustomSlider
             onChange(slider.doubleValue)
         }
+        slider.canBeFocused = environment.isFocusable
         slider.isEnabled = environment.isEnabled
     }
 
     public func setValue(ofSlider slider: Widget, to value: Double) {
-        let slider = slider as! NSSlider
+        let slider = slider as! NSCustomSlider
         slider.doubleValue = value
     }
 
     public func createPicker() -> Widget {
-        return NSPopUpButton()
+        return NSCustomPopUpButton()
     }
 
     public func updatePicker(
@@ -709,7 +714,7 @@ public final class AppKitBackend: AppBackend {
         environment: EnvironmentValues,
         onChange: @escaping (Int?) -> Void
     ) {
-        let picker = picker as! NSPopUpButton
+        let picker = picker as! NSCustomPopUpButton
         picker.isEnabled = environment.isEnabled
         picker.menu?.removeAllItems()
         for option in options {
@@ -718,14 +723,15 @@ public final class AppKitBackend: AppBackend {
             picker.menu?.addItem(item)
         }
         picker.onAction = { picker in
-            let picker = picker as! NSPopUpButton
+            let picker = picker as! NSCustomPopUpButton
             onChange(picker.indexOfSelectedItem)
         }
+        picker.canBeFocused = environment.isFocusable
         picker.bezelStyle = .regularSquare
     }
 
     public func setSelectedOption(ofPicker picker: Widget, to selectedOption: Int?) {
-        let picker = picker as! NSPopUpButton
+        let picker = picker as! NSCustomPopUpButton
         if let index = selectedOption {
             picker.selectItem(at: index)
         } else {
@@ -760,6 +766,7 @@ public final class AppKitBackend: AppBackend {
             onChange(textField.stringValue)
         }
         textField.onSubmit = onSubmit
+        textField.canBeFocused = environment.isFocusable
 
         if #available(macOS 14, *) {
             textField.contentType =
@@ -813,6 +820,7 @@ public final class AppKitBackend: AppBackend {
         }
         textEditor.appearance = environment.colorScheme.nsAppearance
         textEditor.isEditable = environment.isEnabled
+        textEditor.canBeFocused = environment.isFocusable
 
         if #available(macOS 14, *) {
             textEditor.contentType =
@@ -1963,9 +1971,47 @@ final class ObjectAssociation<T: Any> {
     }
 }
 
+final class NSCustomButton: NSButton {
+    var canBeFocused: Bool = true
+
+    override var acceptsFirstResponder: Bool {
+        return canBeFocused
+    }
+}
+
+final class NSCustomSlider: NSSlider {
+    var canBeFocused: Bool = true
+
+    override var acceptsFirstResponder: Bool {
+        return canBeFocused
+    }
+}
+
+final class NSCustomSwitch: NSSwitch {
+    var canBeFocused: Bool = true
+
+    override var acceptsFirstResponder: Bool {
+        return canBeFocused
+    }
+}
+
+final class NSCustomPopUpButton: NSPopUpButton {
+    var canBeFocused: Bool = true
+
+    override var acceptsFirstResponder: Bool {
+        return canBeFocused
+    }
+}
+
 class NSObservableTextField: NSTextField {
     override func textDidChange(_ notification: Notification) {
         onEdit?(self)
+    }
+
+    var canBeFocused: Bool = true
+
+    override var acceptsFirstResponder: Bool {
+        return canBeFocused
     }
 
     var onEdit: ((NSTextField) -> Void)?
@@ -1985,6 +2031,12 @@ class NSObservableTextField: NSTextField {
 class NSObservableTextView: NSTextView, NSTextViewDelegate {
     func textDidChange(_ notification: Notification) {
         onEdit?(self)
+    }
+
+    var canBeFocused: Bool = true
+
+    override var acceptsFirstResponder: Bool {
+        return canBeFocused
     }
 
     var onEdit: ((NSTextView) -> Void)?

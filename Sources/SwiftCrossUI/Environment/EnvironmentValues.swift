@@ -95,6 +95,9 @@ public struct EnvironmentValues {
     /// The style of toggle to use.
     public var toggleStyle: ToggleStyle
 
+    /// Wether a View is focusable
+    public var isFocusable: Bool
+
     // Backing storage for extensible subscript
     private var extraValues: [ObjectIdentifier: Any]
 
@@ -208,6 +211,7 @@ public struct EnvironmentValues {
         toggleStyle = .button
         isEnabled = true
         scrollDismissesKeyboardMode = .automatic
+        isFocusable = true
     }
 
     /// Returns a copy of the environment with the specified property set to the

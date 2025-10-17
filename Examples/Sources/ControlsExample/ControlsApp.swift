@@ -16,6 +16,7 @@ struct ControlsApp: App {
     @State var text = ""
     @State var flavor: String? = nil
     @State var enabled = true
+    @State var isFocusable = true
 
     var body: some Scene {
         WindowGroup("ControlsApp") {
@@ -78,10 +79,20 @@ struct ControlsApp: App {
                         Text("You chose: \(flavor ?? "Nothing yet!")")
                     }
                 }.padding().disabled(!enabled)
+                    .focusable(isFocusable)
 
                 Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
                     .padding()
+                    .focusable(isFocusable)
+
+                Toggle(
+                    isFocusable ? "Disable focusability for all" : "Enable focusability for all",
+                    active: $isFocusable
+                )
+                .padding()
+                .focusable(isFocusable)
             }
+
         }.defaultSize(width: 400, height: 600)
     }
 }
