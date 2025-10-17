@@ -79,7 +79,9 @@ struct ControlsApp: App {
                             }
                             Text("You chose: \(flavor ?? "Nothing yet!")")
                         }
-                    }.padding().disabled(!enabled)
+                    }
+                        .padding()
+                        .disabled(!enabled)
                         .focusable(isFocusable)
                     
                     Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
@@ -93,6 +95,7 @@ struct ControlsApp: App {
                     .padding()
                     .focusable(isFocusable)
                 }
+                .frame(minHeight: 600)
             }
 
         }.defaultSize(width: 400, height: 600)

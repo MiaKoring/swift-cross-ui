@@ -131,6 +131,18 @@ open class Widget: GObject {
 
     /// Set to -1 for no min height request
     @GObjectProperty(named: "height-request") public var minHeight: Int
+    
+    /// Wether a Widget is focusable
+    public var focusable: Bool {
+        get {
+            let result = gtk_widget_get_focusable(widgetPointer) != 0
+            return result
+        }
+        set {
+            gtk_widget_set_focusable(widgetPointer, newValue.toGBoolean())
+            gtk_widget_set_focus_on_click(widgetPointer, newValue.toGBoolean())
+        }
+    }
 
     /// Sets the name of the Gtk view for useful debugging in inspector (Ctrl+Shift+D)
     public func tag(as tag: String) {
