@@ -16,6 +16,8 @@ struct ControlsApp: App {
     @State var text = ""
     @State var flavor: String? = nil
     @State var enabled = true
+    @State var progressViewSize: Int = 10
+    @State var isProgressViewResizable = true
     @State var isFocusable = true
 
     var body: some Scene {
@@ -66,10 +68,23 @@ struct ControlsApp: App {
                             }
                         #endif
 
-                        VStack {
-                            Text("Text field")
-                            TextField("Text field", text: $text)
-                            Text("Value: \(text)")
+                    VStack {
+                        Text("Text field")
+                        TextField("Text field", text: $text)
+                        Text("Value: \(text)")
+                    }
+
+                    Toggle("Enable ProgressView resizability", active: $isProgressViewResizable)
+                    Slider($progressViewSize, minimum: 10, maximum: 100)
+                    ProgressView()
+                        .resizable(isProgressViewResizable)
+                        .frame(width: progressViewSize, height: progressViewSize)
+
+                    VStack {
+                        Text("Drop down")
+                        HStack {
+                            Text("Flavor: ")
+                            Picker(of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
                         }
 
                         VStack {

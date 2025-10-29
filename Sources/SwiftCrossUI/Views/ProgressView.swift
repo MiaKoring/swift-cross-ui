@@ -4,6 +4,7 @@ public struct ProgressView<Label: View>: View {
     private var label: Label
     private var progress: Double?
     private var kind: Kind
+    private var isSpinnerResizable: Bool = false
 
     private enum Kind {
         case spinner
@@ -23,7 +24,7 @@ public struct ProgressView<Label: View>: View {
     private var progressIndicator: some View {
         switch kind {
             case .spinner:
-                ProgressSpinnerView()
+                ProgressSpinnerView(isResizable: isSpinnerResizable)
             case .bar:
                 ProgressBarView(value: progress)
         }
@@ -49,6 +50,14 @@ public struct ProgressView<Label: View>: View {
         self.label = label
         self.kind = .bar
         self.progress = value.map(Double.init)
+    }
+
+    /// Makes the ProgressView resize to fit the available space.
+    /// Only affects `Kind.spinner`.
+    public func resizable(_ isResizable: Bool = true) -> Self {
+        var progressView = self
+        progressView.isSpinnerResizable = isResizable
+        return progressView
     }
 }
 
@@ -101,7 +110,10 @@ extension ProgressView where Label == Text {
 }
 
 struct ProgressSpinnerView: ElementaryView {
-    init() {}
+    let isResizable: Bool
+    init(isResizable: Bool = false) {
+        self.isResizable = isResizable
+    }
 
     func asWidget<Backend: AppBackend>(backend: Backend) -> Backend.Widget {
         backend.createProgressSpinner()
@@ -114,8 +126,33 @@ struct ProgressSpinnerView: ElementaryView {
         backend: Backend,
         dryRun: Bool
     ) -> ViewUpdateResult {
-        ViewUpdateResult.leafView(
-            size: ViewSize(fixedSize: backend.naturalSize(of: widget))
+        let naturalSize = backend.naturalSize(of: widget)
+        guard isResizable else {
+            // Required to reset its size when resizability
+            // gets changed at runtime
+            backend.setSize(of: widget, to: naturalSize)
+            return ViewUpdateResult.leafView(size: ViewSize(fixedSize: naturalSize))
+        }
+        let min = max(min(proposedSize.x, proposedSize.y), 10)
+        let size = SIMD2(
+            min,
+            min
+        )
+        if !dryRun {
+            // Doesn't change the rendered size of ProgressSpinner
+            // on UIKitBackend, but still sets container size to
+            // (width: n, height: n) n = min(proposedSize.x, proposedSize.y)
+            backend.setSize(of: widget, to: size)
+        }
+        return ViewUpdateResult.leafView(
+            size: ViewSize(
+                size: size,
+                idealSize: naturalSize,
+                minimumWidth: 10,
+                minimumHeight: 10,
+                maximumWidth: nil,
+                maximumHeight: nil
+            )
         )
     }
 }
