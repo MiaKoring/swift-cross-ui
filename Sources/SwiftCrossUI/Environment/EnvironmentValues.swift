@@ -95,6 +95,8 @@ public struct EnvironmentValues {
     /// The style of toggle to use.
     public var toggleStyle: ToggleStyle
 
+    /// Wether a View is focusable
+    public var isFocusable: Bool
     /// Whether the text should be selectable. Set by ``View/textSelectionEnabled(_:)``.
     public var isTextSelectionEnabled: Bool
 
@@ -211,6 +213,7 @@ public struct EnvironmentValues {
         toggleStyle = .button
         isEnabled = true
         scrollDismissesKeyboardMode = .automatic
+        isFocusable = true
         isTextSelectionEnabled = false
     }
 

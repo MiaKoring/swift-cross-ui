@@ -753,6 +753,7 @@ public final class GtkBackend: AppBackend {
         // TODO: Update button label color using environment
         let button = button as! Gtk.Button
         button.sensitive = environment.isEnabled
+        button.focusable = environment.isFocusable
         button.label = label
         button.clicked = { _ in action() }
         button.css.clear()
@@ -775,6 +776,7 @@ public final class GtkBackend: AppBackend {
         toggle.toggled = { widget in
             onChange(widget.active)
         }
+        toggle.focusable = environment.isFocusable
         toggle.css.clear()
         // This is a control, but we set isControl to false anyway because isControl overrides
         // the button background and makes the on and off states of the toggle look identical.
@@ -796,6 +798,7 @@ public final class GtkBackend: AppBackend {
     ) {
         let switchWidget = switchWidget as! Gtk.Switch
         switchWidget.sensitive = environment.isEnabled
+        switchWidget.focusable = environment.isFocusable
         switchWidget.notifyActive = { widget, _ in
             onChange(widget.active)
         }
@@ -816,6 +819,7 @@ public final class GtkBackend: AppBackend {
     ) {
         let checkboxWidget = checkboxWidget as! Gtk.CheckButton
         checkboxWidget.sensitive = environment.isEnabled
+        checkboxWidget.focusable = environment.isFocusable
         checkboxWidget.notifyActive = { widget, _ in
             onChange(widget.active)
         }
@@ -844,6 +848,7 @@ public final class GtkBackend: AppBackend {
         slider.minimum = minimum
         slider.maximum = maximum
         slider.digits = decimalPlaces
+        slider.focusable = environment.isFocusable
         slider.valueChanged = { widget in
             onChange(widget.value)
         }
@@ -873,6 +878,7 @@ public final class GtkBackend: AppBackend {
         textField.activate = { _ in
             onSubmit()
         }
+        textField.focusable = environment.isFocusable
 
         textField.css.clear()
         textField.css.set(properties: Self.cssProperties(for: environment, isControl: true))
@@ -929,6 +935,7 @@ public final class GtkBackend: AppBackend {
     ) {
         let picker = picker as! DropDown
         picker.sensitive = environment.isEnabled
+        picker.focusable = environment.isFocusable
 
         // Check whether the options need to be updated or not (avoiding unnecessary updates is
         // required to prevent an infinite loop caused by the onChange handler)

@@ -4,6 +4,12 @@ import UIKit
 final class ButtonWidget: WrapperWidget<UIButton> {
     private let event: UIControl.Event
 
+    var canBeFocused: Bool = true
+
+    override var canBecomeFocused: Bool {
+        canBeFocused
+    }
+
     var onTap: (() -> Void)? {
         didSet {
             if oldValue == nil {
@@ -30,6 +36,12 @@ final class ButtonWidget: WrapperWidget<UIButton> {
 final class TextFieldWidget: WrapperWidget<UITextField>, UITextFieldDelegate {
     var onChange: ((String) -> Void)?
     var onSubmit: (() -> Void)?
+
+    var canBeFocused: Bool = true
+
+    override var canBecomeFocused: Bool {
+        canBeFocused
+    }
 
     @objc
     func textChanged() {
@@ -68,6 +80,12 @@ final class TextEditorWidget: WrapperWidget<UITextView>, UITextViewDelegate {
         }
     }
 
+    var canBeFocused: Bool = true
+
+    override var canBecomeFocused: Bool {
+        canBeFocused
+    }
+
     init() {
         super.init(child: UITextView())
         child.delegate = self
@@ -85,6 +103,12 @@ final class TextEditorWidget: WrapperWidget<UITextView>, UITextViewDelegate {
 #if os(tvOS)
     final class SwitchWidget: WrapperWidget<UISegmentedControl> {
         var onChange: ((Bool) -> Void)?
+
+        var canBeFocused: Bool = true
+
+        override var canBecomeFocused: Bool {
+            canBeFocused
+        }
 
         @objc
         func switchFlipped() {
@@ -109,6 +133,12 @@ final class TextEditorWidget: WrapperWidget<UITextView>, UITextViewDelegate {
 #else
     final class SwitchWidget: WrapperWidget<UISwitch> {
         var onChange: ((Bool) -> Void)?
+
+        var canBeFocused: Bool = true
+
+        override var canBecomeFocused: Bool {
+            canBeFocused
+        }
 
         @objc
         func switchFlipped() {
@@ -216,6 +246,12 @@ final class TappableWidget: ContainerWidget {
 final class SliderWidget: WrapperWidget<UISlider> {
     var onChange: ((Double) -> Void)?
 
+    var canBeFocused: Bool = true
+
+    override var canBecomeFocused: Bool {
+        canBeFocused
+    }
+
     private var _decimalPlaces = 17
     var decimalPlaces: Int {
         get { _decimalPlaces }
@@ -283,6 +319,7 @@ extension UIKitBackend {
 
         buttonWidget.onTap = action
         buttonWidget.child.isEnabled = environment.isEnabled
+        buttonWidget.canBeFocused = environment.isFocusable
     }
 
     public func createTextField() -> Widget {
@@ -308,6 +345,7 @@ extension UIKitBackend {
         let (keyboardType, contentType) = splitTextContentType(environment.textContentType)
         textFieldWidget.child.keyboardType = keyboardType
         textFieldWidget.child.textContentType = contentType
+        textFieldWidget.canBeFocused = environment.isFocusable
 
         #if os(iOS)
             if let updateToolbar = environment.updateToolbar {
@@ -355,6 +393,7 @@ extension UIKitBackend {
         let (keyboardType, contentType) = splitTextContentType(environment.textContentType)
         textEditorWidget.child.keyboardType = keyboardType
         textEditorWidget.child.textContentType = contentType
+        textEditorWidget.canBeFocused = environment.isFocusable
 
         #if os(iOS)
             if let updateToolbar = environment.updateToolbar {
@@ -435,6 +474,7 @@ extension UIKitBackend {
         let wrapper = switchWidget as! SwitchWidget
         wrapper.onChange = onChange
         wrapper.child.isEnabled = environment.isEnabled
+        wrapper.canBeFocused = environment.isFocusable
     }
 
     public func setState(ofSwitch switchWidget: Widget, to state: Bool) {
