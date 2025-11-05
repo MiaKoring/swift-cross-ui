@@ -68,24 +68,32 @@ struct ControlsApp: App {
                             }
                         #endif
 
-                    VStack {
-                        Text("Text field")
-                        TextField("Text field", text: $text)
-                        Text("Value: \(text)")
-                    }
+                        VStack {
+                            Text("Slider")
+                            Slider($sliderValue, minimum: 0, maximum: 10)
+                                .frame(maxWidth: 200)
+                            Text("Value: \(String(format: "%.02f", sliderValue))")
+                        }
 
-                    Toggle("Enable ProgressView resizability", active: $isProgressViewResizable)
-                    Slider($progressViewSize, minimum: 10, maximum: 100)
-                    ProgressView()
-                        .resizable(isProgressViewResizable)
-                        .frame(width: progressViewSize, height: progressViewSize)
+                        VStack {
+                            Text("Text field")
+                            TextField("Text field", text: $text)
+                            Text("Value: \(text)")
+                        }
 
                     VStack {
                         Text("Drop down")
                         HStack {
                             Text("Flavor: ")
                             Picker(of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
+                        Toggle("Enable ProgressView resizability", active: $isProgressViewResizable)
+                        Slider($progressViewSize, minimum: 10, maximum: 100)
+                        Button("Randomize progress view size") {
+                            progressViewSize = Int.random(in: 10...100)
                         }
+                        ProgressView()
+                            .resizable(isProgressViewResizable)
+                            .frame(width: progressViewSize, height: progressViewSize)
 
                         VStack {
                             Text("Drop down")
@@ -115,7 +123,6 @@ struct ControlsApp: App {
                 }
                 .frame(minHeight: 600)
             }
-
         }.defaultSize(width: 400, height: 600)
     }
 }

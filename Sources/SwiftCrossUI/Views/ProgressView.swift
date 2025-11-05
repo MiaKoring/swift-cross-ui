@@ -53,7 +53,7 @@ public struct ProgressView<Label: View>: View {
     }
 
     /// Makes the ProgressView resize to fit the available space.
-    /// Only affects `Kind.spinner`.
+    /// Only affects ``Kind/spinner``.
     public func resizable(_ isResizable: Bool = true) -> Self {
         var progressView = self
         progressView.isSpinnerResizable = isResizable
@@ -111,6 +111,7 @@ extension ProgressView where Label == Text {
 
 struct ProgressSpinnerView: ElementaryView {
     let isResizable: Bool
+
     init(isResizable: Bool = false) {
         self.isResizable = isResizable
     }
@@ -130,26 +131,26 @@ struct ProgressSpinnerView: ElementaryView {
         guard isResizable else {
             // Required to reset its size when resizability
             // gets changed at runtime
-            backend.setSize(of: widget, to: naturalSize)
+            backend.setProgressSpinnerSize(widget, naturalSize)
             return ViewUpdateResult.leafView(size: ViewSize(fixedSize: naturalSize))
         }
-        let min = max(min(proposedSize.x, proposedSize.y), 10)
+        let minimumDimension = max(min(proposedSize.x, proposedSize.y), 0)
         let size = SIMD2(
-            min,
-            min
+            minimumDimension,
+            minimumDimension
         )
         if !dryRun {
             // Doesn't change the rendered size of ProgressSpinner
             // on UIKitBackend, but still sets container size to
             // (width: n, height: n) n = min(proposedSize.x, proposedSize.y)
-            backend.setSize(of: widget, to: size)
+            backend.setProgressSpinnerSize(widget, size)
         }
         return ViewUpdateResult.leafView(
             size: ViewSize(
                 size: size,
                 idealSize: naturalSize,
-                minimumWidth: 10,
-                minimumHeight: 10,
+                minimumWidth: 0,
+                minimumHeight: 0,
                 maximumWidth: nil,
                 maximumHeight: nil
             )
