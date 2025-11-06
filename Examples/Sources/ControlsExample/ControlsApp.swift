@@ -81,47 +81,54 @@ struct ControlsApp: App {
                             Text("Value: \(text)")
                         }
 
-                    VStack {
-                        Text("Drop down")
-                        HStack {
-                            Text("Flavor: ")
-                            Picker(of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
-                        Toggle("Enable ProgressView resizability", active: $isProgressViewResizable)
-                        Slider($progressViewSize, minimum: 10, maximum: 100)
-                        Button("Randomize progress view size") {
-                            progressViewSize = Int.random(in: 10...100)
-                        }
-                        ProgressView()
-                            .resizable(isProgressViewResizable)
-                            .frame(width: progressViewSize, height: progressViewSize)
-
                         VStack {
                             Text("Drop down")
                             HStack {
                                 Text("Flavor: ")
                                 Picker(
                                     of: ["Vanilla", "Chocolate", "Strawberry"], selection: $flavor)
+                                Toggle(
+                                    "Enable ProgressView resizability",
+                                    active: $isProgressViewResizable)
+                                Slider($progressViewSize, minimum: 10, maximum: 100)
+                                Button("Randomize progress view size") {
+                                    progressViewSize = Int.random(in: 10...100)
+                                }
+                                ProgressView()
+                                    .resizable(isProgressViewResizable)
+                                    .frame(width: progressViewSize, height: progressViewSize)
+
+                                VStack {
+                                    Text("Drop down")
+                                    HStack {
+                                        Text("Flavor: ")
+                                        Picker(
+                                            of: ["Vanilla", "Chocolate", "Strawberry"],
+                                            selection: $flavor)
+                                    }
+                                    Text("You chose: \(flavor ?? "Nothing yet!")")
+                                }
                             }
-                            Text("You chose: \(flavor ?? "Nothing yet!")")
+                            .padding()
+                            .disabled(!enabled)
+                            .focusable(isFocusable)
+
+                            Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
+                                .padding()
+                                .focusable(isFocusable)
+
+                            Toggle(
+                                isFocusable
+                                    ? "Disable focusability for all"
+                                    : "Enable focusability for all",
+                                active: $isFocusable
+                            )
+                            .padding()
+                            .focusable(isFocusable)
                         }
+                        .frame(minHeight: 600)
                     }
-                    .padding()
-                    .disabled(!enabled)
-                    .focusable(isFocusable)
-
-                    Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
-                        .padding()
-                        .focusable(isFocusable)
-
-                    Toggle(
-                        isFocusable
-                            ? "Disable focusability for all" : "Enable focusability for all",
-                        active: $isFocusable
-                    )
-                    .padding()
-                    .focusable(isFocusable)
                 }
-                .frame(minHeight: 600)
             }
         }.defaultSize(width: 400, height: 600)
     }
