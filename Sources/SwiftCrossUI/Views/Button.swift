@@ -1,5 +1,3 @@
-import Foundation
-
 /// A control that initiates an action.
 public struct Button: Sendable {
     /// The label to show on the button.
@@ -23,8 +21,7 @@ public struct Button: Sendable {
     }
 }
 
-extension Button: View {
-}
+extension Button: View {}
 
 extension Button: ElementaryView {
     public func asWidget<Backend: AppBackend>(backend: Backend) -> Backend.Widget {
