@@ -1,4 +1,4 @@
-import Foundation
+
 import OrderedCollections
 
 /// A view that displays a variable amount of children.
@@ -155,7 +155,6 @@ extension ForEach: TypeSafeView, View where Child: View {
                     )
                     addChild(node.widget.into())
                 }
-
                 children.nodeIdentifierMap[element[keyPath: idKeyPath]] = node
             } else {
                 node = AnyViewGraphNode(
