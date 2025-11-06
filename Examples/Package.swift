@@ -80,6 +80,10 @@ let package = Package(
         .executableTarget(
             name: "ControlFocusabilityTest",
             dependencies: exampleDependencies
+        ),
+        .executableTarget(
+            name: "ForEachExample",
+            dependencies: exampleDependencies
         )
     ]
 )

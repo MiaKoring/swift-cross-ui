@@ -69,3 +69,8 @@ version = '0.1.0'
 identifier = 'dev.swiftcrossui.ControlFocusabilityTest'
 product = 'ControlFocusabilityTest'
 version = '0.1.0'
+
+[apps.ForEachExample]
+identifier = 'dev.swiftcrossui.ForEachExample'
+product = 'ForEachExample'
+version = '0.1.0'
