@@ -1,4 +1,3 @@
-
 import OrderedCollections
 
 /// A view that displays a variable amount of children.
@@ -250,6 +249,8 @@ extension ForEach: TypeSafeView, View where Child: View {
             }
         }
 
+        let elementsStartIndex = elements.startIndex
+
         // TODO: The way we're reusing nodes for technically different elements means that if
         //   Child has state of its own then it could get pretty confused thinking that its state
         //   changed whereas it was actually just moved to a new slot in the array. Probably not
@@ -259,7 +260,7 @@ extension ForEach: TypeSafeView, View where Child: View {
             guard i < elements.count else {
                 break
             }
-            let index = elements.index(elements.startIndex, offsetBy: i)
+            let index = elements.index(elementsStartIndex, offsetBy: i)
             let childContent = child(elements[index])
             if children.isFirstUpdate {
                 addChild(node.widget.into())
@@ -282,7 +283,7 @@ extension ForEach: TypeSafeView, View where Child: View {
         let nodeCount = children.nodes.count
         let remainingElementCount = elements.count - nodeCount
         if remainingElementCount > 0 {
-            let startIndex = elements.index(elements.startIndex, offsetBy: nodeCount)
+            let startIndex = elements.index(elementsStartIndex, offsetBy: nodeCount)
             for i in 0..<remainingElementCount {
                 let childContent = child(elements[elements.index(startIndex, offsetBy: i)])
                 let node = AnyViewGraphNode(
