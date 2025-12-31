@@ -98,6 +98,9 @@ public protocol AppBackend: Sendable {
     /// Mobile backends generally can't.
     var canRevealFiles: Bool { get }
 
+    /// Provides a central place to observe view update cycle completion
+    var updateGroup: UpdateGroup { get }
+
     /// Often in UI frameworks (such as Gtk), code is run in a callback
     /// after starting the app, and hence this generic root window creation
     /// API must reflect that. This is always the first method to be called
@@ -791,6 +794,27 @@ public protocol AppBackend: Sendable {
     )
     /// Navigates a web view to a given URL.
     func navigateWebView(_ webView: Widget, to url: URL)
+
+    // MARK: Focus
+
+    /// Resigns first responder
+    func resignFirstResponder(as widget: Widget)
+
+    /// Requests first responder
+    func requestFirstResponder(as widget: Widget) -> Bool
+
+    /// Registers closures to run on focus gain and resign
+    func registerFocusObservers(
+        _ data: [FocusData],
+        on widget: Widget
+    )
+
+    func createFocusContainer() -> Widget
+
+    func updateFocusContainer(
+        _ widget: Widget,
+        focusability: SwiftCrossUI.Focusability
+    ) -> ObjectIdentifier?
 }
 
 extension AppBackend {

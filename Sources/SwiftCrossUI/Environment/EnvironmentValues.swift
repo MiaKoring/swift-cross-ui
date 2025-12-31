@@ -101,6 +101,8 @@ public struct EnvironmentValues {
     /// Backing storage for extensible subscript
     private var extraValues: [ObjectIdentifier: Any]
 
+    public var focusObservers: [FocusData]
+
     /// An internal environment value used to control whether layout caching is
     /// enabled or not. This is set to true when computing non-final layouts. E.g.
     /// when a stack computes the minimum and maximum sizes of its children, it
@@ -227,6 +229,7 @@ public struct EnvironmentValues {
         scrollDismissesKeyboardMode = .automatic
         isTextSelectionEnabled = false
         allowLayoutCaching = false
+        focusObservers = []
     }
 
     /// Returns a copy of the environment with the specified property set to the

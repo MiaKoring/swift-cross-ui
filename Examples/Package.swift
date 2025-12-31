@@ -76,6 +76,14 @@ let package = Package(
         .executableTarget(
             name: "HoverExample",
             dependencies: exampleDependencies
+        ),
+        .executableTarget(
+            name: "ControlFocusabilityTest",
+            dependencies: exampleDependencies
+        ),
+        .executableTarget(
+            name: "WidgetGallery",
+            dependencies: exampleDependencies
         )
     ]
 )

@@ -26,6 +26,7 @@ public final class AppKitBackend: AppBackend {
     public let menuImplementationStyle = MenuImplementationStyle.dynamicPopover
     public let canRevealFiles = true
     public let deviceClass = DeviceClass.desktop
+    public let updateGroup = UpdateGroup()
 
     public var scrollBarWidth: Int {
         // We assume that all scrollers have their controlSize set to `.regular` by default.
@@ -40,6 +41,8 @@ public final class AppKitBackend: AppBackend {
     }
 
     private let appDelegate = NSCustomApplicationDelegate()
+
+    let focusManager = FocusStateManager()
 
     public init() {
         NSApplication.shared.delegate = appDelegate
@@ -67,6 +70,24 @@ public final class AppKitBackend: AppBackend {
             defer: true
         )
         window.delegate = window.customDelegate
+
+        window.addObserver(
+            focusManager,
+            forKeyPath: "firstResponder",
+            context: nil
+        )
+
+        updateGroup.registerUpdateFinishedCallback(for: window) { result in
+            guard
+                result()?
+                    .focusChainNeedsRecalculationInWindows
+                    .contains(ObjectIdentifier(window))
+                    == true
+            else {
+                return
+            }
+            //window.recalculateKeyViewLoop()
+        }
 
         return window
     }
@@ -386,6 +407,10 @@ public final class AppKitBackend: AppBackend {
         }
 
         func removeSubview(_ view: NSView) {
+            if let window = self.window as? NSCustomWindow {
+                window.removeFromBypassCache(view)
+            }
+
             children.removeAll { other in
                 view === other
             }
@@ -393,9 +418,13 @@ public final class AppKitBackend: AppBackend {
         }
 
         func removeAllSubviews() {
-            for child in children {
-                child.removeFromSuperview()
+            let window = self.window as? NSCustomWindow
+
+            for view in children {
+                view.removeFromSuperview()
             }
+
+            window?.removeFromBypassCache(children)
             children = []
         }
     }
@@ -1365,7 +1394,7 @@ public final class AppKitBackend: AppBackend {
     }
 
     public func createTapGestureTarget(wrapping child: Widget, gesture _: TapGesture) -> Widget {
-        let container = NSView()
+        let container = NSContainerView()
 
         container.addSubview(child)
         child.leadingAnchor.constraint(equalTo: container.leadingAnchor)
@@ -1417,7 +1446,7 @@ public final class AppKitBackend: AppBackend {
     }
 
     public func createHoverTarget(wrapping child: Widget) -> Widget {
-        let container = NSView()
+        let container = NSContainerView()
 
         container.addSubview(child)
         child.leadingAnchor.constraint(equalTo: container.leadingAnchor)
@@ -2203,59 +2232,6 @@ class NSSplitViewResizingDelegate: NSObject, NSSplitViewDelegate {
                 // of the split view resizing issues.
                 splitView.setPosition(newWidth, ofDividerAt: 0)
             }
-        }
-    }
-}
-
-public class NSCustomWindow: NSWindow {
-    var customDelegate = Delegate()
-    var persistentUndoManager = UndoManager()
-
-    /// A reference to the sheet currently presented on top of this window, if any.
-    /// If the sheet itself has another sheet presented on top of it, then that doubly
-    /// nested sheet gets stored as the sheet's nestedSheet, and so on.
-    var nestedSheet: NSCustomSheet?
-
-    /// Allows the backing scale factor to be overridden. Useful for keeping
-    /// UI tests consistent across devices.
-    ///
-    /// Idea from https://github.com/pointfreeco/swift-snapshot-testing/pull/533
-    public var backingScaleFactorOverride: CGFloat?
-
-    public override var backingScaleFactor: CGFloat {
-        backingScaleFactorOverride ?? super.backingScaleFactor
-    }
-
-    class Delegate: NSObject, NSWindowDelegate {
-        var resizeHandler: ((SIMD2<Int>) -> Void)?
-
-        func setHandler(_ resizeHandler: @escaping (SIMD2<Int>) -> Void) {
-            self.resizeHandler = resizeHandler
-        }
-
-        func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
-            guard let resizeHandler else {
-                return frameSize
-            }
-
-            let contentSize = sender.contentRect(
-                forFrameRect: NSRect(
-                    x: sender.frame.origin.x, y: sender.frame.origin.y, width: frameSize.width,
-                    height: frameSize.height)
-            )
-
-            resizeHandler(
-                SIMD2(
-                    Int(contentSize.width.rounded(.towardZero)),
-                    Int(contentSize.height.rounded(.towardZero))
-                )
-            )
-
-            return frameSize
-        }
-
-        func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? {
-            (window as! NSCustomWindow).persistentUndoManager
         }
     }
 }

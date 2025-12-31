@@ -64,3 +64,13 @@ version = '0.1.0'
 identifier = 'dev.swiftcrossui.HoverExample'
 product = 'HoverExample'
 version = '0.1.0'
+
+[apps.ControlFocusabilityTest]
+identifier = 'dev.swiftcrossui.ControlFocusabilityTest'
+product = 'ControlFocusabilityTest'
+version = '0.1.0'
+
+[apps.WidgetGallery]
+identifier = 'dev.swiftcrossui.WidgetGallery'
+product = 'WidgetGallery'
+version = '0.1.0'
