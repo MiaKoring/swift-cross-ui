@@ -31,11 +31,18 @@ struct ControlsFocusabilityApp: App {
     @State var isTextFieldFocusable = true
     @State var isPickerFocusable = true
 
+    @FocusState var focused: Int?
+
     var body: some Scene {
         WindowGroup("ControlsApp") {
             #hotReloadable {
                 ScrollView {
                     VStack(spacing: 30) {
+                        Button("randomize focus") {
+                            focused = Int.random(in: 1...7)
+                        }
+                        .padding(.bottom, 20)
+
                         HStack {
                             VStack {
                                 Text("Button")
@@ -43,6 +50,7 @@ struct ControlsFocusabilityApp: App {
                                     count += 1
                                 }
                                 .focusable(isButtonFocusable)
+                                .focused($focused, equals: 1)
                                 Text("Count: \(count)")
                             }
                             Toggle("focusable", active: $isButtonFocusable)
@@ -57,6 +65,7 @@ struct ControlsFocusabilityApp: App {
                                     Toggle("Toggle me!", active: $exampleButtonState)
                                         .toggleStyle(.button)
                                         .focusable(isToggleButtonFocusable)
+                                        .focused($focused, equals: 2)
                                     Text("Currently enabled: \(exampleButtonState)")
                                 }
                                 Toggle("focusable", active: $isToggleButtonFocusable)
@@ -71,6 +80,7 @@ struct ControlsFocusabilityApp: App {
                                 Toggle("Toggle me:", active: $exampleSwitchState)
                                     .toggleStyle(.switch)
                                     .focusable(isToggleSwitchFocusable)
+                                    .focused($focused, equals: 3)
                                 Text("Currently enabled: \(exampleSwitchState)")
                             }
                             Toggle("focusable", active: $isToggleSwitchFocusable)
@@ -84,6 +94,7 @@ struct ControlsFocusabilityApp: App {
                                     Toggle("Toggle me:", active: $exampleCheckboxState)
                                         .toggleStyle(.checkbox)
                                         .focusable(isCheckboxFocusable)
+                                        .focused($focused, equals: 4)
                                     Text("Currently enabled: \(exampleCheckboxState)")
                                 }
                                 Toggle("focusable", active: $isCheckboxFocusable)
@@ -97,6 +108,7 @@ struct ControlsFocusabilityApp: App {
                                     Slider($sliderValue, minimum: 0, maximum: 10)
                                         .frame(maxWidth: 200)
                                         .focusable(isSliderFocusable)
+                                        .focused($focused, equals: 5)
                                     Text("Value: \(String(format: "%.02f", sliderValue))")
                                 }
                                 Toggle("focusable", active: $isSliderFocusable)
@@ -108,6 +120,7 @@ struct ControlsFocusabilityApp: App {
                                 Text("Text field")
                                 TextField("Text field", text: $text)
                                     .focusable(isTextFieldFocusable)
+                                    .focused($focused, equals: 6)
                                 Text("Value: \(text)")
                             }
                             Toggle("focusable", active: $isTextFieldFocusable)
@@ -124,6 +137,7 @@ struct ControlsFocusabilityApp: App {
                                         selection: $flavor
                                     )
                                     .focusable(isPickerFocusable)
+                                    .focused($focused, equals: 7)
                                 }
                                 Text("You chose: \(flavor ?? "Nothing yet!")")
                             }

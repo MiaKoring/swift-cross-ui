@@ -10,6 +10,12 @@ extension View {
         FocusModifier(body: TupleView1(self), focusability: focusability)
     }
 
+    public func focusEffectDisabled(_ disabled: Bool = true) -> some View {
+        EnvironmentModifier(self) { environment in
+            environment.with(\.focusEffectDisabled, disabled)
+        }
+    }
+
     public func focused<T, Value>(
         _ focusBinding: FocusState<Value>.Binding,
         equals match: T
@@ -22,13 +28,35 @@ extension View {
                         type: T.self,
                         match: match,
                         set: {
-                            print("\n\n----------\ndidset\n--------\n\n")
                             focusBinding.wrappedValue = match
                         },
                         reset: {
-                            print("\n\n----------\ndidreset\n--------\n\n")
                             focusBinding.reset()
-                        }
+                        },
+                        matches: focusBinding.wrappedValue == match
+                    )
+                ]
+            )
+        }
+    }
+
+    public func focused<T, Value>(
+        _ focusBinding: FocusState<Value>.Binding
+    ) -> some View where Value == T, T == Bool {
+        EnvironmentModifier(self) { environment in
+            environment.with(
+                \.focusObservers,
+                environment.focusObservers + [
+                    FocusData(
+                        type: T.self,
+                        match: true,
+                        set: {
+                            focusBinding.wrappedValue = true
+                        },
+                        reset: {
+                            focusBinding.reset()
+                        },
+                        matches: focusBinding.wrappedValue == true
                     )
                 ]
             )

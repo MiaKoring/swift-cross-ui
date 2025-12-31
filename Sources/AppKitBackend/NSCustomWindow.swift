@@ -57,6 +57,21 @@ public class NSCustomWindow: NSWindow {
     }
 
     // MARK: - FocusChain -
+    override public var initialFirstResponder: NSView? {
+        get {
+            guard let responder = super.initialFirstResponder else {
+                return nil
+            }
+            // Doing this in set doesn't work for some reason.
+            // set gets called first, sets the value but its nil for the get
+            // directly after. Doing it here instead works.
+            return findNextAllowedFocusTarget(suggestion: responder)
+        }
+        set {
+            super.initialFirstResponder = newValue
+        }
+    }
+
     private var forwardFocusChainBypassCache = NSMapTable<NSResponder, NSView>(
         keyOptions: .weakMemory, valueOptions: .weakMemory
     )

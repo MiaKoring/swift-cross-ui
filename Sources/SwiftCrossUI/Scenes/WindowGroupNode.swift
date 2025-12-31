@@ -82,8 +82,6 @@ public final class WindowGroupNode<Content: View>: SceneGraphNode {
         backend: Backend,
         environment: EnvironmentValues
     ) {
-        backend.updateGroup.enter()
-
         guard let window = window as? Backend.Window else {
             fatalError("Scene updated with a backend incompatible with the window it was given")
         }
@@ -238,8 +236,6 @@ public final class WindowGroupNode<Content: View>: SceneGraphNode {
             backend.show(window: window)
             isFirstUpdate = false
         }
-
-        backend.updateGroup.leave(getResult: { finalContentResult })
 
         return finalContentResult
     }

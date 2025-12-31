@@ -144,7 +144,9 @@ public struct FocusState<Value: Hashable>: DynamicProperty, StateProperty {
         /// will give you a binding for reading and writing `myStateProperty` (assuming that
         /// `myStateProperty` is marked with `@State` at its declaration site).
         public init(
-            get: @escaping () -> Value, set: @escaping (Value) -> Void, reset: @escaping () -> Void
+            get: @escaping () -> Value,
+            set: @escaping (Value) -> Void,
+            reset: @escaping () -> Void
         ) {
             self.getValue = get
             self.setValue = set

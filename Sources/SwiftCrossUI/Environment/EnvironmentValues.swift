@@ -103,6 +103,8 @@ public struct EnvironmentValues {
 
     public var focusObservers: [FocusData]
 
+    public var focusEffectDisabled: Bool
+
     /// An internal environment value used to control whether layout caching is
     /// enabled or not. This is set to true when computing non-final layouts. E.g.
     /// when a stack computes the minimum and maximum sizes of its children, it
@@ -230,6 +232,7 @@ public struct EnvironmentValues {
         isTextSelectionEnabled = false
         allowLayoutCaching = false
         focusObservers = []
+        focusEffectDisabled = false
     }
 
     /// Returns a copy of the environment with the specified property set to the

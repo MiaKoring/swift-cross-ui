@@ -92,6 +92,10 @@ extension AppKitBackend {
         }
         return nil
     }
+
+    public func setFocusEffectDisabled(on widget: NSView, disabled: Bool) {
+        widget.focusRingType = disabled ? .none : .default
+    }
 }
 
 // MARK: - FocusState
@@ -103,6 +107,13 @@ class FocusStateManager: NSObject {
 
     func register(_ data: [FocusData], for widget: NSView) {
         focusData[ObjectIdentifier(widget)] = Set(data)
+
+        if data.contains(where: { $0.matches }),
+            !widget.isHidden,
+            widget.acceptsFirstResponder
+        {
+            widget.window?.makeFirstResponder(widget)
+        }
     }
 
     override func observeValue(
@@ -116,19 +127,15 @@ class FocusStateManager: NSObject {
         if let responder = window.firstResponder,
             !(responder is NSCustomWindow)
         {
-            print(responder)
             if responder is NSObservableTextField {
-                print("observable tf")
                 shouldSkip = true
                 self.lastFocused = responder
             } else if !shouldSkip {
                 if let lastFocused {
-                    print(lastFocused)
                     handleFocusChange(of: ObjectIdentifier(lastFocused), toState: false)
                 }
                 self.lastFocused = responder
             } else if shouldSkip {
-                print("skipped")
                 shouldSkip = false
             }
             let identifier = ObjectIdentifier(responder)
@@ -147,12 +154,10 @@ class FocusStateManager: NSObject {
             data.forEach { binding in
                 binding.set()
             }
-            print("set")
         } else {
             data.forEach { binding in
                 binding.reset()
             }
-            print("should reset")
         }
     }
 }

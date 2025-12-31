@@ -258,6 +258,8 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
 
         if currentLayout?.shouldSetFocusData == true {
             backend.registerFocusObservers(parentEnvironment.focusObservers, on: widget)
+            backend.setFocusEffectDisabled(
+                on: widget, disabled: parentEnvironment.focusEffectDisabled)
         }
 
         backend.show(widget: widget)

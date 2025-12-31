@@ -11,14 +11,20 @@ public struct FocusData {
     public let set: () -> Void
     public let reset: () -> Void
 
+    public let matches: Bool
+
     public init(
-        type: any Hashable.Type, match: any Hashable, set: @escaping () -> Void,
-        reset: @escaping () -> Void
+        type: any Hashable.Type,
+        match: any Hashable,
+        set: @escaping () -> Void,
+        reset: @escaping () -> Void,
+        matches: Bool
     ) {
         self.type = type
         self.match = match
         self.set = set
         self.reset = reset
+        self.matches = matches
     }
 }
 

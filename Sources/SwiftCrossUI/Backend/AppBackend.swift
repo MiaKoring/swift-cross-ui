@@ -815,6 +815,11 @@ public protocol AppBackend: Sendable {
         _ widget: Widget,
         focusability: SwiftCrossUI.Focusability
     ) -> ObjectIdentifier?
+
+    func setFocusEffectDisabled(
+        on widget: Widget,
+        disabled: Bool
+    )
 }
 
 extension AppBackend {
@@ -1350,6 +1355,13 @@ extension AppBackend {
         _ widget: Widget,
         focusability: SwiftCrossUI.Focusability
     ) -> ObjectIdentifier? {
+        todo()
+    }
+
+    public func setFocusEffectDisabled(
+        on widget: Widget,
+        disabled: Bool
+    ) {
         todo()
     }
 }
