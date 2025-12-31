@@ -256,8 +256,9 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
                 .leave(getResult: { self.currentLayout })
         }
 
-        // TODO: apply only if base widget can be focused
-        backend.registerFocusObservers(parentEnvironment.focusObservers, on: widget)
+        if currentLayout?.shouldSetFocusData == true {
+            backend.registerFocusObservers(parentEnvironment.focusObservers, on: widget)
+        }
 
         backend.show(widget: widget)
 

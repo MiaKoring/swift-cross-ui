@@ -109,7 +109,10 @@ public struct Slider: ElementaryView, View {
         )
 
         // TODO: Allow backends to specify their own ideal slider widths.
-        return ViewLayoutResult.leafView(size: size)
+        return
+            ViewLayoutResult
+            .leafView(size: size)
+            .with(\.shouldSetFocusData, true)
     }
 
     func commit<Backend: AppBackend>(

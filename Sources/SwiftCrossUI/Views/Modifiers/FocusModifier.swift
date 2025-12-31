@@ -74,6 +74,7 @@ struct FocusModifier<Content: View>: TypeSafeView {
             proposedSize: proposedSize,
             environment: environment
         )
+        .with(\.shouldSetFocusData, true)
     }
 
     func commit<Backend>(

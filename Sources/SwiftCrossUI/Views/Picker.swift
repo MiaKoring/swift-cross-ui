@@ -54,7 +54,10 @@ public struct Picker<Value: Equatable>: ElementaryView, View {
         } else {
             size = ViewSize(naturalSize)
         }
-        return ViewLayoutResult.leafView(size: size)
+        return
+            ViewLayoutResult
+            .leafView(size: size)
+            .with(\.shouldSetFocusData, true)
     }
 
     func commit<Backend: AppBackend>(

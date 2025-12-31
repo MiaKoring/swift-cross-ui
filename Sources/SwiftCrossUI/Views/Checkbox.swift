@@ -18,9 +18,12 @@ struct Checkbox: ElementaryView, View {
         environment: EnvironmentValues,
         backend: Backend
     ) -> ViewLayoutResult {
-        return ViewLayoutResult.leafView(
-            size: ViewSize(backend.naturalSize(of: widget))
-        )
+        return
+            ViewLayoutResult
+            .leafView(
+                size: ViewSize(backend.naturalSize(of: widget))
+            )
+            .with(\.shouldSetFocusData, true)
     }
 
     func commit<Backend: AppBackend>(
