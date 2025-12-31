@@ -1322,4 +1322,34 @@ extension AppBackend {
     ) {
         todo()
     }
+
+    public var updateGroup: UpdateGroup {
+        todo()
+    }
+
+    public func resignFirstResponder(as widget: Widget) {
+        todo()
+    }
+
+    public func requestFirstResponder(as widget: Widget) -> Bool {
+        todo()
+    }
+
+    public func registerFocusObservers(
+        _ data: [FocusData],
+        on widget: Widget
+    ) {
+        todo()
+    }
+
+    public func createFocusContainer() -> Widget {
+        todo()
+    }
+
+    public func updateFocusContainer(
+        _ widget: Widget,
+        focusability: SwiftCrossUI.Focusability
+    ) -> ObjectIdentifier? {
+        todo()
+    }
 }

@@ -9,8 +9,6 @@ public struct ViewLayoutResult {
     /// The preference values produced by the view and its children.
     public var preferences: PreferenceValues
 
-    public var focusChainNeedsRecalculationInWindows = Set<ObjectIdentifier>()
-
     public init(
         size: ViewSize,
         participateInStackLayoutsWhenEmpty: Bool = false,

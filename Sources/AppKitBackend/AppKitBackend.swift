@@ -77,18 +77,6 @@ public final class AppKitBackend: AppBackend {
             context: nil
         )
 
-        updateGroup.registerUpdateFinishedCallback(for: window) { result in
-            guard
-                result()?
-                    .focusChainNeedsRecalculationInWindows
-                    .contains(ObjectIdentifier(window))
-                    == true
-            else {
-                return
-            }
-            //window.recalculateKeyViewLoop()
-        }
-
         return window
     }
 
