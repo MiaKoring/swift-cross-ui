@@ -1,7 +1,9 @@
 import AppKit
 import SwiftCrossUI
 
-public class NSCustomWindow: NSWindow {
+public class NSCustomWindow: NSWindow, FocusChainManager {
+    public typealias Widget = AppKitBackend.Widget
+
     var customDelegate = Delegate()
     var persistentUndoManager = UndoManager()
 
@@ -56,21 +58,7 @@ public class NSCustomWindow: NSWindow {
         }
     }
 
-    // MARK: - FocusChain -
-    override public var initialFirstResponder: NSView? {
-        get {
-            guard let responder = super.initialFirstResponder else {
-                return nil
-            }
-            // Doing this in set doesn't work for some reason.
-            // set gets called first, sets the value but its nil for the get
-            // directly after. Doing it here instead works.
-            return findNextAllowedFocusTarget(suggestion: responder)
-        }
-        set {
-            super.initialFirstResponder = newValue
-        }
-    }
+    // MARK: - FocusChain Storage -
 
     private var forwardFocusChainBypassCache = NSMapTable<NSResponder, NSView>(
         keyOptions: .weakMemory, valueOptions: .weakMemory
@@ -103,101 +91,72 @@ public class NSCustomWindow: NSWindow {
         )
     }
 
-    private func findNextAllowedFocusTarget(
-        suggestion: NSView,
-        forward: Bool = true
-    ) -> NSView? {
-        var currentOption: NSView? = suggestion
-        while let next = currentOption {
-            if !isDescendantOfDisabledParent(next),
-                next.canBecomeKeyView,
-                !next.isHidden
-            {
-                return next
+    // MARK: - AppKit FocusChain handling -
+
+    override public var initialFirstResponder: NSView? {
+        get {
+            guard let responder = super.initialFirstResponder else {
+                return nil
             }
-
-            if forward {
-                if let cached = forwardFocusChainBypassCache.object(forKey: next) {
-                    return cached
-                }
-
-                currentOption = next.nextValidKeyView
-            } else {
-                if let cached = reverseFocusChainBypassCache.object(forKey: next) {
-                    return cached
-                }
-
-                currentOption = next.previousValidKeyView
-            }
-
-            if currentOption == suggestion {
-                break
-            }
+            // Doing this in set doesn't work for some reason.
+            // set gets called first, sets the value but its nil for the get
+            // directly after. Doing it here instead works.
+            return findNextAllowedFocusTarget(suggestion: responder)
         }
-
-        return nil
-    }
-
-    @inline(__always)
-    private func isDescendantOfDisabledParent(_ view: NSView) -> Bool {
-        var current = view.superview
-
-        while let next = current {
-            if let next = next as? FocusabilityContainer,
-                next.focusability == .disabled
-            {
-                return true
-            }
-            current = next.superview
+        set {
+            super.initialFirstResponder = newValue
         }
-
-        return false
-    }
-
-    @inline(__always)
-    private func addLinkToFocusChainCache(_ result: NSView, following view: NSView) {
-        forwardFocusChainBypassCache.setObject(result, forKey: view)
-        reverseFocusChainBypassCache.setObject(view, forKey: result)
     }
 
     override public func selectKeyView(following view: NSView) {
-        if let cached = forwardFocusChainBypassCache.object(forKey: view),
-            cached.canBecomeKeyView
-        {
-            makeFirstResponder(cached)
-            return
-        }
-
-        guard
-            let next = view.nextValidKeyView,
-            let result = findNextAllowedFocusTarget(suggestion: next)
-        else { return }
-        makeFirstResponder(result)
-        addLinkToFocusChainCache(result, following: view)
+        selectTabStop(following: view)
     }
 
     override public func selectKeyView(preceding view: NSView) {
-        if let cached = reverseFocusChainBypassCache.object(forKey: view),
-            cached.canBecomeKeyView
-        {
-            makeFirstResponder(cached)
-            return
-        }
-
-        guard
-            let previous = view.previousValidKeyView,
-            let result = findNextAllowedFocusTarget(
-                suggestion: previous,
-                forward: false
-            )
-        else { return }
-        makeFirstResponder(result)
-        addLinkToFocusChainCache(view, following: result)
+        selectTabStop(preceding: view)
     }
 
     override public func recalculateKeyViewLoop() {
         invalidateCache()
         super.recalculateKeyViewLoop()
+    }
 
+    // MARK: - FocusChainManager compatibility -
+
+    public func cachedStop(following key: Widget) -> Widget? {
+        forwardFocusChainBypassCache.object(forKey: key)
+    }
+
+    public func cachedStop(preceding key: Widget) -> Widget? {
+        reverseFocusChainBypassCache.object(forKey: key)
+    }
+
+    public func closestValidStop(following view: Widget) -> Widget? {
+        view.nextValidKeyView
+    }
+
+    public func closestValidStop(preceding view: Widget) -> Widget? {
+        view.previousValidKeyView
+    }
+
+    public func setRelationship(_ widget: Widget, following previous: Widget) {
+        forwardFocusChainBypassCache.setObject(widget, forKey: previous)
+        reverseFocusChainBypassCache.setObject(previous, forKey: widget)
+    }
+
+    public func makeKey(_ widget: Widget) {
+        makeFirstResponder(widget)
+    }
+
+    public func getParent(of widget: Widget) -> Widget? {
+        widget.superview
     }
 }
+
+extension NSView: FocusChainParticipant {
+    public var canBeTabStop: Bool {
+        canBecomeKeyView
+    }
+}
+
+extension FocusabilityContainer: SwiftCrossUI.FocusabilityContainer {}
