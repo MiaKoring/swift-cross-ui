@@ -98,6 +98,12 @@ public struct EnvironmentValues {
     /// Whether the text should be selectable. Set by ``View/textSelectionEnabled(_:)``.
     public var isTextSelectionEnabled: Bool
 
+    /// The resizing behaviour of the current window.
+    var windowResizability: WindowResizability
+
+    /// The menu ordering to use.
+    public var menuOrder: MenuOrder
+
     /// Backing storage for extensible subscript
     private var extraValues: [ObjectIdentifier: Any]
 
@@ -131,7 +137,7 @@ public struct EnvironmentValues {
             backend.activate(window: window as! Backend.Window)
         }
         activate(with: backend)
-        print("Activated")
+        logger.info("window activated")
     }
 
     /// The backend's representation of the window that the current view is
@@ -208,6 +214,18 @@ public struct EnvironmentValues {
         )
     }
 
+    /// The current calendar that views should use when handling dates.
+    public var calendar: Calendar
+
+    /// The current time zone that views should use when handling dates.
+    public var timeZone: TimeZone
+
+    /// The display style used by ``DatePicker``.
+    public var datePickerStyle: DatePickerStyle
+
+    /// The display styles supported by ``DatePicker``. ``datePickerStyle`` must be one of these.
+    public let supportedDatePickerStyles: [DatePickerStyle]
+
     /// Creates the default environment.
     package init<Backend: AppBackend>(backend: Backend) {
         self.backend = backend
@@ -230,7 +248,19 @@ public struct EnvironmentValues {
         isEnabled = true
         scrollDismissesKeyboardMode = .automatic
         isTextSelectionEnabled = false
+        windowResizability = .automatic
+        menuOrder = .automatic
         allowLayoutCaching = false
+        calendar = .current
+        timeZone = .current
+        datePickerStyle = .automatic
+
+        let supportedDatePickerStyles = backend.supportedDatePickerStyles
+        if supportedDatePickerStyles.isEmpty {
+            self.supportedDatePickerStyles = [.automatic]
+        } else {
+            self.supportedDatePickerStyles = supportedDatePickerStyles
+        }
         focusObservers = []
         focusEffectDisabled = false
     }
@@ -245,7 +275,7 @@ public struct EnvironmentValues {
 }
 
 /// A key that can be used to extend the environment with new properties.
-public protocol EnvironmentKey {
+public protocol EnvironmentKey<Value> {
     /// The type of value the key can hold.
     associatedtype Value
     /// The default value for the key.

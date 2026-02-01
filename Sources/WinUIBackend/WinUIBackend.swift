@@ -9,7 +9,7 @@ import WinUIInterop
 import WindowsFoundation
 
 // Many force tries are required for the WinUI backend but we don't really want them
-// anywhere else so just disable them for this file.
+// anywhere else so just disable the lint rule at a file level.
 // swiftlint:disable force_try
 
 extension App {
@@ -29,6 +29,29 @@ class WinUIApplication: SwiftApplication {
 }
 
 public final class WinUIBackend: AppBackend {
+    // Logging
+    private struct LogLocation: Hashable, Equatable {
+        let file: String
+        let line: Int
+        let column: Int
+    }
+
+    private var logsPerformed: Set<LogLocation> = []
+
+    func debugLogOnce(
+        _ message: String,
+        file: String = #file,
+        line: Int = #line,
+        column: Int = #column
+    ) {
+        #if DEBUG
+            let location = LogLocation(file: file, line: line, column: column)
+            if logsPerformed.insert(location).inserted {
+                logger.notice("\(message)")
+            }
+        #endif
+    }
+
     public typealias Window = CustomWindow
     public typealias Widget = WinUI.FrameworkElement
     public typealias Menu = Void
@@ -44,6 +67,9 @@ public final class WinUIBackend: AppBackend {
     public let menuImplementationStyle = MenuImplementationStyle.dynamicPopover
     public let canRevealFiles = false
     public let deviceClass = DeviceClass.desktop
+    public let supportedDatePickerStyles: [DatePickerStyle] = [
+        .automatic, .graphical, .compact, .wheel,
+    ]
 
     public var scrollBarWidth: Int {
         12
@@ -90,7 +116,10 @@ public final class WinUIBackend: AppBackend {
             // won't get seen anyway. But I don't trust my Windows knowledge enough
             // to assert that it's impossible to view logs on failure, so let's
             // print a warning anyway.
-            print("Warning: Failed to attach to parent console: \(error.localizedDescription)")
+            logger.warning(
+                "failed to attach to parent console",
+                metadata: ["error": "\(error)"]
+            )
         }
 
         // Ensure that the app's windows adapt to DPI changes at runtime
@@ -117,7 +146,7 @@ public final class WinUIBackend: AppBackend {
             //   let pv: __ABI_Windows_Foundation.IPropertyValue = try! iinspectable.QueryInterface()
             //   let value = try! pv.GetDoubleImpl()
 
-            self.measurementTextBlock = self.createTextView() as! TextBlock
+            self.measurementTextBlock = (self.createTextView() as! TextBlock)
 
             callback()
         }
@@ -197,8 +226,12 @@ public final class WinUIBackend: AppBackend {
         try! window.appWindow.resizeClient(size)
     }
 
-    public func setMinimumSize(ofWindow window: Window, to minimumSize: SIMD2<Int>) {
-        missing("window minimum size")
+    public func setSizeLimits(
+        ofWindow window: Window,
+        minimum minimumSize: SIMD2<Int>,
+        maximum maximumSize: SIMD2<Int>?
+    ) {
+        debugLogOnce("\(#function) unimplemented")
     }
 
     public func setResizeHandler(
@@ -218,8 +251,15 @@ public final class WinUIBackend: AppBackend {
         window.title = title
     }
 
-    public func setResizability(ofWindow window: Window, to value: Bool) {
-        (window.appWindow.presenter as! OverlappedPresenter).isResizable = value
+    public func setBehaviors(
+        ofWindow window: Window,
+        closable: Bool,
+        minimizable: Bool,
+        resizable: Bool
+    ) {
+        // TODO: Set window closability (need to reach down to Win32 for this)
+        (window.appWindow.presenter as? OverlappedPresenter)?.isMinimizable = minimizable
+        (window.appWindow.presenter as? OverlappedPresenter)?.isResizable = resizable
     }
 
     public func setChild(ofWindow window: Window, to widget: Widget) {
@@ -250,10 +290,6 @@ public final class WinUIBackend: AppBackend {
 
     public func show(widget _: Widget) {}
 
-    private func missing(_ message: String) {
-        // print("missing: \(message)")
-    }
-
     private func renderItems(_ items: [ResolvedMenu.Item]) -> [MenuFlyoutItemBase] {
         items.map { item in
             switch item {
@@ -264,6 +300,17 @@ public final class WinUIBackend: AppBackend {
                         action?()
                     }
                     return widget
+                case .toggle(let label, let value, let onChange):
+                    let widget = ToggleMenuFlyoutItem()
+                    widget.text = label
+                    widget.isChecked = value
+                    widget.click.addHandler { [weak widget] _, _ in
+                        guard let widget else { return }
+                        onChange(widget.isChecked)
+                    }
+                    return widget
+                case .separator:
+                    return MenuFlyoutSeparator()
                 case .submenu(let submenu):
                     let widget = MenuFlyoutSubItem()
                     widget.text = submenu.label
@@ -330,8 +377,8 @@ public final class WinUIBackend: AppBackend {
     }
 
     public func setIncomingURLHandler(to action: @escaping (URL) -> Void) {
-        print("Implement set incoming url handler")
-        // TODO
+        // TODO: Implement WinUIBackend setIncomingURLHandler
+        logger.warning("\(#function) not implemented")
     }
 
     public func createContainer() -> Widget {
@@ -343,33 +390,39 @@ public final class WinUIBackend: AppBackend {
         container.children.clear()
     }
 
-    public func addChild(_ child: Widget, to container: Widget) {
+    public func insert(_ child: Widget, into container: Widget, at index: Int) {
         let container = container as! Canvas
-        container.children.append(child)
+        container.children.insertAt(UInt32(index), child)
+    }
+
+    public func swap(childAt firstIndex: Int, withChildAt secondIndex: Int, in container: Widget) {
+        // TODO: Find out if there's an efficient way to do this without WinUI
+        //   getting annoyed at us for having the same element in the list twice.
+        let container = container as! Canvas
+        let largerIndex = UInt32(max(firstIndex, secondIndex))
+        let smallerIndex = UInt32(min(firstIndex, secondIndex))
+        let element1 = container.children[Int(smallerIndex)]
+        let element2 = container.children[Int(largerIndex)]
+        container.children.removeAt(largerIndex)
+        container.children.removeAt(smallerIndex)
+        container.children.insertAt(smallerIndex, element2)
+        container.children.insertAt(largerIndex, element1)
+    }
+
+    public func remove(childAt index: Int, from container: Widget) {
+        let container = container as! Canvas
+        container.children.removeAt(UInt32(index))
     }
 
     public func setPosition(ofChildAt index: Int, in container: Widget, to position: SIMD2<Int>) {
         let container = container as! Canvas
         guard let child = container.children.getAt(UInt32(index)) else {
-            print("warning: child to set position of not found")
+            logger.warning("child to set position of not found")
             return
         }
 
         Canvas.setTop(child, Double(position.y))
         Canvas.setLeft(child, Double(position.x))
-    }
-
-    public func removeChild(_ child: Widget, from container: Widget) {
-        let container = container as! Canvas
-        let count = container.children.size
-        for index in 0..<count {
-            if container.children.getAt(index) == child {
-                container.children.removeAt(index)
-                return
-            }
-        }
-
-        print("warning: child to remove not found")
     }
 
     public func createColorableRectangle() -> Widget {
@@ -378,7 +431,7 @@ public final class WinUIBackend: AppBackend {
 
     public func setColor(
         ofColorableRectangle widget: Widget,
-        to color: SwiftCrossUI.Color
+        to color: SwiftCrossUI.Color.Resolved
     ) {
         let canvas = widget as! Canvas
         let brush = WinUI.SolidColorBrush()
@@ -409,6 +462,13 @@ public final class WinUIBackend: AppBackend {
     }
 
     public func naturalSize(of widget: Widget) -> SIMD2<Int> {
+        Self.naturalSize(of: widget)
+    }
+
+    /// A static version of `naturalSize(of:)` for convenience. Used by
+    /// WinUIElementRepresentable.
+    @MainActor
+    public static func naturalSize(of widget: Widget) -> SIMD2<Int> {
         let allocation = WindowsFoundation.Size(
             width: .infinity,
             height: .infinity
@@ -468,6 +528,16 @@ public final class WinUIBackend: AppBackend {
             // the defaults set in the following code from the WinUI repository:
             // https://github.com/marcelwgn/microsoft-ui-xaml/blob/ff21f9b212cea2191b959649e45e52486c8465aa/src/controls/dev/ProgressRing/ProgressRing.xaml#L12
             return SIMD2(32, 32)
+        } else if let datePicker = widget as? CustomDatePicker {
+            // CustomDatePicker is a StackPanel whose individual subviews need to be manually sized
+            // and then added together. Its naturalSize(in:) method dispatches back here once for
+            // each of its children.
+            return datePicker.naturalSize()
+        } else if widget is WinUI.DatePicker {
+            // Width is 296:
+            // https://github.com/marcelwgn/microsoft-ui-xaml/blob/ff21f9b212cea2191b959649e45e52486c8465aa/src/controls/dev/CommonStyles/DatePicker_themeresources.xaml#L261
+            // Height is experimentally 29 which I don't see anywhere in that file.
+            return SIMD2(296, 29)
         }
 
         let oldWidth = widget.width
@@ -483,14 +553,27 @@ public final class WinUIBackend: AppBackend {
         try! widget.measure(allocation)
 
         let computedSize = widget.desiredSize
+        let adjustment = sizeCorrection(for: widget)
 
-        // Some elements don't get their default padding/border applied until
-        // they've been rendered. For such elements we have to compute out own
-        // adjustment factors based off values taken from WinUI's default theme.
-        // We can detect such elements because their padding property will be set
-        // to zero until first render (and atm WinUIBackend doesn't set this padding
-        // property itself so this is a safe detection method).
+        let out = SIMD2(
+            Int(computedSize.width) + adjustment.x,
+            Int(computedSize.height) + adjustment.y
+        )
+
+        return out
+    }
+
+    /// Some elements don't get their default padding/border applied until
+    /// they've been rendered. For such elements we have to compute our own
+    /// adjustment factors based off values taken from WinUI's default theme.
+    /// We can detect such elements because their padding property will be set
+    /// to zero until first render (and atm WinUIBackend doesn't set this padding
+    /// property itself so this is a safe detection method).
+    @MainActor
+    public static func sizeCorrection(for widget: Widget) -> SIMD2<Int> {
         let adjustment: SIMD2<Int>
+        let noPadding = Thickness(left: 0, top: 0, right: 0, bottom: 0)
+        let computedSize = widget.desiredSize
         if let button = widget as? WinUI.Button, button.padding == noPadding {
             // WinUI buttons have padding, but the `padding` property returns
             // zero until the button has been rendered at least once. And even
@@ -531,16 +614,21 @@ public final class WinUIBackend: AppBackend {
                 64,
                 32
             )
+        } else if widget is CalendarView {
+            // I don't actually know why this is necessary, but without it the abbreviations for the
+            // weekdays wrap, making it taller than it says it is. Value was derived by trial and
+            // error.
+            adjustment = SIMD2(20, 0)
+        } else if computedSize.width == 0 && computedSize.width == 0 && widget is CalendarDatePicker
+        {
+            // I can't find any source on what the size of CalendarDatePicker is, but it reports 0x0
+            // in at least some cases before initial render. In these cases, use a size derived
+            // experimentally.
+            adjustment = SIMD2(116, 32)
         } else {
             adjustment = .zero
         }
-
-        let out = SIMD2(
-            Int(computedSize.width) + adjustment.x,
-            Int(computedSize.height) + adjustment.y
-        )
-
-        return out
+        return adjustment
     }
 
     public func setSize(of widget: Widget, to size: SIMD2<Int>) {
@@ -610,16 +698,14 @@ public final class WinUIBackend: AppBackend {
         let block = textView as! TextBlock
         block.text = content
         block.isTextSelectionEnabled = environment.isTextSelectionEnabled
-        missing("font design handling (monospace vs normal)")
+        // TODO: Font design handling (monospace vs normal)
         environment.apply(to: block)
     }
 
     public func createButton() -> Widget {
         let button = Button()
         button.click.addHandler { [weak internalState] _, _ in
-            guard let internalState = internalState else {
-                return
-            }
+            guard let internalState else { return }
             internalState.buttonClickActions[ObjectIdentifier(button)]?()
         }
         return button
@@ -778,9 +864,7 @@ public final class WinUIBackend: AppBackend {
     public func createSlider() -> Widget {
         let slider = Slider()
         slider.valueChanged.addHandler { [weak internalState] _, event in
-            guard let internalState = internalState else {
-                return
-            }
+            guard let internalState else { return }
             internalState.sliderChangeActions[ObjectIdentifier(slider)]?(
                 Double(event?.newValue ?? 0))
         }
@@ -840,7 +924,8 @@ public final class WinUIBackend: AppBackend {
 
         picker.onChangeSelection = onChange
         environment.apply(to: picker)
-        picker.actualForegroundColor = environment.suggestedForegroundColor.uwpColor
+        picker.actualForegroundColor =
+            environment.suggestedForegroundColor.resolve(in: environment).uwpColor
 
         // Only update options past this point, otherwise the early return
         // will cause issues.
@@ -878,8 +963,8 @@ public final class WinUIBackend: AppBackend {
             }
         }
 
-        missing("proper picker updating logic")
-        missing("picker font handling")
+        // TODO: Proper picker updating logic
+        // TODO: Picker font handling
 
         picker.options = options
     }
@@ -892,15 +977,11 @@ public final class WinUIBackend: AppBackend {
     public func createTextField() -> Widget {
         let textField = TextBox()
         textField.textChanged.addHandler { [weak internalState] _, _ in
-            guard let internalState = internalState else {
-                return
-            }
+            guard let internalState else { return }
             internalState.textFieldChangeActions[ObjectIdentifier(textField)]?(textField.text)
         }
         textField.keyUp.addHandler { [weak internalState] _, event in
-            guard let internalState = internalState else {
-                return
-            }
+            guard let internalState else { return }
 
             if event?.key == .enter {
                 internalState.textFieldSubmitActions[ObjectIdentifier(textField)]?()
@@ -936,9 +1017,7 @@ public final class WinUIBackend: AppBackend {
     public func createTextEditor() -> Widget {
         let textEditor = TextBox()
         textEditor.textChanged.addHandler { [weak internalState] _, _ in
-            guard let internalState = internalState else {
-                return
-            }
+            guard let internalState else { return }
             // Reuse this storage because it's the same widget type as a text field
             internalState.textFieldChangeActions[ObjectIdentifier(textEditor)]?(textEditor.text)
         }
@@ -1099,9 +1178,7 @@ public final class WinUIBackend: AppBackend {
     public func createToggle() -> Widget {
         let toggle = ToggleButton()
         toggle.click.addHandler { [weak internalState] _, _ in
-            guard let internalState = internalState else {
-                return
-            }
+            guard let internalState else { return }
             internalState.toggleClickActions[ObjectIdentifier(toggle)]?(toggle.isChecked ?? false)
         }
         return toggle
@@ -1151,9 +1228,7 @@ public final class WinUIBackend: AppBackend {
         toggleSwitch.onContent = ""
         toggleSwitch.padding = Thickness(left: 0, top: 0, right: 0, bottom: 0)
         toggleSwitch.toggled.addHandler { [weak internalState] _, _ in
-            guard let internalState = internalState else {
-                return
-            }
+            guard let internalState else { return }
             internalState.switchClickActions[ObjectIdentifier(toggleSwitch)]?(toggleSwitch.isOn)
         }
         return toggleSwitch
@@ -1181,7 +1256,7 @@ public final class WinUIBackend: AppBackend {
 
         func handleToggle() {
             if isChecked == nil {
-                print("warning: Checkbox in limbo")
+                logger.warning("checkbox in limbo")
             }
             onToggle?(isChecked ?? false)
         }
@@ -1262,7 +1337,7 @@ public final class WinUIBackend: AppBackend {
         // WinUI only allows one dialog at a time so we limit ourselves using
         // a semaphore.
         guard let window = window ?? windows.first else {
-            print("warning: WinUI can't show alert without window")
+            logger.warning("WinUI can't show alert without window")
             return
         }
 
@@ -1375,7 +1450,7 @@ public final class WinUIBackend: AppBackend {
             fatalError("Unsupported gesture type \(gesture)")
         }
         let tapGestureTarget = TapGestureTarget()
-        addChild(child, to: tapGestureTarget)
+        insert(child, into: tapGestureTarget, at: 0)
         tapGestureTarget.child = child
 
         // Set a background so that the click target's entire area gets hit
@@ -1409,7 +1484,7 @@ public final class WinUIBackend: AppBackend {
 
     public func createHoverTarget(wrapping child: Widget) -> Widget {
         let hoverTarget = HoverGestureTarget()
-        addChild(child, to: hoverTarget)
+        insert(child, into: hoverTarget, at: 0)
         hoverTarget.child = child
 
         // Ensure the hover target covers the full area of the child.
@@ -1458,7 +1533,7 @@ public final class WinUIBackend: AppBackend {
         environment: EnvironmentValues
     ) {
         let progressBar = widget as! ProgressBar
-        if let progressFraction = progressFraction {
+        if let progressFraction {
             progressBar.isIndeterminate = false
             progressBar.value = progressBar.maximum * progressFraction
         } else {
@@ -1699,8 +1774,8 @@ public final class WinUIBackend: AppBackend {
     public func renderPath(
         _ path: Path,
         container: Widget,
-        strokeColor: SwiftCrossUI.Color,
-        fillColor: SwiftCrossUI.Color,
+        strokeColor: SwiftCrossUI.Color.Resolved,
+        fillColor: SwiftCrossUI.Color.Resolved,
         overrideStrokeStyle: StrokeStyle?
     ) {
         let winUiPath = container as! WinUI.Path
@@ -1733,6 +1808,57 @@ public final class WinUIBackend: AppBackend {
         }
 
         winUiPath.data = path.group
+    }
+
+    public func createDatePicker() -> Widget {
+        return CustomDatePicker()
+    }
+
+    public func updateDatePicker(
+        _ datePicker: Widget,
+        environment: EnvironmentValues,
+        date: Date,
+        range: ClosedRange<Date>,
+        components: DatePickerComponents,
+        onChange: @escaping (Date) -> Void
+    ) {
+        let customDatePicker = datePicker as! CustomDatePicker
+
+        if components.contains(.hourMinuteAndSecond) {
+            print(
+                "DatePickerComponents.hourMinuteAndSecond is not supported in WinUIBackend. Falling back to .hourAndMinute."
+            )
+        }
+
+        customDatePicker.toggleTimeView(shown: components.contains(.hourAndMinute))
+
+        if environment.timeZone != .current {
+            print("environment.timeZone is has no effect in WinUIBackend.")
+        }
+
+        let dateViewType: CustomDatePicker.DateViewType.Discriminator? =
+            if components.contains(.date) {
+                switch environment.datePickerStyle {
+                    case .automatic, .wheel:
+                        .datePicker
+                    case .compact:
+                        .calendarDatePicker
+                    case .graphical:
+                        .calendarView
+                }
+            } else {
+                nil
+            }
+
+        customDatePicker.onChange = onChange
+        customDatePicker.changeDateView(to: dateViewType)
+        customDatePicker.updateIfNeeded(date: date, calendar: environment.calendar)
+        customDatePicker.setDateRange(to: range)
+        customDatePicker.setEnabled(to: environment.isEnabled)
+
+        // TODO(parity): foreground color ignored
+        // Setting foreground like for other views works for TimePicker and DatePicker but not for
+        // CalendarView or CalendarDatePicker.
     }
 
     // public func createTable(rows: Int, columns: Int) -> Widget {
@@ -1781,30 +1907,11 @@ public final class WinUIBackend: AppBackend {
     // }
 }
 
-extension SwiftCrossUI.Color {
-    var uwpColor: UWP.Color {
-        UWP.Color(
-            a: UInt8((alpha * Float(UInt8.max)).rounded()),
-            r: UInt8((red * Float(UInt8.max)).rounded()),
-            g: UInt8((green * Float(UInt8.max)).rounded()),
-            b: UInt8((blue * Float(UInt8.max)).rounded())
-        )
-    }
-
-    init(uwpColor: UWP.Color) {
-        self.init(
-            Float(uwpColor.r) / Float(UInt8.max),
-            Float(uwpColor.g) / Float(UInt8.max),
-            Float(uwpColor.b) / Float(UInt8.max),
-            Float(uwpColor.a) / Float(UInt8.max)
-        )
-    }
-}
-
 extension EnvironmentValues {
+    @MainActor
     var winUIForegroundBrush: WinUI.Brush {
         let brush = SolidColorBrush()
-        brush.color = suggestedForegroundColor.uwpColor
+        brush.color = suggestedForegroundColor.resolve(in: self).uwpColor
         return brush
     }
 
@@ -1931,7 +2038,7 @@ public class CustomWindow: WinUI.Window {
         if result == S_OK {
             windowScaleFactor = Double(x) / Double(USER_DEFAULT_SCREEN_DPI)
         } else {
-            print("Warning: Failed to get window scale factor, defaulting to 1.0")
+            logger.warning("failed to get window scale factor, defaulting to 1.0")
             windowScaleFactor = 1
         }
 
@@ -1970,4 +2077,283 @@ public class CustomWindow: WinUI.Window {
 public final class GeometryGroupHolder {
     var group = GeometryGroup()
     var strokeStyle: StrokeStyle?
+}
+
+@MainActor
+final class CustomDatePicker: StackPanel {
+    override init() {
+        super.init()
+        self.spacing = 10
+    }
+
+    deinit {
+        timeChangedEvent?.dispose()
+        dateChangedEvent?.dispose()
+    }
+
+    enum DateViewType {
+        case calendarView(CalendarView)
+        case calendarDatePicker(CalendarDatePicker)
+        case datePicker(WinUI.DatePicker)
+
+        var asControl: Control {
+            switch self {
+                case .calendarView(let calendarView): calendarView
+                case .calendarDatePicker(let calendarDatePicker): calendarDatePicker
+                case .datePicker(let datePicker): datePicker
+            }
+        }
+
+        enum Discriminator {
+            case calendarView, calendarDatePicker, datePicker
+        }
+
+        var discriminator: Discriminator {
+            switch self {
+                case .calendarView(_): .calendarView
+                case .calendarDatePicker(_): .calendarDatePicker
+                case .datePicker(_): .datePicker
+            }
+        }
+    }
+
+    private var dateView: DateViewType?
+    private var timeView: TimePicker?
+    private var date = Date()
+    private var calendar = Calendar.current
+    private var needsUpdate = false
+    var onChange: ((Date) -> Void)?
+    private var timeChangedEvent: EventCleanup?
+    private var dateChangedEvent: EventCleanup?
+
+    func toggleTimeView(shown: Bool) {
+        guard shown != (self.timeView != nil) else { return }
+
+        if shown {
+            let timeView = TimePicker()
+            children.append(timeView)
+            self.timeView = timeView
+            timeChangedEvent = timeView.timeChanged.addHandler { [unowned self] _, change in
+                guard let change else { return }
+                self.date =
+                    calendar.startOfDay(for: date)
+                    + Double(change.newTime.duration) / ticksPerSecond
+                self.onChange?(self.date)
+            }
+            needsUpdate = true
+        } else {
+            timeChangedEvent?.dispose()
+            timeChangedEvent = nil
+            children.removeAtEnd()
+            self.timeView = nil
+        }
+    }
+
+    func setEnabled(to isEnabled: Bool) {
+        dateView?.asControl.isEnabled = isEnabled
+        timeView?.isEnabled = isEnabled
+    }
+
+    func changeDateView(to newDiscriminator: DateViewType.Discriminator?) {
+        guard newDiscriminator != dateView?.discriminator else { return }
+
+        dateChangedEvent?.dispose()
+        if dateView != nil {
+            children.removeAt(0)
+        }
+
+        switch newDiscriminator {
+            case .calendarView:
+                let calendarView = CalendarView()
+                dateView = .calendarView(calendarView)
+                children.insertAt(0, calendarView)
+                orientation = .vertical
+                dateChangedEvent = calendarView.selectedDatesChanged.addHandler {
+                    [unowned self] _, _ in
+
+                    guard calendarView.selectedDates.size > 0 else {
+                        let (dateTime, _) = foundationDateToComponents(self.date)
+                        calendarView.selectedDates.append(dateTime)
+                        return
+                    }
+
+                    self.date = componentsToFoundationDate(
+                        dateTime: calendarView.selectedDates.getAt(0),
+                        timeSpan: timeView?.selectedTime
+                    )
+
+                    if calendarView.selectedDates.size > 1 {
+                        self.needsUpdate = true
+                    }
+
+                    self.onChange?(self.date)
+                }
+                needsUpdate = true
+            case .calendarDatePicker:
+                let calendarDatePicker = CalendarDatePicker()
+                dateView = .calendarDatePicker(calendarDatePicker)
+                children.insertAt(0, calendarDatePicker)
+                orientation = .horizontal
+                dateChangedEvent = calendarDatePicker.dateChanged.addHandler {
+                    [unowned self] _, change in
+
+                    guard let newDate = change?.newDate else { return }
+                    self.date = componentsToFoundationDate(
+                        dateTime: newDate, timeSpan: timeView?.selectedTime)
+                    self.onChange?(self.date)
+                }
+                needsUpdate = true
+            case .datePicker:
+                let datePicker = WinUI.DatePicker()
+                dateView = .datePicker(datePicker)
+                children.insertAt(0, datePicker)
+                orientation = .horizontal
+                dateChangedEvent = datePicker.selectedDateChanged.addHandler {
+                    [unowned self] _, _ in
+
+                    guard let selectedDate = datePicker.selectedDate else { return }
+                    self.date = componentsToFoundationDate(
+                        dateTime: selectedDate, timeSpan: timeView?.selectedTime)
+                    self.onChange?(self.date)
+                }
+                needsUpdate = true
+            case nil:
+                break
+        }
+    }
+
+    func setDateRange(to range: ClosedRange<Date>) {
+        guard let dateView else { return }
+
+        let (startDate, _) = foundationDateToComponents(range.lowerBound)
+        let (endDate, _) = foundationDateToComponents(range.upperBound)
+
+        switch dateView {
+            case .calendarView(let calendarView):
+                calendarView.minDate = startDate
+                calendarView.maxDate = endDate
+            case .calendarDatePicker(let calendarDatePicker):
+                calendarDatePicker.minDate = startDate
+                calendarDatePicker.maxDate = endDate
+            case .datePicker(let datePicker):
+                datePicker.minYear = startDate
+                datePicker.maxYear = endDate
+        }
+    }
+
+    func updateIfNeeded(date: Date, calendar: Calendar) {
+        if !needsUpdate && date == self.date && calendar == self.calendar { return }
+        defer { needsUpdate = false }
+
+        self.date = date
+        self.calendar = calendar
+
+        let (dateTime, timeSpan) = foundationDateToComponents(date)
+
+        switch dateView {
+            case .calendarView(let calendarView):
+                calendarView.calendarIdentifier = identifier(for: calendar)
+                switch calendarView.selectedDates.size {
+                    case 0:
+                        calendarView.selectedDates.append(dateTime)
+                    case 1:
+                        calendarView.selectedDates.setAt(0, dateTime)
+                    default:
+                        calendarView.selectedDates.clear()
+                        calendarView.selectedDates.setAt(0, dateTime)
+                }
+            case .calendarDatePicker(let calendarDatePicker):
+                calendarDatePicker.calendarIdentifier = identifier(for: calendar)
+                calendarDatePicker.date = dateTime
+            case .datePicker(let datePicker):
+                datePicker.selectedDate = dateTime
+            case nil:
+                break
+        }
+
+        if let timeView {
+            timeView.selectedTime = timeSpan
+        }
+    }
+
+    private func identifier(for calendar: Calendar) -> String {
+        switch calendar.identifier {
+            case .chinese: return "ChineseLunarCalendar"
+            case .gregorian, .iso8601: return "GregorianCalendar"
+            case .hebrew: return "HebrewCalendar"
+            case .islamicTabular: return "HijriCalendar"
+            case .islamicUmmAlQura: return "UmAlQuraCalendar"
+            case .japanese: return "JapaneseCalendar"
+            case .persian: return "PersianCalendar"
+            case .republicOfChina: return "TaiwanCalendar"
+            #if compiler(>=6.2)
+                case .vietnamese: return "VietnameseLunarCalendar"
+            #endif
+            case let id:
+                print("Unsupported calendar identifier '\(id)'. Falling back to Gregorian.")
+                return "GregorianCalendar"
+        }
+    }
+
+    // Magic numbers taken from https://stackoverflow.com/a/5471380/6253337
+    private let ticksPerSecond: Double = 10_000_000
+    private let unixEpochInUniversalTime: Int64 = 116_444_736_000_000_000
+
+    private func foundationDateToComponents(_ date: Date) -> (DateTime, TimeSpan) {
+        let timeInterval = date.timeIntervalSince(calendar.startOfDay(for: date))
+
+        return (
+            DateTime(
+                universalTime: Int64(
+                    date.timeIntervalSince1970 * ticksPerSecond + Double(unixEpochInUniversalTime)
+                )
+            ),
+            TimeSpan(duration: Int64(timeInterval * ticksPerSecond))
+        )
+    }
+
+    private func componentsToFoundationDate(dateTime: DateTime, timeSpan: TimeSpan?) -> Date {
+        let baseDate = Date(
+            timeIntervalSince1970: Double(dateTime.universalTime - unixEpochInUniversalTime)
+                / ticksPerSecond
+        )
+
+        if let timeSpan {
+            let time = Double(timeSpan.duration) / ticksPerSecond
+            return calendar.startOfDay(for: baseDate) + time
+        } else {
+            return baseDate
+        }
+    }
+
+    func naturalSize() -> SIMD2<Int> {
+        let timeViewSize =
+            if timeView != nil {
+                // Width is 242, as shown in the WinUI repository:
+                // https://github.com/marcelwgn/microsoft-ui-xaml/blob/ff21f9b212cea2191b959649e45e52486c8465aa/src/controls/dev/CommonStyles/TimePicker_themeresources.xaml#L116
+                // Height is experimentally 29 which I don't see anywhere in that file.
+                SIMD2(242, 29)
+            } else {
+                SIMD2<Int>.zero
+            }
+
+        let dateViewSize =
+            if let dateControl = dateView?.asControl {
+                WinUIBackend.naturalSize(of: dateControl)
+            } else {
+                SIMD2<Int>.zero
+            }
+
+        if orientation == .horizontal {
+            return SIMD2(
+                x: timeViewSize.x + dateViewSize.x + Int(self.spacing),
+                y: max(timeViewSize.y, dateViewSize.y)
+            )
+        } else {
+            return SIMD2(
+                x: max(timeViewSize.x, dateViewSize.x),
+                y: timeViewSize.y + dateViewSize.y + Int(self.spacing)
+            )
+        }
+    }
 }

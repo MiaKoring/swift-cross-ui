@@ -9,9 +9,9 @@ import SwiftCrossUI
 @main
 @HotReloadable
 struct WebViewApp: App {
-    @State var urlInput = "https://stackotter.dev"
+    @State var urlInput = "https://swiftcrossui.dev"
 
-    @State var url = URL(string: "https://stackotter.dev")!
+    @State var url = URL(string: "https://swiftcrossui.dev")!
 
     func go(_ url: String) {
         guard let url = URL(string: urlInput) else {
@@ -37,10 +37,14 @@ struct WebViewApp: App {
                     }
                     .padding()
 
-                    WebView($url)
-                        .onChange(of: url) {
-                            urlInput = url.absoluteString
-                        }
+                    #if !os(tvOS)
+                        WebView($url)
+                            .onChange(of: url) {
+                                urlInput = url.absoluteString
+                            }
+                    #else
+                        Text("WebView isn't supported on tvOS")
+                    #endif
                 }
             }
         }

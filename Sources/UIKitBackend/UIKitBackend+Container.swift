@@ -2,7 +2,7 @@ import SwiftCrossUI
 import UIKit
 
 final class ScrollWidget: ContainerWidget {
-    private var scrollView = UIScrollView()
+    var scrollView = UIScrollView()
     private var childWidthConstraint: NSLayoutConstraint?
     private var childHeightConstraint: NSLayoutConstraint?
 
@@ -83,8 +83,13 @@ extension UIKitBackend {
         container.childWidgets.forEach { $0.removeFromParentWidget() }
     }
 
-    public func addChild(_ child: Widget, to container: Widget) {
-        container.add(childWidget: child)
+    public func insert(_ child: Widget, into container: Widget, at index: Int) {
+        (container as! BaseViewWidget).insert(child, at: index)
+    }
+
+    public func swap(childAt firstIndex: Int, withChildAt secondIndex: Int, in container: Widget) {
+        container.view.exchangeSubview(at: firstIndex, withSubviewAt: secondIndex)
+        container.childWidgets.swapAt(firstIndex, secondIndex)
     }
 
     public func setPosition(
@@ -102,16 +107,15 @@ extension UIKitBackend {
         child.y = position.y
     }
 
-    public func removeChild(_ child: Widget, from container: Widget) {
-        assert(child.view.isDescendant(of: container.view))
-        child.removeFromParentWidget()
+    public func remove(childAt index: Int, from container: Widget) {
+        container.childWidgets[index].removeFromParentWidget()
     }
 
     public func createColorableRectangle() -> Widget {
         BaseViewWidget()
     }
 
-    public func setColor(ofColorableRectangle widget: Widget, to color: Color) {
+    public func setColor(ofColorableRectangle widget: Widget, to color: Color.Resolved) {
         widget.view.backgroundColor = color.uiColor
     }
 

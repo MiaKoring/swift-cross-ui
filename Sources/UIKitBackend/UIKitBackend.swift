@@ -1,3 +1,4 @@
+import Logging
 import SwiftCrossUI
 import UIKit
 
@@ -9,6 +10,8 @@ public final class UIKitBackend: AppBackend {
     /// The first window to get created.
     static var mainWindow: UIWindow?
     static var hasReturnedAWindow = false
+
+    private var timeZoneObserver: NSObjectProtocol?
 
     public let scrollBarWidth = 0
     public let defaultPaddingAmount = 15
@@ -42,6 +45,20 @@ public final class UIKitBackend: AppBackend {
         }
     }
 
+    public nonisolated var supportedDatePickerStyles: [DatePickerStyle] {
+        #if os(tvOS)
+            []
+        #else
+            if #available(iOS 14, macCatalyst 14, *) {
+                [.automatic, .graphical, .compact, .wheel]
+            } else if #available(iOS 13.4, macCatalyst 13.4, *) {
+                [.automatic, .compact, .wheel]
+            } else {
+                [.automatic]
+            }
+        #endif
+    }
+
     var onTraitCollectionChange: (() -> Void)?
 
     private let appDelegateClass: ApplicationDelegate.Type
@@ -69,13 +86,13 @@ public final class UIKitBackend: AppBackend {
         #if DEBUG
             let location = LogLocation(file: file, line: line, column: column)
             if logsPerformed.insert(location).inserted {
-                print(message)
+                logger.notice("\(message)")
             }
         #endif
     }
 
-    public init() {
-        self.appDelegateClass = ApplicationDelegate.self
+    public convenience init() {
+        self.init(appDelegateClass: ApplicationDelegate.self)
     }
 
     public init(appDelegateClass: ApplicationDelegate.Type) {
@@ -115,6 +132,7 @@ public final class UIKitBackend: AppBackend {
         var environment = defaultEnvironment
 
         environment.toggleStyle = .switch
+        environment.timeZone = .current
 
         switch UITraitCollection.current.userInterfaceStyle {
             case .light:
@@ -130,6 +148,17 @@ public final class UIKitBackend: AppBackend {
 
     public func setRootEnvironmentChangeHandler(to action: @escaping () -> Void) {
         onTraitCollectionChange = action
+        if timeZoneObserver == nil {
+            timeZoneObserver = NotificationCenter.default.addObserver(
+                forName: .NSSystemTimeZoneDidChange,
+                object: nil,
+                queue: .main
+            ) { [unowned self] _ in
+                MainActor.assumeIsolated {
+                    self.onTraitCollectionChange?()
+                }
+            }
+        }
     }
 
     public func computeWindowEnvironment(

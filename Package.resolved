@@ -1,5 +1,5 @@
 {
-  "originHash" : "77caf3e84e88f2ff183c89c647d8007a7ba7b50bfb1fb7216b22f7dfda4a2dc0",
+  "originHash" : "27514c89a6281b652f580a01028064b9beb4e680acfe909a65fdf50dcd0c741f",
   "pins" : [
     {
       "identity" : "jpeg",
@@ -82,12 +82,21 @@
       }
     },
     {
+      "identity" : "swift-log",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-log.git",
+      "state" : {
+        "revision" : "ce592ae52f982c847a4efc0dd881cc9eb32d29f2",
+        "version" : "1.6.4"
+      }
+    },
+    {
       "identity" : "swift-macro-toolkit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stackotter/swift-macro-toolkit",
       "state" : {
-        "revision" : "569627091e1fbb8745d691aeeb008e7247dedb7c",
-        "version" : "0.6.1"
+        "revision" : "d319bcc2586f7dbc6a09c05792105078263f1ed3",
+        "version" : "0.7.2"
       }
     },
     {
@@ -95,8 +104,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+        "revision" : "f99ae8aa18f0cf0d53481901f88a0991dc3bd4a2",
+        "version" : "601.0.1"
       }
     },
     {
@@ -104,7 +113,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stackotter/swift-uwp",
       "state" : {
-        "revision" : "e3ff9c195775e16b404b82cf6886c5e81d73b6c1"
+        "revision" : "8128f6615b7c5b46ada289ab6d49d871ca1e13a5"
       }
     },
     {
@@ -112,7 +121,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stackotter/swift-webview2core",
       "state" : {
-        "revision" : "c9911ca23455b9fcdb2429e98baa6f4d003b381c"
+        "revision" : "4396f5d94d6dfd1f95ab25e79de98141b7f4f183"
       }
     },
     {
@@ -120,7 +129,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stackotter/swift-windowsappsdk",
       "state" : {
-        "revision" : "ba6f0ec377b70d8be835d253102ff665a0e47d99"
+        "revision" : "f1c50892f10c0f7f635d3c7a3d728fd634ad001a"
       }
     },
     {
@@ -136,7 +145,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stackotter/swift-winui",
       "state" : {
-        "revision" : "1695ee3ea2b7a249f6504c7f1759e7ec7a38eb86"
+        "revision" : "42c47f4e4129c8b5a5d9912f05e1168c924ac180"
       }
     },
     {

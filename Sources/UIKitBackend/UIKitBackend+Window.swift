@@ -1,3 +1,4 @@
+import SwiftCrossUI
 import UIKit
 
 final class RootViewController: UIViewController {
@@ -23,7 +24,11 @@ final class RootViewController: UIViewController {
 
         override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
             super.traitCollectionDidChange(previousTraitCollection)
-            backend.onTraitCollectionChange?()
+
+            let previous = previousTraitCollection?.userInterfaceStyle
+            if UITraitCollection.current.userInterfaceStyle != previous {
+                backend.onTraitCollectionChange?()
+            }
         }
     #endif
 
@@ -32,18 +37,11 @@ final class RootViewController: UIViewController {
         fatalError("init(coder:) is not used for the root view controller")
     }
 
-    override func loadView() {
-        super.loadView()
-        if traitCollection.userInterfaceStyle != .dark {
-            view.backgroundColor = .white
-        }
-    }
-
     override func viewWillTransition(
         to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator
     ) {
-        super.viewWillTransition(to: size, with: coordinator)
         resizeHandler?(size)
+        super.viewWillTransition(to: size, with: coordinator)
     }
 
     func setChild(to child: some WidgetProtocol) {
@@ -69,14 +67,23 @@ extension UIKitBackend {
     public typealias Window = UIWindow
 
     public func createWindow(withDefaultSize _: SIMD2<Int>?) -> Window {
-        var window: UIWindow
+        let window: UIWindow
 
         if !Self.hasReturnedAWindow {
+            if let mainWindow = Self.mainWindow {
+                window = mainWindow
+            } else {
+                window = UIWindow()
+                Self.mainWindow = window
+            }
             Self.hasReturnedAWindow = true
-            window = Self.mainWindow ?? UIWindow()
         } else {
             window = UIWindow()
         }
+
+        #if !os(tvOS)
+            window.backgroundColor = .systemBackground
+        #endif
 
         window.rootViewController = RootViewController(backend: self)
         return window
@@ -129,24 +136,48 @@ extension UIKitBackend {
         #endif
     }
 
-    public func setResizability(ofWindow window: Window, to resizable: Bool) {
-        print("UIKitBackend: ignoring \(#function) call")
+    public func setBehaviors(
+        ofWindow window: Window,
+        closable: Bool,
+        minimizable: Bool,
+        resizable: Bool
+    ) {
+        if #available(iOS 16, tvOS 16, macCatalyst 16, *) {
+            window.windowScene?.windowingBehaviors?.isClosable = closable
+            window.windowScene?.windowingBehaviors?.isMiniaturizable = minimizable
+        }
+
+        logger.notice("ignoring resizability change")
     }
 
     public func setSize(ofWindow window: Window, to newSize: SIMD2<Int>) {
         #if os(visionOS)
             window.bounds.size = CGSize(width: CGFloat(newSize.x), height: CGFloat(newSize.y))
         #else
-            print(
-                "UIKitBackend: ignoring \(#function) call. Current window size: \(window.bounds.width) x \(window.bounds.height); proposed size: \(newSize.x) x \(newSize.y)"
+            logger.notice(
+                "ignoring \(#function) call",
+                metadata: [
+                    "currentWindowSize": "\(window.bounds.width) x \(window.bounds.height)",
+                    "proposedWindowSize": "\(newSize.x) x \(newSize.y)",
+                ]
             )
         #endif
     }
 
-    public func setMinimumSize(ofWindow window: Window, to minimumSize: SIMD2<Int>) {
+    public func setSizeLimits(
+        ofWindow window: Window,
+        minimum minimumSize: SIMD2<Int>,
+        maximum maximumSize: SIMD2<Int>?
+    ) {
         // if windowScene is nil, either the window isn't shown or it must be fullscreen
-        // if sizeRestrictions is nil, the device doesn't support setting a minimum window size
-        window.windowScene?.sizeRestrictions?.minimumSize = CGSize(
-            width: CGFloat(minimumSize.x), height: CGFloat(minimumSize.y))
+        // if sizeRestrictions is nil, the device doesn't support setting window size bounds
+        window.windowScene?.sizeRestrictions?.minimumSize =
+            CGSize(width: minimumSize.x, height: minimumSize.y)
+        window.windowScene?.sizeRestrictions?.maximumSize =
+            if let maximumSize {
+                CGSize(width: maximumSize.x, height: maximumSize.y)
+            } else {
+                CGSize(width: Double.infinity, height: .infinity)
+            }
     }
 }

@@ -26,6 +26,7 @@ public final class AppKitBackend: AppBackend {
     public let menuImplementationStyle = MenuImplementationStyle.dynamicPopover
     public let canRevealFiles = true
     public let deviceClass = DeviceClass.desktop
+    public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical, .compact]
     public let updateGroup = UpdateGroup()
 
     public var scrollBarWidth: Int {
@@ -96,9 +97,18 @@ public final class AppKitBackend: AppBackend {
         window.setContentSize(NSSize(width: newSize.x, height: newSize.y))
     }
 
-    public func setMinimumSize(ofWindow window: Window, to minimumSize: SIMD2<Int>) {
-        window.contentMinSize.width = CGFloat(minimumSize.x)
-        window.contentMinSize.height = CGFloat(minimumSize.y)
+    public func setSizeLimits(
+        ofWindow window: Window,
+        minimum minimumSize: SIMD2<Int>,
+        maximum maximumSize: SIMD2<Int>?
+    ) {
+        window.contentMinSize = CGSize(width: minimumSize.x, height: minimumSize.y)
+        window.contentMaxSize =
+            if let maximumSize {
+                CGSize(width: maximumSize.x, height: maximumSize.y)
+            } else {
+                CGSize(width: Double.infinity, height: .infinity)
+            }
     }
 
     public func setResizeHandler(
@@ -112,7 +122,24 @@ public final class AppKitBackend: AppBackend {
         window.title = title
     }
 
-    public func setResizability(ofWindow window: Window, to resizable: Bool) {
+    public func setBehaviors(
+        ofWindow window: Window,
+        closable: Bool,
+        minimizable: Bool,
+        resizable: Bool
+    ) {
+        if closable {
+            window.styleMask.insert(.closable)
+        } else {
+            window.styleMask.remove(.closable)
+        }
+
+        if minimizable {
+            window.styleMask.insert(.miniaturizable)
+        } else {
+            window.styleMask.remove(.miniaturizable)
+        }
+
         if resizable {
             window.styleMask.insert(.resizable)
         } else {
@@ -158,6 +185,26 @@ public final class AppKitBackend: AppBackend {
                         renderedItem.target = wrappedAction
                     }
                     return renderedItem
+                case .toggle(let label, let value, let onChange):
+                    // Custom subclass is used to keep strong reference to action
+                    // wrapper.
+                    let renderedItem = NSCustomMenuItem(
+                        title: label,
+                        action: nil,
+                        keyEquivalent: ""
+                    )
+                    renderedItem.isOn = value
+
+                    let wrappedAction = Action {
+                        onChange(!renderedItem.isOn)
+                    }
+                    renderedItem.actionWrapper = wrappedAction
+                    renderedItem.action = #selector(wrappedAction.run)
+                    renderedItem.target = wrappedAction
+
+                    return renderedItem
+                case .separator:
+                    return NSCustomMenuItem.separator()
                 case .submenu(let submenu):
                     return renderSubmenu(submenu)
             }
@@ -359,21 +406,42 @@ public final class AppKitBackend: AppBackend {
             // Self.scrollBarWidth has changed
             action()
         }
+
+        NotificationCenter.default.addObserver(
+            forName: .NSSystemTimeZoneDidChange,
+            object: nil,
+            queue: .main
+        ) { _ in
+            action()
+        }
     }
 
     public func computeWindowEnvironment(
         window: Window,
         rootEnvironment: EnvironmentValues
     ) -> EnvironmentValues {
-        // TODO: Record window scale factor in here
-        rootEnvironment
+        window.lastBackingScaleFactor = window.backingScaleFactor
+
+        return rootEnvironment.with(\.windowScaleFactor, window.backingScaleFactor)
     }
 
     public func setWindowEnvironmentChangeHandler(
         of window: Window,
         to action: @escaping () -> Void
     ) {
-        // TODO: Notify when window scale factor changes
+        // For updating window scale factor
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didChangeBackingPropertiesNotification,
+            object: window,
+            queue: .main
+        ) { notification in
+            let backingScaleFactorChanged =
+                window.lastBackingScaleFactor != window.backingScaleFactor
+
+            if backingScaleFactorChanged {
+                action()
+            }
+        }
     }
 
     public func setIncomingURLHandler(to action: @escaping (URL) -> Void) {
@@ -418,7 +486,7 @@ public final class AppKitBackend: AppBackend {
     }
 
     public func createContainer() -> Widget {
-        let container = NSContainerView()
+        let container = NSContainerView
         container.translatesAutoresizingMaskIntoConstraints = false
         return container
     }
@@ -428,20 +496,36 @@ public final class AppKitBackend: AppBackend {
         container.removeAllSubviews()
     }
 
-    public func addChild(_ child: Widget, to container: Widget) {
-        container.addSubview(child)
+    public func insert(_ child: Widget, into container: Widget, at index: Int) {
+        container.subviews.insert(child, at: index)
         child.translatesAutoresizingMaskIntoConstraints = false
     }
 
-    public func setPosition(ofChildAt index: Int, in container: Widget, to position: SIMD2<Int>) {
-        let container = container as! NSContainerView
-        guard container.children.indices.contains(index) else {
-            // TODO: Create proper logging system.
-            print("warning: Attempted to set position of non-existent container child")
-            return
-        }
+    public func swap(childAt firstIndex: Int, withChildAt secondIndex: Int, in container: NSView) {
+        assert(
+            container.subviews.indices.contains(firstIndex)
+                && container.subviews.indices.contains(secondIndex),
+            """
+            attempted to swap container child out of bounds; container count \
+            = \(container.subviews.count); firstIndex = \(firstIndex); \
+            secondIndex = \(secondIndex)
+            """
+        )
 
-        let child = container.children[index]
+        container.subviews.swapAt(firstIndex, secondIndex)
+    }
+
+    public func setPosition(ofChildAt index: Int, in container: Widget, to position: SIMD2<Int>) {
+        assert(
+            container.subviews.indices.contains(index),
+            """
+            attempted to set position of non-existent container child; container \
+            count = \(container.subviews.count); index = \(index); position = \
+            \(position)
+            """
+        )
+
+        let child = container.subviews[index]
 
         var foundConstraint = false
         for constraint in container.constraints {
@@ -480,9 +564,9 @@ public final class AppKitBackend: AppBackend {
         }
     }
 
-    public func removeChild(_ child: Widget, from container: Widget) {
+    public func remove(childAt index: Int, from container: Widget) {
         let container = container as! NSContainerView
-        container.removeSubview(child)
+        container.removeSubview(at: index)
     }
 
     public func createColorableRectangle() -> Widget {
@@ -491,7 +575,7 @@ public final class AppKitBackend: AppBackend {
         return widget
     }
 
-    public func setColor(ofColorableRectangle widget: Widget, to color: Color) {
+    public func setColor(ofColorableRectangle widget: Widget, to color: Color.Resolved) {
         widget.layer?.backgroundColor = color.nsColor.cgColor
     }
 
@@ -502,6 +586,15 @@ public final class AppKitBackend: AppBackend {
     }
 
     public func naturalSize(of widget: Widget) -> SIMD2<Int> {
+        if let spinner = widget.subviews.first as? NSProgressIndicator,
+            spinner.style == .spinning
+        {
+            let size = spinner.intrinsicContentSize
+            return SIMD2(
+                Int(size.width),
+                Int(size.height)
+            )
+        }
         let size = widget.intrinsicContentSize
         return SIMD2(
             Int(size.width),
@@ -510,30 +603,44 @@ public final class AppKitBackend: AppBackend {
     }
 
     public func setSize(of widget: Widget, to size: SIMD2<Int>) {
+        setSize(of: widget, to: ProposedViewSize(ViewSize(Double(size.x), Double(size.y))))
+    }
+
+    func setSize(of widget: Widget, to proposedSize: ProposedViewSize) {
         var foundConstraint = false
         for constraint in widget.constraints {
             if constraint.firstAnchor === widget.widthAnchor {
-                constraint.constant = CGFloat(size.x)
+                if let proposedWidth = proposedSize.width {
+                    constraint.constant = CGFloat(proposedWidth)
+                    constraint.isActive = true
+                } else {
+                    constraint.isActive = false
+                }
                 foundConstraint = true
                 break
             }
         }
 
-        if !foundConstraint {
-            widget.widthAnchor.constraint(equalToConstant: CGFloat(size.x)).isActive = true
+        if !foundConstraint, let proposedWidth = proposedSize.width {
+            widget.widthAnchor.constraint(equalToConstant: proposedWidth).isActive = true
         }
 
         foundConstraint = false
         for constraint in widget.constraints {
             if constraint.firstAnchor === widget.heightAnchor {
-                constraint.constant = CGFloat(size.y)
+                if let proposedHeight = proposedSize.height {
+                    constraint.constant = CGFloat(proposedHeight)
+                    constraint.isActive = true
+                } else {
+                    constraint.isActive = false
+                }
                 foundConstraint = true
                 break
             }
         }
 
-        if !foundConstraint {
-            widget.heightAnchor.constraint(equalToConstant: CGFloat(size.y)).isActive = true
+        if !foundConstraint, let proposedHeight = proposedSize.height {
+            widget.heightAnchor.constraint(equalToConstant: proposedHeight).isActive = true
         }
     }
 
@@ -1133,7 +1240,7 @@ public final class AppKitBackend: AppBackend {
         paragraphStyle.lineSpacing = 0
 
         return [
-            .foregroundColor: environment.suggestedForegroundColor.nsColor,
+            .foregroundColor: environment.suggestedForegroundColor.resolve(in: environment).nsColor,
             .font: font(for: resolvedFont),
             .paragraphStyle: paragraphStyle,
         ]
@@ -1185,11 +1292,32 @@ public final class AppKitBackend: AppBackend {
     }
 
     public func createProgressSpinner() -> Widget {
+        let container = NSView()
         let spinner = NSProgressIndicator()
+        spinner.translatesAutoresizingMaskIntoConstraints = false
         spinner.isIndeterminate = true
         spinner.style = .spinning
         spinner.startAnimation(nil)
-        return spinner
+        container.addSubview(spinner)
+        return container
+    }
+
+    public func setSize(
+        ofProgressSpinner widget: Widget,
+        to size: SIMD2<Int>
+    ) {
+        guard Int(widget.frame.size.height) != size.y else { return }
+        setSize(of: widget, to: size)
+        let spinner = NSProgressIndicator()
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        spinner.isIndeterminate = true
+        spinner.style = .spinning
+        spinner.startAnimation(nil)
+        spinner.widthAnchor.constraint(equalToConstant: CGFloat(size.x)).isActive = true
+        spinner.heightAnchor.constraint(equalToConstant: CGFloat(size.y)).isActive = true
+
+        widget.subviews = []
+        widget.addSubview(spinner)
     }
 
     public func createProgressBar() -> Widget {
@@ -1276,7 +1404,7 @@ public final class AppKitBackend: AppBackend {
             }
 
             guard response != .abort, response != .cancel else {
-                print("warning: Got abort or cancel modal response, unexpected and unhandled")
+                logger.warning("got abort or cancel modal response, unexpected and unhandled")
                 return
             }
 
@@ -1657,8 +1785,8 @@ public final class AppKitBackend: AppBackend {
     public func renderPath(
         _ path: Path,
         container: Widget,
-        strokeColor: Color,
-        fillColor: Color,
+        strokeColor: Color.Resolved,
+        fillColor: Color.Resolved,
         overrideStrokeStyle: StrokeStyle?
     ) {
         if let overrideStrokeStyle {
@@ -1742,7 +1870,7 @@ public final class AppKitBackend: AppBackend {
         cornerRadius: Double?,
         detents: [PresentationDetent],
         dragIndicatorVisibility: Visibility,
-        backgroundColor: Color?,
+        backgroundColor: Color.Resolved?,
         interactiveDismissDisabled: Bool
     ) {
         sheet.setContentSize(NSSize(width: size.x, height: size.y))
@@ -1790,6 +1918,80 @@ public final class AppKitBackend: AppBackend {
 
         parent.endSheet(sheet)
         parent.nestedSheet = nil
+    }
+
+    public func createDatePicker() -> NSView {
+        let datePicker = CustomDatePicker()
+        datePicker.delegate = datePicker.strongDelegate
+        return datePicker
+    }
+
+    // Depending on the calendar, era is either necessary or must be omitted. Making the wrong
+    // choice for the current calendar means the cursor position is reset after every keystroke. I
+    // know of no simple way to tell whether NSDatePicker requires or forbids eras for a given
+    // calendar, so in lieu of that I have hardcoded the calendar identifiers.
+    private let calendarsRequiringEra: Set<Calendar.Identifier> = [
+        .buddhist, .coptic, .ethiopicAmeteAlem, .ethiopicAmeteMihret, .indian, .islamic,
+        .islamicCivil, .islamicTabular, .islamicUmmAlQura, .japanese, .persian, .republicOfChina,
+    ]
+
+    public func updateDatePicker(
+        _ datePicker: NSView,
+        environment: EnvironmentValues,
+        date: Date,
+        range: ClosedRange<Date>,
+        components: DatePickerComponents,
+        onChange: @escaping (Date) -> Void
+    ) {
+        let datePicker = datePicker as! CustomDatePicker
+
+        datePicker.isEnabled = environment.isEnabled
+        datePicker.textColor = environment.suggestedForegroundColor.resolve(in: environment).nsColor
+
+        // If the time zone is set to autoupdatingCurrent, then the cursor position is reset after
+        // every keystroke. Thanks Apple
+        datePicker.timeZone =
+            environment.timeZone == .autoupdatingCurrent ? .current : environment.timeZone
+
+        // A couple properties cause infinite update loops if we assign to them on every update, so
+        // check their values first.
+        if datePicker.calendar != environment.calendar {
+            datePicker.calendar = environment.calendar
+        }
+
+        if datePicker.dateValue != date {
+            datePicker.dateValue = date
+        }
+
+        var elementFlags: NSDatePicker.ElementFlags = []
+        if components.contains(.date) {
+            elementFlags.insert(.yearMonthDay)
+            if calendarsRequiringEra.contains(environment.calendar.identifier) {
+                elementFlags.insert(.era)
+            }
+        }
+        if components.contains(.hourMinuteAndSecond) {
+            elementFlags.insert(.hourMinuteSecond)
+        } else if components.contains(.hourAndMinute) {
+            elementFlags.insert(.hourMinute)
+        }
+
+        if datePicker.datePickerElements != elementFlags {
+            datePicker.datePickerElements = elementFlags
+        }
+
+        datePicker.strongDelegate.onChange = onChange
+
+        datePicker.minDate = range.lowerBound
+        datePicker.maxDate = range.upperBound
+
+        datePicker.datePickerStyle =
+            switch environment.datePickerStyle {
+                case .automatic, .compact:
+                    .textFieldAndStepper
+                case .graphical:
+                    .clockAndCalendar
+            }
     }
 }
 
@@ -1928,6 +2130,11 @@ final class NSCustomMenuItem: NSMenuItem {
     /// This property's only purpose is to keep a strong reference to the wrapped
     /// action so that it sticks around for long enough to be useful.
     var actionWrapper: Action?
+
+    var isOn: Bool {
+        get { state == .on }
+        set { state = newValue ? .on : .off }
+    }
 }
 
 // TODO: Update all controls to use this style of action passing, seems way nicer
@@ -1973,11 +2180,11 @@ class NSCustomTableViewDelegate: NSObject, NSTableViewDelegate, NSTableViewDataS
         row: Int
     ) -> NSView? {
         guard let tableColumn else {
-            print("warning: No column provided")
+            logger.warning("no column provided")
             return nil
         }
         guard let columnIndex = columnIndices[ObjectIdentifier(tableColumn)] else {
-            print("warning: NSTableView asked for value of non-existent column")
+            logger.warning("NSTableView asked for value of non-existent column")
             return nil
         }
         return widgets[row * columnCount + columnIndex]
@@ -2011,31 +2218,6 @@ extension ColorScheme {
             case .dark:
                 return NSAppearance(named: .darkAqua)
         }
-    }
-}
-
-extension Color {
-    init(_ nsColor: NSColor) {
-        guard let resolvedNSColor = nsColor.usingColorSpace(.deviceRGB) else {
-            print("error: Failed to convert NSColor to RGB")
-            self = .black
-            return
-        }
-        self.init(
-            Float(resolvedNSColor.redComponent),
-            Float(resolvedNSColor.greenComponent),
-            Float(resolvedNSColor.blueComponent),
-            Float(resolvedNSColor.alphaComponent)
-        )
-    }
-
-    var nsColor: NSColor {
-        NSColor(
-            calibratedRed: CGFloat(red),
-            green: CGFloat(green),
-            blue: CGFloat(blue),
-            alpha: CGFloat(alpha)
-        )
     }
 }
 
@@ -2224,6 +2406,67 @@ class NSSplitViewResizingDelegate: NSObject, NSSplitViewDelegate {
     }
 }
 
+public class NSCustomWindow: NSWindow {
+    var customDelegate = Delegate()
+    var persistentUndoManager = UndoManager()
+
+    /// A reference to the sheet currently presented on top of this window, if any.
+    /// If the sheet itself has another sheet presented on top of it, then that doubly
+    /// nested sheet gets stored as the sheet's nestedSheet, and so on.
+    var nestedSheet: NSCustomSheet?
+
+    var lastBackingScaleFactor: CGFloat?
+    /// Allows the backing scale factor to be overridden. Useful for keeping
+    /// UI tests consistent across devices.
+    ///
+    /// Idea from https://github.com/pointfreeco/swift-snapshot-testing/pull/533
+    public var backingScaleFactorOverride: CGFloat?
+
+    public override var backingScaleFactor: CGFloat {
+        backingScaleFactorOverride ?? super.backingScaleFactor
+    }
+
+    class Delegate: NSObject, NSWindowDelegate {
+        var resizeHandler: ((SIMD2<Int>) -> Void)?
+
+        func setHandler(_ resizeHandler: @escaping (SIMD2<Int>) -> Void) {
+            self.resizeHandler = resizeHandler
+        }
+
+        func windowWillClose(_ notification: Notification) {
+            guard let window = notification.object as? NSCustomWindow else { return }
+
+            // Not sure if this is actually needed
+            NotificationCenter.default.removeObserver(window)
+        }
+
+        func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
+            guard let resizeHandler else {
+                return frameSize
+            }
+
+            let contentSize = sender.contentRect(
+                forFrameRect: NSRect(
+                    x: sender.frame.origin.x, y: sender.frame.origin.y, width: frameSize.width,
+                    height: frameSize.height)
+            )
+
+            resizeHandler(
+                SIMD2(
+                    Int(contentSize.width.rounded(.towardZero)),
+                    Int(contentSize.height.rounded(.towardZero))
+                )
+            )
+
+            return frameSize
+        }
+
+        func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? {
+            (window as! NSCustomWindow).persistentUndoManager
+        }
+    }
+}
+
 extension Notification.Name {
     static let AppleInterfaceThemeChangedNotification = Notification.Name(
         "AppleInterfaceThemeChangedNotification"
@@ -2255,10 +2498,26 @@ final class CustomWKNavigationDelegate: NSObject, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         guard let url = webView.url else {
-            print("warning: Web view has no URL")
+            logger.warning("web view has no URL")
             return
         }
 
         onNavigate?(url)
+    }
+}
+
+final class CustomDatePicker: NSDatePicker {
+    var strongDelegate = CustomDatePickerDelegate()
+}
+
+final class CustomDatePickerDelegate: NSObject, NSDatePickerCellDelegate {
+    var onChange: ((Date) -> Void)?
+
+    func datePickerCell(
+        _: NSDatePickerCell,
+        validateProposedDateValue proposedDateValue: AutoreleasingUnsafeMutablePointer<NSDate>,
+        timeInterval _: UnsafeMutablePointer<TimeInterval>?
+    ) {
+        onChange?(proposedDateValue.pointee as Date)
     }
 }

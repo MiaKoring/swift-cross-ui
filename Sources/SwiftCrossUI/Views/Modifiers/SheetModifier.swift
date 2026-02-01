@@ -131,7 +131,7 @@ struct SheetModifier<Content: View, SheetContent: View>: TypeSafeView {
                 detents: preferences.presentationDetents ?? [],
                 dragIndicatorVisibility:
                     preferences.presentationDragIndicatorVisibility ?? .automatic,
-                backgroundColor: preferences.presentationBackground,
+                backgroundColor: preferences.presentationBackground?.resolve(in: environment),
                 interactiveDismissDisabled: preferences.interactiveDismissDisabled ?? false
             )
 
@@ -174,7 +174,7 @@ class SheetModifierViewChildren<Child: View, SheetContent: View>: ViewGraphNodeC
 
     var erasedNodes: [ErasedViewGraphNode] {
         var nodes: [ErasedViewGraphNode] = [ErasedViewGraphNode(wrapping: childNode)]
-        if let sheetContentNode = sheetContentNode {
+        if let sheetContentNode {
             nodes.append(ErasedViewGraphNode(wrapping: sheetContentNode))
         }
         return nodes

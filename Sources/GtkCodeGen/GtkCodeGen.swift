@@ -27,6 +27,12 @@ struct GtkCodeGen {
         "GtkSelectionModel*": "OpaquePointer?",
         "GtkListItemFactory*": "OpaquePointer?",
         "GtkTextTagTable*": "OpaquePointer?",
+        "int": "Int",
+    ]
+
+    static let cTypesManuallyConverted: [String: String] = [
+        "guint": "guint",
+        "int": "CInt",
     ]
 
     /// Problematic signals which are excluded from the generated Swift
@@ -112,7 +118,7 @@ struct GtkCodeGen {
             "Button", "Entry", "Label", "Range", "Scale", "Image", "Switch", "Spinner",
             "ProgressBar", "FileChooserNative", "NativeDialog", "GestureClick",
             "GestureSingle", "Gesture", "EventController", "GestureLongPress", "GLArea",
-            "DrawingArea", "CheckButton",
+            "DrawingArea", "CheckButton", "Calendar", "SpinButton",
         ]
         let gtk3AllowListedClasses = ["MenuShell", "EventBox"]
         let gtk4AllowListedClasses = [
@@ -546,7 +552,7 @@ struct GtkCodeGen {
             let closure = ExprSyntax(
                 """
                 { [weak self] (\(raw: parameters)) in
-                    guard let self = self else { return }
+                    guard let self else { return }
                     self.\(raw: name)?(\(raw: arguments))
                 }
                 """
@@ -773,7 +779,7 @@ struct GtkCodeGen {
         // avoid ambiguity between certain initializers). E.g. `gtk_button_new_with_label` and
         // `gtk_button_new_with_mnemonic` both call their first parameter `label` which would be
         // ambiguous in Swift.
-        if let constructorName = constructorName, constructorName.contains("_with_") {
+        if let constructorName, constructorName.contains("_with_") {
             let label = convertCIdentifier(
                 String(constructorName.components(separatedBy: "_with_")[1])
             )
@@ -810,6 +816,10 @@ struct GtkCodeGen {
                         .unsafeCopy()
                         .baseAddress!
                     """
+            } else if let type = parameter.type?.cType,
+                let destinationType = cTypesManuallyConverted[type]
+            {
+                return "\(destinationType)(\(argument))"
             }
 
             return argument

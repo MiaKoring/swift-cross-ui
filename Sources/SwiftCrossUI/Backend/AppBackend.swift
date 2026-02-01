@@ -98,6 +98,10 @@ public protocol AppBackend: Sendable {
     /// Mobile backends generally can't.
     var canRevealFiles: Bool { get }
 
+    /// The supported date picker styles. Must include ``DatePickerStyle/automatic`` if date pickers
+    /// are supported at all.
+    nonisolated var supportedDatePickerStyles: [DatePickerStyle] { get }
+
     /// Provides a central place to observe view update cycle completion
     var updateGroup: UpdateGroup { get }
 
@@ -139,9 +143,20 @@ public protocol AppBackend: Sendable {
     func createWindow(withDefaultSize defaultSize: SIMD2<Int>?) -> Window
     /// Sets the title of a window.
     func setTitle(ofWindow window: Window, to title: String)
-    /// Sets the resizability of a window. Even if resizable, the window
-    /// shouldn't be allowed to become smaller than its content.
-    func setResizability(ofWindow window: Window, to resizable: Bool)
+    /// Sets the behaviors of a window.
+    /// - Parameters:
+    ///   - window: The window to set the behaviors on.
+    ///   - closable: Whether the window can be closed by the user.
+    ///   - minimizable: Whether the window can be minimized by the user.
+    ///   - resizable: Whether the window can be resized by the user. Even if
+    ///     resizable, the window shouldn't be allowed to become smaller than its
+    ///     minimum size, or larger than its maximum size.
+    func setBehaviors(
+        ofWindow window: Window,
+        closable: Bool,
+        minimizable: Bool,
+        resizable: Bool
+    )
     /// Sets the root child of a window (replaces the previous child if any).
     func setChild(ofWindow window: Window, to child: Widget)
     /// Gets the size of the given window in pixels.
@@ -151,9 +166,20 @@ public protocol AppBackend: Sendable {
     func isWindowProgrammaticallyResizable(_ window: Window) -> Bool
     /// Sets the size of the given window in pixels.
     func setSize(ofWindow window: Window, to newSize: SIMD2<Int>)
-    /// Sets the minimum width and height of the window. Prevents the user from making the
-    /// window any smaller than the given size.
-    func setMinimumSize(ofWindow window: Window, to minimumSize: SIMD2<Int>)
+    /// Sets the minimum and maximum width and height of a window.
+    ///
+    /// Prevents the user from making the window any smaller or larger than the given minimum and
+    /// maximum sizes, respectively.
+    /// - Parameters:
+    ///   - window: The window to set the size limits of.
+    ///   - minimumSize: The minimum window size.
+    ///   - maximumSize: The maximum window size. If `nil`, any existing maximum size
+    ///     constraints should be removed.
+    func setSizeLimits(
+        ofWindow window: Window,
+        minimum minimumSize: SIMD2<Int>,
+        maximum maximumSize: SIMD2<Int>?
+    )
     /// Sets the handler for the window's resizing events. `action` takes the proposed size
     /// of the window and returns the final size for the window (which allows SwiftCrossUI
     /// to implement features such as dynamic minimum window sizes based off the content's
@@ -200,6 +226,14 @@ public protocol AppBackend: Sendable {
     /// from Apple's typography guidelines. See ``TextStyle/resolve(for:)``.
     func resolveTextStyle(_ textStyle: Font.TextStyle) -> Font.TextStyle.Resolved
 
+    /// Resolves the given adaptive color to a concrete color given the current environment.
+    ///
+    /// The default implementation uses Apple's adaptive colors.
+    func resolveAdaptiveColor(
+        _ adaptiveColor: Color.SystemAdaptive,
+        in environment: EnvironmentValues
+    ) -> Color.Resolved
+
     /// Computes a window's environment based off the root environment. This may involve
     /// updating ``EnvironmentValues/windowScaleFactor`` etc.
     func computeWindowEnvironment(
@@ -245,17 +279,20 @@ public protocol AppBackend: Sendable {
     func createContainer() -> Widget
     /// Removes all children of the given container.
     func removeAllChildren(of container: Widget)
-    /// Adds a child to a given container at an exact position.
-    func addChild(_ child: Widget, to container: Widget)
+    /// Inserts a child into a given container at a given index.
+    func insert(_ child: Widget, into container: Widget, at index: Int)
+    /// Swaps the child at firstIndex with the child at secondIndex. May crash if either
+    /// index is out of bounds.
+    func swap(childAt firstIndex: Int, withChildAt secondIndex: Int, in container: Widget)
     /// Sets the position of the specified child in a container.
     func setPosition(ofChildAt index: Int, in container: Widget, to position: SIMD2<Int>)
-    /// Removes a child widget from a container (if the child is a direct child of the container).
-    func removeChild(_ child: Widget, from container: Widget)
+    /// Removes the child at the given index from the given container.
+    func remove(childAt index: Int, from container: Widget)
 
     /// Creates a rectangular widget with configurable color.
     func createColorableRectangle() -> Widget
     /// Sets the color of a colorable rectangle.
-    func setColor(ofColorableRectangle widget: Widget, to color: Color)
+    func setColor(ofColorableRectangle widget: Widget, to color: Color.Resolved)
 
     /// Sets the corner radius of a widget (any widget). Should affect the view's border radius
     /// as well.
@@ -550,8 +587,29 @@ public protocol AppBackend: Sendable {
     /// Sets the index of the selected option of a picker.
     func setSelectedOption(ofPicker picker: Widget, to selectedOption: Int?)
 
+    func createDatePicker() -> Widget
+
+    func updateDatePicker(
+        _ datePicker: Widget,
+        environment: EnvironmentValues,
+        date: Date,
+        range: ClosedRange<Date>,
+        components: DatePickerComponents,
+        onChange: @escaping (Date) -> Void
+    )
+
     /// Creates an indeterminate progress spinner.
     func createProgressSpinner() -> Widget
+
+    /// Sets the size of a progress spinner.
+    ///
+    /// This method exists because AppKitBackend requires special handling to resize progress spinners.
+    ///
+    /// The default implementation forwards to ``AppBackend/setSize(of:to:)``.
+    func setSize(
+        ofProgressSpinner widget: Widget,
+        to size: SIMD2<Int>
+    )
 
     /// Creates a progress bar.
     func createProgressBar() -> Widget
@@ -658,7 +716,7 @@ public protocol AppBackend: Sendable {
         cornerRadius: Double?,
         detents: [PresentationDetent],
         dragIndicatorVisibility: Visibility,
-        backgroundColor: Color?,
+        backgroundColor: Color.Resolved?,
         interactiveDismissDisabled: Bool
     )
 
@@ -776,8 +834,8 @@ public protocol AppBackend: Sendable {
     func renderPath(
         _ path: Path,
         container: Widget,
-        strokeColor: Color,
-        fillColor: Color,
+        strokeColor: Color.Resolved,
+        fillColor: Color.Resolved,
         overrideStrokeStyle: StrokeStyle?
     )
 
@@ -829,6 +887,25 @@ extension AppBackend {
         textStyle.resolve(for: deviceClass)
     }
 
+    public func resolveAdaptiveColor(
+        _ adaptiveColor: Color.SystemAdaptive,
+        in environment: EnvironmentValues
+    ) -> Color.Resolved {
+        let color: Color =
+            switch adaptiveColor.kind {
+                case .blue: .blue
+                case .brown: .brown
+                case .gray: .gray
+                case .green: .green
+                case .orange: .orange
+                case .purple: .purple
+                case .red: .red
+                case .yellow: .yellow
+            }
+
+        return color.resolve(in: environment)
+    }
+
     public func tag(widget: Widget, as tag: String) {
         // This is only really to assist contributors when debugging backends,
         // so it's safe enough to have a no-op default implementation.
@@ -838,14 +915,14 @@ extension AppBackend {
 extension AppBackend {
     /// Used by placeholder implementations of backend methods.
     private func todo(_ function: String = #function) -> Never {
-        print("\(type(of: self)): \(function) not implemented")
+        logger.critical("\(type(of: self)): \(function) not implemented")
         Foundation.exit(1)
     }
 
     private func ignored(_ function: String = #function) {
         #if DEBUG
-            print(
-                "\(type(of: self)): \(function) is being ignored\nConsult at the documentation for further information."
+            logger.warning(
+                "\(type(of: self)): \(function) is being ignored; consult the documentation for further information"
             )
         #endif
     }
@@ -876,7 +953,7 @@ extension AppBackend {
         todo()
     }
 
-    public func setColor(ofColorableRectangle widget: Widget, to color: Color) {
+    public func setColor(ofColorableRectangle widget: Widget, to color: Color.Resolved) {
         todo()
     }
 
@@ -1152,6 +1229,13 @@ extension AppBackend {
         todo()
     }
 
+    public func setSize(
+        ofProgressSpinner widget: Widget,
+        to size: SIMD2<Int>
+    ) {
+        setSize(of: widget, to: size)
+    }
+
     public func createProgressBar() -> Widget {
         todo()
     }
@@ -1252,8 +1336,8 @@ extension AppBackend {
     public func renderPath(
         _ path: Path,
         container: Widget,
-        strokeColor: Color,
-        fillColor: Color,
+        strokeColor: Color.Resolved,
+        fillColor: Color.Resolved,
         overrideStrokeStyle: StrokeStyle?
     ) {
         todo()
@@ -1300,7 +1384,7 @@ extension AppBackend {
         cornerRadius: Double?,
         detents: [PresentationDetent],
         dragIndicatorVisibility: Visibility,
-        backgroundColor: Color?,
+        backgroundColor: Color.Resolved?,
         interactiveDismissDisabled: Bool
     ) {
         todo()
@@ -1327,6 +1411,17 @@ extension AppBackend {
     ) {
         todo()
     }
+
+    public func createDatePicker() -> Widget { todo() }
+
+    public func updateDatePicker(
+        _ datePicker: Widget,
+        environment: EnvironmentValues,
+        date: Date,
+        range: ClosedRange<Date>,
+        components: DatePickerComponents,
+        onChange: @escaping (Date) -> Void
+    ) { todo() }
 
     public var updateGroup: UpdateGroup {
         todo()

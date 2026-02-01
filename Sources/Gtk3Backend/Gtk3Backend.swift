@@ -11,12 +11,6 @@ extension App {
     }
 }
 
-extension SwiftCrossUI.Color {
-    public var gtkColor: Gtk3.Color {
-        return Gtk3.Color(Double(red), Double(green), Double(blue), Double(alpha))
-    }
-}
-
 public final class Gtk3Backend: AppBackend {
     public typealias Window = Gtk3.ApplicationWindow
     public typealias Widget = Gtk3.Widget
@@ -38,6 +32,7 @@ public final class Gtk3Backend: AppBackend {
     public let menuImplementationStyle = MenuImplementationStyle.dynamicPopover
     public let canRevealFiles = true
     public let deviceClass = DeviceClass.desktop
+    public let supportedDatePickerStyles: [DatePickerStyle] = []
 
     var gtkApp: Application
 
@@ -49,6 +44,28 @@ public final class Gtk3Backend: AppBackend {
     /// All current windows associated with the application. Doesn't include the
     /// precreated window until it gets 'created' via `createWindow`.
     var windows: [Window] = []
+
+    private struct LogLocation: Hashable, Equatable {
+        let file: String
+        let line: Int
+        let column: Int
+    }
+
+    private var logsPerformed: Set<LogLocation> = []
+
+    func debugLogOnce(
+        _ message: String,
+        file: String = #file,
+        line: Int = #line,
+        column: Int = #column
+    ) {
+        #if DEBUG
+            let location = LogLocation(file: file, line: line, column: column)
+            if logsPerformed.insert(location).inserted {
+                logger.notice("\(message)")
+            }
+        #endif
+    }
 
     // A separate initializer to satisfy ``AppBackend``'s requirements.
     public convenience init() {
@@ -136,7 +153,7 @@ public final class Gtk3Backend: AppBackend {
 
     public func createWindow(withDefaultSize defaultSize: SIMD2<Int>?) -> Window {
         let window: Gtk3.ApplicationWindow
-        if let precreatedWindow = precreatedWindow {
+        if let precreatedWindow {
             self.precreatedWindow = nil
             window = precreatedWindow
             window.setPosition(to: .center)
@@ -146,7 +163,7 @@ public final class Gtk3Backend: AppBackend {
 
         windows.append(window)
 
-        if let defaultSize = defaultSize {
+        if let defaultSize {
             window.defaultSize = Size(
                 width: defaultSize.x,
                 height: defaultSize.y
@@ -160,7 +177,18 @@ public final class Gtk3Backend: AppBackend {
         window.title = title
     }
 
-    public func setResizability(ofWindow window: Window, to resizable: Bool) {
+    public func setBehaviors(
+        ofWindow window: Window,
+        closable: Bool,
+        minimizable: Bool,
+        resizable: Bool
+    ) {
+        // FIXME: This doesn't seem to work on macOS at least
+        window.deletable = closable
+
+        // TODO: Figure out if there's some magic way to disable minimization
+        //   in a framework where the minimize button usually doesn't even exist
+
         window.resizable = resizable
     }
 
@@ -207,9 +235,19 @@ public final class Gtk3Backend: AppBackend {
         )
     }
 
-    public func setMinimumSize(ofWindow window: Window, to minimumSize: SIMD2<Int>) {
+    public func setSizeLimits(
+        ofWindow window: Window,
+        minimum minimumSize: SIMD2<Int>,
+        maximum maximumSize: SIMD2<Int>?
+    ) {
         let child = window.child! as! CustomRootWidget
         child.setMinimumSize(minimumWidth: minimumSize.x, minimumHeight: minimumSize.y)
+
+        // NB: GTK does not support setting maximum sizes for widgets. It just doesn't.
+        // https://discourse.gnome.org/t/how-to-build-fixed-size-windows-in-gtk-4/22807/10
+        if maximumSize != nil {
+            debugLogOnce("GTK does not support setting maximum window sizes")
+        }
     }
 
     public func setResizeHandler(
@@ -228,7 +266,9 @@ public final class Gtk3Backend: AppBackend {
         actionNamespace: String,
         actionPrefix: String?
     ) -> GMenu {
-        let model = GMenu()
+        var currentSection = GMenu()
+        var previousSections: [GMenu] = []
+
         for (i, item) in menu.items.enumerated() {
             let actionName =
                 if let actionPrefix {
@@ -240,12 +280,30 @@ public final class Gtk3Backend: AppBackend {
             switch item {
                 case .button(let label, let action):
                     if let action {
-                        actionMap.addAction(named: actionName, action: action)
+                        actionMap.addAction(GSimpleAction(name: actionName, action: action))
                     }
 
-                    model.appendItem(label: label, actionName: "\(actionNamespace).\(actionName)")
+                    currentSection.appendItem(
+                        label: label,
+                        actionName: "\(actionNamespace).\(actionName)"
+                    )
+                case .toggle(let label, let value, let onChange):
+                    actionMap.addAction(
+                        GSimpleAction(name: actionName, state: value, action: onChange)
+                    )
+
+                    currentSection.appendItem(
+                        label: label,
+                        actionName: "\(actionNamespace).\(actionName)"
+                    )
+                case .separator:
+                    // GTK[3] doesn't have explicit separators per se, but instead deals with
+                    // sections (actually quite similar to what you can do in SwiftUI with the
+                    // Section view). It'll automatically draw separators between sections.
+                    previousSections.append(currentSection)
+                    currentSection = GMenu()
                 case .submenu(let submenu):
-                    model.appendSubmenu(
+                    currentSection.appendSubmenu(
                         label: submenu.label,
                         content: renderMenu(
                             submenu.content,
@@ -256,7 +314,17 @@ public final class Gtk3Backend: AppBackend {
                     )
             }
         }
-        return model
+
+        if previousSections.isEmpty {
+            // There are no dividers; just return the current section to keep the menu tree flat.
+            return currentSection
+        } else {
+            let model = GMenu()
+            for section in previousSections + [currentSection] {
+                model.appendSection(label: nil, content: section)
+            }
+            return model
+        }
     }
 
     private func renderMenuBar(_ submenus: [ResolvedMenu.Submenu]) -> GMenu {
@@ -357,7 +425,7 @@ public final class Gtk3Backend: AppBackend {
         g_idle_add_full(
             0,
             { context in
-                guard let context = context else {
+                guard let context else {
                     fatalError("Gtk action callback called without context")
                 }
 
@@ -383,7 +451,7 @@ public final class Gtk3Backend: AppBackend {
             0,
             guint(max(0, delay)),
             { context in
-                guard let context = context else {
+                guard let context else {
                     fatalError("Gtk action callback called without context")
                 }
 
@@ -453,9 +521,9 @@ public final class Gtk3Backend: AppBackend {
         container.removeAllChildren()
     }
 
-    public func addChild(_ child: Widget, to container: Widget) {
+    public func insert(_ child: Widget, into container: Widget, at index: Int) {
         let container = container as! Fixed
-        container.put(child, x: 0, y: 0)
+        container.put(child, index: index, x: 0, y: 0)
     }
 
     public func setPosition(ofChildAt index: Int, in container: Widget, to position: SIMD2<Int>) {
@@ -463,9 +531,20 @@ public final class Gtk3Backend: AppBackend {
         container.move(container.children[index], x: position.x, y: position.y)
     }
 
-    public func removeChild(_ child: Widget, from container: Widget) {
+    public func remove(childAt index: Int, from container: Widget) {
         let container = container as! Fixed
+        let child = container.children[index]
         container.remove(child)
+    }
+
+    public func swap(childAt firstIndex: Int, withChildAt secondIndex: Int, in container: Widget) {
+        // Gtk3.Fixed doesn't let us rearrange children, so we just swap them in
+        // our own list so that at least everything works on the SCUI side. The
+        // only side effect of this approach is that overlapping widgets may
+        // end up with unexpected z ordering. If that becomes an issue we may
+        // have to make a custom replacement for Gtk3.Fixed.
+        let container = container as! Fixed
+        container.children.swapAt(firstIndex, secondIndex)
     }
 
     public func createColorableRectangle() -> Widget {
@@ -474,7 +553,7 @@ public final class Gtk3Backend: AppBackend {
 
     public func setColor(
         ofColorableRectangle widget: Widget,
-        to color: SwiftCrossUI.Color
+        to color: SwiftCrossUI.Color.Resolved
     ) {
         widget.css.set(property: .backgroundColor(color.gtkColor))
         widget.css.set(property: CSSProperty(key: "background-clip", value: "border-box"))
@@ -676,6 +755,12 @@ public final class Gtk3Backend: AppBackend {
         environment: EnvironmentValues
     ) {
         let imageView = imageView as! Gtk3.Image
+
+        // Check if the resulting image would be empty
+        guard targetWidth > 0, targetHeight > 0 else {
+            imageView.clear()
+            return
+        }
 
         let pixbuf = Pixbuf(
             rgbaData: rgbaData,
@@ -1271,8 +1356,8 @@ public final class Gtk3Backend: AppBackend {
     public func renderPath(
         _ path: Path,
         container: Widget,
-        strokeColor: SwiftCrossUI.Color,
-        fillColor: SwiftCrossUI.Color,
+        strokeColor: SwiftCrossUI.Color.Resolved,
+        fillColor: SwiftCrossUI.Color.Resolved,
         overrideStrokeStyle: StrokeStyle?
     ) {
         let drawingArea = container as! Gtk3.DrawingArea
@@ -1281,7 +1366,7 @@ public final class Gtk3Backend: AppBackend {
         // a weak reference anyway.
         drawingArea.doDraw = { [weak self] cairo in
             let scaleFactor = path.scaleFactor
-            guard let self = self, let path = path.path else {
+            guard let self, let path = path.path else {
                 return
             }
 
@@ -1326,7 +1411,7 @@ public final class Gtk3Backend: AppBackend {
                 Double(fillColor.red),
                 Double(fillColor.green),
                 Double(fillColor.blue),
-                Double(fillColor.alpha)
+                Double(fillColor.opacity)
             )
             cairo_set_source(cairo, fillPattern)
             cairo_fill_preserve(cairo)
@@ -1336,7 +1421,7 @@ public final class Gtk3Backend: AppBackend {
                 Double(strokeColor.red),
                 Double(strokeColor.green),
                 Double(strokeColor.blue),
-                Double(strokeColor.alpha)
+                Double(strokeColor.opacity)
             )
             cairo_set_source(cairo, strokePattern)
             cairo_stroke(cairo)
@@ -1447,7 +1532,11 @@ public final class Gtk3Backend: AppBackend {
         isControl: Bool = false
     ) -> [CSSProperty] {
         var properties: [CSSProperty] = []
-        properties.append(.foregroundColor(environment.suggestedForegroundColor.gtkColor))
+        properties.append(
+            .foregroundColor(
+                environment.suggestedForegroundColor.resolve(in: environment).gtkColor
+            )
+        )
         let font = environment.resolvedFont
         switch font.identifier.kind {
             case .system:

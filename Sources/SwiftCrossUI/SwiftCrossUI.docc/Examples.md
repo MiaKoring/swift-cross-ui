@@ -20,15 +20,16 @@ A few examples are included with SwiftCrossUI to demonstrate some of its basic f
 - `NotesExample`, an app showcasing multi-line text editing and a more realistic usage of SwiftCrossUI.
 - `PathsExample`, an app showcasing the use of ``Path`` to draw various shapes.
 - `WebViewExample`, an app showcasing the use of ``WebView`` to display websites. Only works on Apple platforms so far.
+- `AdvancedCustomizationExample`, an app showcasing SwiftCrossUI's more advanced APIs for customizing the underlying native views of your app.
 
 ## Running examples
 
-Running the examples requires [Swift Bundler](https://github.com/stackotter/swift-bundler), which provides consistent behavior across platforms and enables running SwiftPM-based apps on iOS/tvOS devices and simulators.
+Running the examples requires [Swift Bundler](https://github.com/moreSwift/swift-bundler), which provides consistent behavior across platforms and enables running SwiftPM-based apps on iOS/tvOS devices and simulators.
 
-To install Swift Bundler, follow [its official installation instructions](https://github.com/stackotter/swift-bundler?tab=readme-ov-file#installation-).
+To install Swift Bundler, follow [its official installation instructions](https://github.com/moreSwift/swift-bundler?tab=readme-ov-file#installation-).
 
 ```sh
-git clone https://github.com/stackotter/swift-cross-ui
+git clone https://github.com/moreSwift/swift-cross-ui
 cd swift-cross-ui/Examples
 
 # Run on host machine

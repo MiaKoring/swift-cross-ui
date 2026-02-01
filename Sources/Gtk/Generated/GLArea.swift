@@ -125,7 +125,7 @@ open class GLArea: Widget {
         super.didMoveToParent()
 
         addSignal(name: "create-context") { [weak self] () in
-            guard let self = self else { return }
+            guard let self else { return }
             self.createContext?(self)
         }
 
@@ -137,7 +137,7 @@ open class GLArea: Widget {
 
         addSignal(name: "render", handler: gCallback(handler1)) {
             [weak self] (param0: OpaquePointer) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.render?(self, param0)
         }
 
@@ -149,7 +149,7 @@ open class GLArea: Widget {
 
         addSignal(name: "resize", handler: gCallback(handler2)) {
             [weak self] (param0: Int, param1: Int) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.resize?(self, param0, param1)
         }
 
@@ -161,7 +161,7 @@ open class GLArea: Widget {
 
         addSignal(name: "notify::allowed-apis", handler: gCallback(handler3)) {
             [weak self] (param0: OpaquePointer) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.notifyAllowedApis?(self, param0)
         }
 
@@ -173,7 +173,7 @@ open class GLArea: Widget {
 
         addSignal(name: "notify::api", handler: gCallback(handler4)) {
             [weak self] (param0: OpaquePointer) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.notifyApi?(self, param0)
         }
 
@@ -185,7 +185,7 @@ open class GLArea: Widget {
 
         addSignal(name: "notify::auto-render", handler: gCallback(handler5)) {
             [weak self] (param0: OpaquePointer) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.notifyAutoRender?(self, param0)
         }
 
@@ -197,7 +197,7 @@ open class GLArea: Widget {
 
         addSignal(name: "notify::context", handler: gCallback(handler6)) {
             [weak self] (param0: OpaquePointer) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.notifyContext?(self, param0)
         }
 
@@ -209,7 +209,7 @@ open class GLArea: Widget {
 
         addSignal(name: "notify::has-depth-buffer", handler: gCallback(handler7)) {
             [weak self] (param0: OpaquePointer) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.notifyHasDepthBuffer?(self, param0)
         }
 
@@ -221,7 +221,7 @@ open class GLArea: Widget {
 
         addSignal(name: "notify::has-stencil-buffer", handler: gCallback(handler8)) {
             [weak self] (param0: OpaquePointer) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.notifyHasStencilBuffer?(self, param0)
         }
 
@@ -233,7 +233,7 @@ open class GLArea: Widget {
 
         addSignal(name: "notify::use-es", handler: gCallback(handler9)) {
             [weak self] (param0: OpaquePointer) in
-            guard let self = self else { return }
+            guard let self else { return }
             self.notifyUseEs?(self, param0)
         }
     }

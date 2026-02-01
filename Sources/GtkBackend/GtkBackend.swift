@@ -11,12 +11,6 @@ extension App {
     }
 }
 
-extension SwiftCrossUI.Color {
-    public var gtkColor: Gtk.Color {
-        return Gtk.Color(red, green, blue, alpha)
-    }
-}
-
 public final class GtkBackend: AppBackend {
     public typealias Window = Gtk.ApplicationWindow
     public typealias Widget = Gtk.Widget
@@ -43,6 +37,7 @@ public final class GtkBackend: AppBackend {
     public let canRevealFiles = true
     public let deviceClass = DeviceClass.desktop
     public let defaultSheetCornerRadius = 10
+    public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical]
 
     var gtkApp: Application
 
@@ -54,6 +49,28 @@ public final class GtkBackend: AppBackend {
     /// All current windows associated with the application. Doesn't include the
     /// precreated window until it gets 'created' via `createWindow`.
     var windows: [Window] = []
+
+    private struct LogLocation: Hashable, Equatable {
+        let file: String
+        let line: Int
+        let column: Int
+    }
+
+    private var logsPerformed: Set<LogLocation> = []
+
+    func debugLogOnce(
+        _ message: String,
+        file: String = #file,
+        line: Int = #line,
+        column: Int = #column
+    ) {
+        #if DEBUG
+            let location = LogLocation(file: file, line: line, column: column)
+            if logsPerformed.insert(location).inserted {
+                logger.notice("\(message)")
+            }
+        #endif
+    }
 
     // A separate initializer to satisfy ``AppBackend``'s requirements.
     public convenience init() {
@@ -124,7 +141,7 @@ public final class GtkBackend: AppBackend {
 
     public func createWindow(withDefaultSize defaultSize: SIMD2<Int>?) -> Window {
         let window: Gtk.ApplicationWindow
-        if let precreatedWindow = precreatedWindow {
+        if let precreatedWindow {
             self.precreatedWindow = nil
             window = precreatedWindow
         } else {
@@ -133,7 +150,7 @@ public final class GtkBackend: AppBackend {
 
         windows.append(window)
 
-        if let defaultSize = defaultSize {
+        if let defaultSize {
             window.defaultSize = Size(
                 width: defaultSize.x,
                 height: defaultSize.y
@@ -149,7 +166,18 @@ public final class GtkBackend: AppBackend {
         window.title = title
     }
 
-    public func setResizability(ofWindow window: Window, to resizable: Bool) {
+    public func setBehaviors(
+        ofWindow window: Window,
+        closable: Bool,
+        minimizable: Bool,
+        resizable: Bool
+    ) {
+        // FIXME: This doesn't seem to work on macOS at least
+        window.deletable = closable
+
+        // TODO: Figure out if there's some magic way to disable minimization
+        //   in a framework where the minimize button usually doesn't even exist
+
         window.resizable = resizable
     }
 
@@ -192,8 +220,18 @@ public final class GtkBackend: AppBackend {
         child.preemptAllocatedSize(allocatedWidth: newSize.x, allocatedHeight: newSize.y)
     }
 
-    public func setMinimumSize(ofWindow window: Window, to minimumSize: SIMD2<Int>) {
+    public func setSizeLimits(
+        ofWindow window: Window,
+        minimum minimumSize: SIMD2<Int>,
+        maximum maximumSize: SIMD2<Int>?
+    ) {
         window.setMinimumSize(to: Size(width: minimumSize.x, height: minimumSize.y))
+
+        // NB: GTK does not support setting maximum sizes for widgets. It just doesn't.
+        // https://discourse.gnome.org/t/how-to-build-fixed-size-windows-in-gtk-4/22807/10
+        if maximumSize != nil {
+            debugLogOnce("GTK does not support setting maximum window sizes")
+        }
     }
 
     public func setResizeHandler(
@@ -263,7 +301,9 @@ public final class GtkBackend: AppBackend {
         actionNamespace: String,
         actionPrefix: String?
     ) -> GMenu {
-        let model = GMenu()
+        var currentSection = GMenu()
+        var previousSections: [GMenu] = []
+
         for (i, item) in menu.items.enumerated() {
             let actionName =
                 if let actionPrefix {
@@ -275,12 +315,30 @@ public final class GtkBackend: AppBackend {
             switch item {
                 case .button(let label, let action):
                     if let action {
-                        actionMap.addAction(named: actionName, action: action)
+                        actionMap.addAction(GSimpleAction(name: actionName, action: action))
                     }
 
-                    model.appendItem(label: label, actionName: "\(actionNamespace).\(actionName)")
+                    currentSection.appendItem(
+                        label: label,
+                        actionName: "\(actionNamespace).\(actionName)"
+                    )
+                case .toggle(let label, let value, let onChange):
+                    actionMap.addAction(
+                        GSimpleAction(name: actionName, state: value, action: onChange)
+                    )
+
+                    currentSection.appendItem(
+                        label: label,
+                        actionName: "\(actionNamespace).\(actionName)"
+                    )
+                case .separator:
+                    // GTK[3] doesn't have explicit separators per se, but instead deals with
+                    // sections (actually quite similar to what you can do in SwiftUI with the
+                    // Section view). It'll automatically draw separators between sections.
+                    previousSections.append(currentSection)
+                    currentSection = GMenu()
                 case .submenu(let submenu):
-                    model.appendSubmenu(
+                    currentSection.appendSubmenu(
                         label: submenu.label,
                         content: renderMenu(
                             submenu.content,
@@ -291,7 +349,17 @@ public final class GtkBackend: AppBackend {
                     )
             }
         }
-        return model
+
+        if previousSections.isEmpty {
+            // There are no dividers; just return the current section to keep the menu tree flat.
+            return currentSection
+        } else {
+            let model = GMenu()
+            for section in previousSections + [currentSection] {
+                model.appendSection(label: nil, content: section)
+            }
+            return model
+        }
     }
 
     private func renderMenuBar(_ submenus: [ResolvedMenu.Submenu]) -> GMenu {
@@ -334,7 +402,7 @@ public final class GtkBackend: AppBackend {
         g_idle_add_full(
             0,
             { context in
-                guard let context = context else {
+                guard let context else {
                     fatalError("Gtk action callback called without context")
                 }
 
@@ -360,7 +428,7 @@ public final class GtkBackend: AppBackend {
             0,
             guint(max(delay, 0)),
             { context in
-                guard let context = context else {
+                guard let context else {
                     fatalError("Gtk action callback called without context")
                 }
 
@@ -428,9 +496,9 @@ public final class GtkBackend: AppBackend {
         container.removeAllChildren()
     }
 
-    public func addChild(_ child: Widget, to container: Widget) {
+    public func insert(_ child: Widget, into container: Widget, at index: Int) {
         let container = container as! Fixed
-        container.put(child, x: 0, y: 0)
+        container.put(child, index: index, x: 0, y: 0)
     }
 
     public func setPosition(ofChildAt index: Int, in container: Widget, to position: SIMD2<Int>) {
@@ -438,16 +506,30 @@ public final class GtkBackend: AppBackend {
         container.move(container.children[index], x: Double(position.x), y: Double(position.y))
     }
 
-    public func removeChild(_ child: Widget, from container: Widget) {
+    public func remove(childAt index: Int, from container: Widget) {
         let container = container as! Fixed
+        let child = container.children[index]
         container.remove(child)
+    }
+
+    public func swap(childAt firstIndex: Int, withChildAt secondIndex: Int, in container: Widget) {
+        // Gtk.Fixed doesn't let us rearrange children, so we just swap them in
+        // our own list so that at least everything works on the SCUI side. The
+        // only side effect of this approach is that overlapping widgets may
+        // end up with unexpected z ordering. If that becomes an issue we may
+        // have to make a custom replacement for Gtk.Fixed.
+        let container = container as! Fixed
+        container.children.swapAt(firstIndex, secondIndex)
     }
 
     public func createColorableRectangle() -> Widget {
         return Box()
     }
 
-    public func setColor(ofColorableRectangle widget: Widget, to color: SwiftCrossUI.Color) {
+    public func setColor(
+        ofColorableRectangle widget: Widget,
+        to color: SwiftCrossUI.Color.Resolved
+    ) {
         widget.css.set(property: .backgroundColor(color.gtkColor))
     }
 
@@ -1049,7 +1131,7 @@ public final class GtkBackend: AppBackend {
         // Compute styles
         let menuBackground: Gtk.Color
         let menuItemHoverBackground: Gtk.Color
-        let foreground = environment.suggestedForegroundColor.gtkColor
+        let foreground = environment.suggestedForegroundColor.resolve(in: environment).gtkColor
         switch environment.colorScheme {
             case .light:
                 menuBackground = Gtk.Color(1, 1, 1)
@@ -1343,8 +1425,8 @@ public final class GtkBackend: AppBackend {
     public func renderPath(
         _ path: Path,
         container: Widget,
-        strokeColor: SwiftCrossUI.Color,
-        fillColor: SwiftCrossUI.Color,
+        strokeColor: SwiftCrossUI.Color.Resolved,
+        fillColor: SwiftCrossUI.Color.Resolved,
         overrideStrokeStyle: StrokeStyle?
     ) {
         let drawingArea = container as! Gtk.DrawingArea
@@ -1352,7 +1434,7 @@ public final class GtkBackend: AppBackend {
         // We don't actually care about leaking backends, but might as well use
         // a weak reference anyway.
         drawingArea.setDrawFunc { [weak self] cairo, _, _ in
-            guard let self = self, let path = path.path else {
+            guard let self, let path = path.path else {
                 return
             }
 
@@ -1397,7 +1479,7 @@ public final class GtkBackend: AppBackend {
                 Double(fillColor.red),
                 Double(fillColor.green),
                 Double(fillColor.blue),
-                Double(fillColor.alpha)
+                Double(fillColor.opacity)
             )
             cairo_set_source(cairo, fillPattern)
             cairo_fill_preserve(cairo)
@@ -1407,7 +1489,7 @@ public final class GtkBackend: AppBackend {
                 Double(strokeColor.red),
                 Double(strokeColor.green),
                 Double(strokeColor.blue),
-                Double(strokeColor.alpha)
+                Double(strokeColor.opacity)
             )
             cairo_set_source(cairo, strokePattern)
             cairo_stroke(cairo)
@@ -1510,6 +1592,36 @@ public final class GtkBackend: AppBackend {
         }
     }
 
+    public func createDatePicker() -> Widget {
+        let widget = Gtk.Calendar()
+        widget.date = Date()
+        return widget
+    }
+
+    public func updateDatePicker(
+        _ datePicker: Widget,
+        environment: EnvironmentValues,
+        date: Date,
+        range: ClosedRange<Date>,
+        components: DatePickerComponents,
+        onChange: @escaping (Date) -> Void
+    ) {
+        if components.contains(.hourAndMinute) {
+            debugLogOnce("Warning: time picker is unimplemented on GtkBackend")
+        }
+
+        let calendarWidget = datePicker as! Gtk.Calendar
+        calendarWidget.date = date
+        calendarWidget.daySelected = { calendarWidget in
+            let date = max(range.lowerBound, min(calendarWidget.date, range.upperBound))
+            calendarWidget.date = date
+            onChange(date)
+        }
+        calendarWidget.sensitive = environment.isEnabled
+        calendarWidget.css.clear()
+        calendarWidget.css.set(properties: Self.cssProperties(for: environment, isControl: true))
+    }
+
     // MARK: Helpers
 
     private func wrapInCustomRootContainer(_ widget: Widget) -> Widget {
@@ -1523,7 +1635,11 @@ public final class GtkBackend: AppBackend {
         isControl: Bool = false
     ) -> [CSSProperty] {
         var properties: [CSSProperty] = []
-        properties.append(.foregroundColor(environment.suggestedForegroundColor.gtkColor))
+        properties.append(
+            .foregroundColor(
+                environment.suggestedForegroundColor.resolve(in: environment).gtkColor
+            )
+        )
         let font = environment.resolvedFont
         switch font.identifier.kind {
             case .system:
@@ -1623,7 +1739,7 @@ public final class GtkBackend: AppBackend {
         cornerRadius: Double?,
         detents: [PresentationDetent],
         dragIndicatorVisibility: Visibility,
-        backgroundColor: SwiftCrossUI.Color?,
+        backgroundColor: SwiftCrossUI.Color.Resolved?,
         interactiveDismissDisabled: Bool
     ) {
         sheet.size = Size(width: size.x, height: size.y)
@@ -1631,7 +1747,12 @@ public final class GtkBackend: AppBackend {
 
         // Add a slight border to not be just a flat corner
         sheet.css.clear()
-        sheet.css.set(property: .border(color: SwiftCrossUI.Color.gray.gtkColor, width: 1))
+        sheet.css.set(
+            property: .border(
+                color: SwiftCrossUI.Color.gray.resolve(in: environment).gtkColor,
+                width: 1
+            )
+        )
 
         // Respect corner radius and background Color
         let radius = cornerRadius.map(Int.init) ?? defaultSheetCornerRadius
@@ -1721,5 +1842,174 @@ class CustomLabel: Label {
                 (Double(height) * Double(PANGO_SCALE))
                     .rounded(.towardZero))
         )
+    }
+}
+
+// This class is incomplete and unused. It was meant to implement time components for DatePicker,
+// but I couldn't get the spin buttons to work. TODOs include:
+// - Fix the spin buttons
+// - Update the strings in the AM/PM picker when the locale changes
+// - Replace the calls to calendar.date(bySetting:value:of:) with something that actually does what we need
+// - Implement range when possible
+@available(macOS 13, *)
+final class TimePicker: Box {
+    private var hourCycle: Locale.HourCycle
+    private let hourPicker: SpinButton
+    private let hourMinuteSeparator = Label(string: ":")
+    private let minutePicker = SpinButton(range: 0, max: 59, step: 1)
+    private var minuteSecondSeparator: Label?
+    private var secondPicker: SpinButton?
+    private var amPmPicker: DropDown?
+
+    var onChange: ((Date) -> Void)?
+
+    init() {
+        let hourCycle = Locale.current.hourCycle
+
+        self.hourCycle = hourCycle
+        self.hourPicker = SpinButton(
+            range: TimePicker.minHour(for: hourCycle),
+            max: TimePicker.maxHour(for: hourCycle),
+            step: 1
+        )
+
+        super.init(gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0))
+
+        self.hourPicker.wrap = true
+        self.hourPicker.orientation = .vertical
+        self.hourPicker.numeric = true
+        self.minutePicker.wrap = true
+        self.minutePicker.orientation = .vertical
+        self.minutePicker.numeric = true
+
+        self.add(self.hourPicker)
+        self.add(self.hourMinuteSeparator)
+        self.add(self.minutePicker)
+    }
+
+    func setEnabled(to isEnabled: Bool) {
+        hourPicker.sensitive = isEnabled
+    }
+
+    private static func minHour(for hourCycle: Locale.HourCycle) -> Double {
+        switch hourCycle {
+            case .zeroToEleven, .zeroToTwentyThree: 0
+            case .oneToTwelve, .oneToTwentyFour: 1
+            #if os(macOS)
+                @unknown default: fatalError("Unrecognized hourCycle \(hourCycle)")
+            #endif
+        }
+    }
+
+    private static func maxHour(for hourCycle: Locale.HourCycle) -> Double {
+        switch hourCycle {
+            case .zeroToEleven: 11
+            case .oneToTwelve: 12
+            case .zeroToTwentyThree: 23
+            case .oneToTwentyFour: 24
+            #if os(macOS)
+                @unknown default: fatalError("Unrecognized hourCycle \(hourCycle)")
+            #endif
+        }
+    }
+
+    func update(calendar: Foundation.Calendar, date: Date, showSeconds: Bool) {
+        let components = calendar.dateComponents([.hour, .minute, .second], from: date)
+
+        if showSeconds {
+            let secondsRange = calendar.range(of: .second, in: .minute, for: date) ?? 0..<60
+            if let secondPicker {
+                secondPicker.setRange(
+                    min: Double(secondsRange.lowerBound),
+                    max: Double(secondsRange.upperBound - 1)
+                )
+            } else {
+                minuteSecondSeparator = Label(string: ":")
+                secondPicker = SpinButton(
+                    range: Double(secondsRange.lowerBound),
+                    max: Double(secondsRange.upperBound - 1),
+                    step: 1
+                )
+                secondPicker!.numeric = true
+                secondPicker!.wrap = true
+                secondPicker!.text = "\(components.second!)"
+                insert(child: minuteSecondSeparator!, after: minutePicker)
+                insert(child: secondPicker!, after: minuteSecondSeparator!)
+            }
+        } else {
+            if let minuteSecondSeparator {
+                remove(minuteSecondSeparator)
+                self.minuteSecondSeparator = nil
+            }
+            if let secondPicker {
+                remove(secondPicker)
+                self.secondPicker = nil
+            }
+        }
+
+        let minutesRange = calendar.range(of: .minute, in: .hour, for: date) ?? 0..<60
+        minutePicker.setRange(
+            min: Double(minutesRange.lowerBound),
+            max: Double(minutesRange.upperBound - 1)
+        )
+        minutePicker.text = "\(components.minute!)"
+        minutePicker.valueChanged = { [unowned self] minutePicker in
+            guard let value = Int(exactly: minutePicker.value),
+                let newDate = calendar.date(bySetting: .minute, value: value, of: date)
+            else {
+                return
+            }
+            self.onChange?(newDate)
+        }
+
+        let hoursRange = calendar.range(of: .hour, in: .day, for: date)
+        self.hourCycle = (calendar.locale ?? .current).hourCycle
+        let effectiveHours = hoursRange?.map {
+            TimePicker.transformToRange($0, hourCycle: self.hourCycle)
+        }
+
+        hourPicker.setRange(
+            min: effectiveHours?.min().map(Double.init(_:))
+                ?? TimePicker.minHour(for: self.hourCycle),
+            max: effectiveHours?.max().map(Double.init(_:))
+                ?? TimePicker.maxHour(for: self.hourCycle)
+        )
+
+        if self.hourCycle == .oneToTwelve || self.hourCycle == .zeroToEleven {
+            if let amPmPicker {
+                // update strings if necessary
+            } else {
+                amPmPicker = DropDown(strings: [calendar.amSymbol, calendar.pmSymbol])
+                add(amPmPicker!)
+            }
+        } else {
+            if let amPmPicker {
+                remove(amPmPicker)
+                self.amPmPicker = nil
+            }
+        }
+
+        hourPicker.text =
+            "\(TimePicker.transformToRange(components.hour!, hourCycle: self.hourCycle))"
+        hourPicker.valueChanged = { [unowned self] hourPicker in
+            guard let value = Int(exactly: hourPicker.value),
+                let newDate = calendar.date(bySetting: .hour, value: value, of: date)
+            else {
+                return
+            }
+            self.onChange?(newDate)
+        }
+    }
+
+    private static func transformToRange(_ value: Int, hourCycle: Locale.HourCycle) -> Int {
+        switch hourCycle {
+            case .zeroToEleven: value % 12
+            case .oneToTwelve: (value + 11) % 12 + 1
+            case .zeroToTwentyThree: value % 24
+            case .oneToTwentyFour: (value + 23) % 24 + 1
+            #if os(macOS)
+                @unknown default: fatalError("Unrecognized hourCycle \(hourCycle)")
+            #endif
+        }
     }
 }

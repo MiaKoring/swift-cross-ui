@@ -33,8 +33,8 @@ public struct VStack<Content: View>: View {
         backend: Backend
     ) -> Backend.Widget {
         let vStack = backend.createContainer()
-        for child in children.widgets(for: backend) {
-            backend.addChild(child, to: vStack)
+        for (index, child) in children.widgets(for: backend).enumerated() {
+            backend.insert(child, into: vStack, at: index)
         }
         return vStack
     }
@@ -46,11 +46,17 @@ public struct VStack<Content: View>: View {
         environment: EnvironmentValues,
         backend: Backend
     ) -> ViewLayoutResult {
-        if !(children is TupleViewChildren) {
+        if !(children is TupleViewChildren || children is EmptyViewChildren) {
             // TODO: Make layout caching a ViewGraphNode feature so that we can handle
             //   these edge cases without a second thought. Would also make introducing
             //   a port of SwiftUI's Layout protocol much easier.
-            print("warning: VStack will not function correctly non-TupleView Content")
+            logger.warning(
+                "VStack will not function correctly with non-TupleView content",
+                metadata: [
+                    "childrenType": "\(type(of: children))",
+                    "contentType": "\(Content.self)",
+                ]
+            )
         }
         var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache()
         let result = LayoutSystem.computeStackLayout(

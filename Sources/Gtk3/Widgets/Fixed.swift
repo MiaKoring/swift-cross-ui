@@ -37,17 +37,23 @@ import CGtk3
 /// If you know none of these things are an issue for your application,
 /// and prefer the simplicity of `GtkFixed`, by all means use the
 /// widget. But you should be aware of the tradeoffs.
-public class Fixed: Widget {
+open class Fixed: Widget {
     public var children: [Widget] = []
 
     /// Creates a new `GtkFixed`.
-    public convenience init() {
-        self.init(gtk_fixed_new())
+    public init() {
+        super.init(gtk_fixed_new())
     }
 
     public func put(_ child: Widget, x: Int, y: Int) {
         gtk_fixed_put(castedPointer(), child.widgetPointer, gint(x), gint(y))
         children.append(child)
+        child.parentWidget = self
+    }
+
+    public func put(_ child: Widget, index: Int, x: Int, y: Int) {
+        gtk_fixed_put(castedPointer(), child.widgetPointer, gint(x), gint(y))
+        children.insert(child, at: index)
         child.parentWidget = self
     }
 

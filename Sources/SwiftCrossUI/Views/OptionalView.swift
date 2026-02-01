@@ -48,7 +48,7 @@ extension OptionalView: TypeSafeView {
     ) -> ViewLayoutResult {
         let hasToggled: Bool
         let result: ViewLayoutResult
-        if let view = view {
+        if let view {
             if let node = children.node {
                 result = node.computeLayout(
                     with: view,
@@ -90,7 +90,7 @@ extension OptionalView: TypeSafeView {
         if children.hasToggled {
             backend.removeAllChildren(of: widget)
             if let node = children.node {
-                backend.addChild(node.widget.into(), to: widget)
+                backend.insert(node.widget.into(), into: widget, at: 0)
                 backend.setPosition(ofChildAt: 0, in: widget, to: .zero)
             }
             children.hasToggled = false
@@ -116,7 +116,7 @@ class OptionalViewChildren<V: View>: ViewGraphNodeChildren {
     }
 
     var erasedNodes: [ErasedViewGraphNode] {
-        if let node = node {
+        if let node {
             [ErasedViewGraphNode(wrapping: node)]
         } else {
             []
@@ -131,7 +131,7 @@ class OptionalViewChildren<V: View>: ViewGraphNodeChildren {
         snapshot: ViewGraphSnapshotter.NodeSnapshot?,
         environment: EnvironmentValues
     ) {
-        if let view = view {
+        if let view {
             node = AnyViewGraphNode(
                 for: view,
                 backend: backend,
