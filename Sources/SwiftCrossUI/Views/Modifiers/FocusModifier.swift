@@ -2,8 +2,8 @@ extension View {
     /// Set wether a View is focusable
     /// Only has effect on out of the box interactable Views
     /// doesn't work on Views using onTapGesture instead of Button
-    public func focusable(_ isFocusable: Bool = true) -> some View {
-        FocusModifier(body: TupleView1(self), focusability: isFocusable ? .enabled : .disabled)
+    public func focusable(_ isFocusable: Bool) -> some View {
+        FocusModifier(body: TupleView1(self), focusability: isFocusable ? .unmodified : .disabled)
     }
 
     public func focusable(_ focusability: Focusability = .unmodified) -> some View {

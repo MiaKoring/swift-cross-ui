@@ -1,10 +1,3 @@
-//
-//  has.swift
-//  swift-cross-ui
-//
-//  Created by Mia Koring on 31.12.25.
-//
-
 /// Enables finer-grained control of ``View/focusable``
 ///
 /// ``Focusability/unmodified`` maintains the existing focus
@@ -30,8 +23,9 @@
 //   of altering the backend's graph with every change
 @frozen
 public enum Focusability: String, CaseIterable, Sendable, Codable {
-    /// Inserts a new tab stop into the focus chain.
-    case enabled
+    // Inserts a new tab stop into the focus chain
+    // disabled until backends properly support it, can currently be buggy in reverse
+    // case enabled
     /// Does not alter focus chain; view graph behaves as it would without the modifier
     case unmodified
     /// Prevents the view and its subtree from receiving focus by keyboard.

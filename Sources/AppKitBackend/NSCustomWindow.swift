@@ -163,5 +163,3 @@ extension NSView: FocusChainParticipant {
         canBecomeKeyView
     }
 }
-
-extension FocusabilityContainer: SwiftCrossUI.FocusabilityContainer {}

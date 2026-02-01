@@ -2,7 +2,7 @@ import AppKit
 import SwiftCrossUI
 
 // MARK: - Focusability
-final class FocusabilityContainer: NSView {
+final class FocusabilityContainer: NSView, SwiftCrossUI.FocusabilityContainer {
     private(set) var focusability: SwiftCrossUI.Focusability = .unmodified
 
     func setFocusability(_ newValue: SwiftCrossUI.Focusability) -> Bool {
@@ -19,11 +19,13 @@ final class FocusabilityContainer: NSView {
     }
 
     override var canBecomeKeyView: Bool {
-        focusability == .enabled
+        //focusability == .enabled
+        false
     }
 
     override var acceptsFirstResponder: Bool {
-        focusability == .enabled
+        //focusability == .enabled
+        false
     }
 
     override var focusRingType: NSFocusRingType {
@@ -41,13 +43,6 @@ final class FocusabilityContainer: NSView {
 
     override var focusRingMaskBounds: NSRect {
         subviews[0].frame
-    }
-
-    override func becomeFirstResponder() -> Bool {
-        setKeyboardFocusRingNeedsDisplay(subviews[0].frame)
-
-        let result = super.becomeFirstResponder()
-        return result
     }
 
     override func resignFirstResponder() -> Bool {

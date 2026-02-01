@@ -81,6 +81,7 @@ extension FocusChainManager {
         if let cached = cachedStop(following: widget),
             cached.canBeTabStop
         {
+            logger.info("used following cache for \(widget)")
             makeKey(cached)
             return
         }
@@ -90,6 +91,9 @@ extension FocusChainManager {
             let result = findNextAllowedFocusTarget(suggestion: next)
         else { return }
 
+        logger.info("found next: \(next)")
+        logger.info("\ncurrent: \(widget)\nnext:\(next)")
+
         makeKey(result)
         setRelationship(result, following: widget)
     }
@@ -98,10 +102,10 @@ extension FocusChainManager {
         if let cached = cachedStop(preceding: widget),
             cached.canBeTabStop
         {
+            logger.info("used previous cache for \(widget)")
             makeKey(cached)
             return
         }
-
         guard
             let previous = closestValidStop(preceding: widget),
             let result = findNextAllowedFocusTarget(
@@ -109,6 +113,8 @@ extension FocusChainManager {
                 forward: false
             )
         else { return }
+        logger.info("found previous: \(previous)")
+        logger.info("\ncurrent: \(widget)\nprevious:\(previous)")
 
         makeKey(result)
         setRelationship(widget, following: result)

@@ -1,10 +1,3 @@
-//
-//  ControlsFocusabilityApp.swift
-//  Examples
-//
-//  Created by Mia Koring on 31.12.25.
-//
-
 import DefaultBackend
 import SwiftCrossUI
 
@@ -53,7 +46,7 @@ struct ControlsFocusabilityApp: App {
                                 .focused($focused, equals: 1)
                                 Text("Count: \(count)")
                             }
-                            Toggle("focusable", active: $isButtonFocusable)
+                            Toggle("focusable", isOn: $isButtonFocusable)
                                 .focusable(false)
                         }
                         .padding(.bottom, 20)
@@ -62,13 +55,13 @@ struct ControlsFocusabilityApp: App {
                             HStack {
                                 VStack {
                                     Text("Toggle button")
-                                    Toggle("Toggle me!", active: $exampleButtonState)
+                                    Toggle("Toggle me!", isOn: $exampleButtonState)
                                         .toggleStyle(.button)
                                         .focusable(isToggleButtonFocusable)
                                         .focused($focused, equals: 2)
                                     Text("Currently enabled: \(exampleButtonState)")
                                 }
-                                Toggle("focusable", active: $isToggleButtonFocusable)
+                                Toggle("focusable", isOn: $isToggleButtonFocusable)
                                     .focusable(false)
                             }
                             .padding(.bottom, 20)
@@ -77,13 +70,13 @@ struct ControlsFocusabilityApp: App {
                         HStack {
                             VStack {
                                 Text("Toggle switch")
-                                Toggle("Toggle me:", active: $exampleSwitchState)
+                                Toggle("Toggle me:", isOn: $exampleSwitchState)
                                     .toggleStyle(.switch)
-                                    .focusable(isToggleSwitchFocusable)
+                                    .focusable(isToggleButtonFocusable)
                                     .focused($focused, equals: 3)
                                 Text("Currently enabled: \(exampleSwitchState)")
                             }
-                            Toggle("focusable", active: $isToggleSwitchFocusable)
+                            Toggle("focusable", isOn: $isToggleSwitchFocusable)
                                 .focusable(false)
                         }
 
@@ -91,13 +84,13 @@ struct ControlsFocusabilityApp: App {
                             HStack {
                                 VStack {
                                     Text("Checkbox")
-                                    Toggle("Toggle me:", active: $exampleCheckboxState)
+                                    Toggle("Toggle me:", isOn: $exampleCheckboxState)
                                         .toggleStyle(.checkbox)
-                                        .focusable(isCheckboxFocusable)
+                                        .focusable(isToggleButtonFocusable)
                                         .focused($focused, equals: 4)
                                     Text("Currently enabled: \(exampleCheckboxState)")
                                 }
-                                Toggle("focusable", active: $isCheckboxFocusable)
+                                Toggle("focusable", isOn: $isCheckboxFocusable)
                                     .focusable(false)
                             }
                         #endif
@@ -105,13 +98,13 @@ struct ControlsFocusabilityApp: App {
                             HStack {
                                 VStack {
                                     Text("Slider")
-                                    Slider($sliderValue, minimum: 0, maximum: 10)
+                                    Slider(value: $sliderValue, in: 0...10)
                                         .frame(maxWidth: 200)
-                                        .focusable(isSliderFocusable)
+                                        .focusable(isToggleButtonFocusable)
                                         .focused($focused, equals: 5)
                                     Text("Value: \(String(format: "%.02f", sliderValue))")
                                 }
-                                Toggle("focusable", active: $isSliderFocusable)
+                                Toggle("focusable", isOn: $isSliderFocusable)
                                     .focusable(false)
                             }
                         #endif
@@ -119,11 +112,11 @@ struct ControlsFocusabilityApp: App {
                             VStack {
                                 Text("Text field")
                                 TextField("Text field", text: $text)
-                                    .focusable(isTextFieldFocusable)
+                                    .focusable(isToggleButtonFocusable)
                                     .focused($focused, equals: 6)
                                 Text("Value: \(text)")
                             }
-                            Toggle("focusable", active: $isTextFieldFocusable)
+                            Toggle("focusable", isOn: $isTextFieldFocusable)
                                 .focusable(false)
                         }
 
@@ -136,19 +129,19 @@ struct ControlsFocusabilityApp: App {
                                         of: ["Vanilla", "Chocolate", "Strawberry"],
                                         selection: $flavor
                                     )
-                                    .focusable(isPickerFocusable)
+                                    .focusable(isToggleButtonFocusable)
                                     .focused($focused, equals: 7)
                                 }
                                 Text("You chose: \(flavor ?? "Nothing yet!")")
                             }
-                            Toggle("focusable", active: $isPickerFocusable)
+                            Toggle("focusable", isOn: $isPickerFocusable)
                                 .focusable(false)
                         }
                     }
                     .padding()
                     .disabled(!enabled)
 
-                    Toggle(enabled ? "Disable all" : "Enable all", active: $enabled)
+                    Toggle(enabled ? "Disable all" : "Enable all", isOn: $enabled)
                         .padding()
                         .focusable(false)
                 }
