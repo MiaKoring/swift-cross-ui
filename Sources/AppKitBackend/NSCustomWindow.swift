@@ -7,14 +7,12 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
     var customDelegate = Delegate()
     var persistentUndoManager = UndoManager()
 
-    var startupHappened: Bool? = nil
-    var shouldPassthroughFocusRequests: Bool = false
-
     /// A reference to the sheet currently presented on top of this window, if any.
     /// If the sheet itself has another sheet presented on top of it, then that doubly
     /// nested sheet gets stored as the sheet's nestedSheet, and so on.
     var nestedSheet: NSCustomSheet?
 
+    var lastBackingScaleFactor: CGFloat?
     /// Allows the backing scale factor to be overridden. Useful for keeping
     /// UI tests consistent across devices.
     ///
@@ -30,6 +28,13 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
 
         func setHandler(_ resizeHandler: @escaping (SIMD2<Int>) -> Void) {
             self.resizeHandler = resizeHandler
+        }
+
+        func windowWillClose(_ notification: Notification) {
+            guard let window = notification.object as? NSCustomWindow else { return }
+
+            // Not sure if this is actually needed
+            NotificationCenter.default.removeObserver(window)
         }
 
         func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {

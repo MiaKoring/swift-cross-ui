@@ -9,7 +9,7 @@ import Foundation
 
 /// A property wrapper type that can read and write a value that SwiftUI updates as the placement of focus within the scene changes.
 @propertyWrapper
-public struct FocusState<Value: Hashable>: DynamicProperty, StateProperty {
+public struct FocusState<Value: Hashable>: DynamicProperty, ObservableProperty {
     class Storage {
         // This inner box is what stays constant between view updates. The
         // outer box (Storage) is used so that we can assign this box to
@@ -59,7 +59,7 @@ public struct FocusState<Value: Hashable>: DynamicProperty, StateProperty {
 
     var storage: Storage
 
-    var didChange: Publisher {
+    public var didChange: Publisher {
         storage.box.didChange
     }
 
@@ -110,9 +110,9 @@ public struct FocusState<Value: Hashable>: DynamicProperty, StateProperty {
         }
     }
 
-    func tryRestoreFromSnapshot(_ snapshot: Data) {}
+    public func tryRestoreFromSnapshot(_ snapshot: Data) {}
 
-    func snapshot() throws -> Data? { nil }
+    public func snapshot() throws -> Data? { nil }
 
     /// A property wrapper type that can read and write a value that indicates the current focus location.
     @propertyWrapper

@@ -88,7 +88,7 @@ struct FocusModifier<Content: View>: TypeSafeView {
     ) -> Backend.Widget {
         let container = backend.createFocusContainer()
 
-        backend.addChild(children.child0.widget.into(), to: container)
+        backend.insert(children.child0.widget.into(), into: container, at: 0)
 
         return container
     }

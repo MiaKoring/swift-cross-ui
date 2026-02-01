@@ -455,38 +455,28 @@ public final class AppKitBackend: AppBackend {
     public func show(widget: Widget) {}
 
     class NSContainerView: NSView {
-        var children: [NSView] = []
-
-        override func addSubview(_ view: NSView) {
-            children.append(view)
+        override func addSubview(_ view: Widget) {
             super.addSubview(view)
         }
 
-        func removeSubview(_ view: NSView) {
+        func removeSubview(at index: Int) {
+            let view = super.subviews.remove(at: index)
+
             if let window = self.window as? NSCustomWindow {
                 window.removeFromBypassCache(view)
             }
-
-            children.removeAll { other in
-                view === other
-            }
-            view.removeFromSuperview()
         }
 
         func removeAllSubviews() {
             let window = self.window as? NSCustomWindow
+            window?.removeFromBypassCache(subviews)
 
-            for view in children {
-                view.removeFromSuperview()
-            }
-
-            window?.removeFromBypassCache(children)
-            children = []
+            subviews.removeAll()
         }
     }
 
     public func createContainer() -> Widget {
-        let container = NSContainerView
+        let container = NSContainerView()
         container.translatesAutoresizingMaskIntoConstraints = false
         return container
     }
@@ -2402,67 +2392,6 @@ class NSSplitViewResizingDelegate: NSObject, NSSplitViewDelegate {
                 // of the split view resizing issues.
                 splitView.setPosition(newWidth, ofDividerAt: 0)
             }
-        }
-    }
-}
-
-public class NSCustomWindow: NSWindow {
-    var customDelegate = Delegate()
-    var persistentUndoManager = UndoManager()
-
-    /// A reference to the sheet currently presented on top of this window, if any.
-    /// If the sheet itself has another sheet presented on top of it, then that doubly
-    /// nested sheet gets stored as the sheet's nestedSheet, and so on.
-    var nestedSheet: NSCustomSheet?
-
-    var lastBackingScaleFactor: CGFloat?
-    /// Allows the backing scale factor to be overridden. Useful for keeping
-    /// UI tests consistent across devices.
-    ///
-    /// Idea from https://github.com/pointfreeco/swift-snapshot-testing/pull/533
-    public var backingScaleFactorOverride: CGFloat?
-
-    public override var backingScaleFactor: CGFloat {
-        backingScaleFactorOverride ?? super.backingScaleFactor
-    }
-
-    class Delegate: NSObject, NSWindowDelegate {
-        var resizeHandler: ((SIMD2<Int>) -> Void)?
-
-        func setHandler(_ resizeHandler: @escaping (SIMD2<Int>) -> Void) {
-            self.resizeHandler = resizeHandler
-        }
-
-        func windowWillClose(_ notification: Notification) {
-            guard let window = notification.object as? NSCustomWindow else { return }
-
-            // Not sure if this is actually needed
-            NotificationCenter.default.removeObserver(window)
-        }
-
-        func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
-            guard let resizeHandler else {
-                return frameSize
-            }
-
-            let contentSize = sender.contentRect(
-                forFrameRect: NSRect(
-                    x: sender.frame.origin.x, y: sender.frame.origin.y, width: frameSize.width,
-                    height: frameSize.height)
-            )
-
-            resizeHandler(
-                SIMD2(
-                    Int(contentSize.width.rounded(.towardZero)),
-                    Int(contentSize.height.rounded(.towardZero))
-                )
-            )
-
-            return frameSize
-        }
-
-        func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? {
-            (window as! NSCustomWindow).persistentUndoManager
         }
     }
 }
