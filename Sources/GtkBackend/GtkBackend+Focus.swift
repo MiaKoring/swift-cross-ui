@@ -101,6 +101,9 @@ extension GtkBackend {
     }
     
     public func setFocusEffectDisabled(on widget:  Gtk.Widget, disabled: Bool) {
+        if disabled {
+            
+        }
         //widget.focusRingType = disabled ? .none : .default
     }
 }

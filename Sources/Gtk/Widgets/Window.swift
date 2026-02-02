@@ -9,7 +9,6 @@ open class Window: Widget {
 
     public convenience init() {
         self.init(gtk_window_new())
-        gtk_window_set_focus_visible(self.castedPointer(), true.toGBoolean())
     }
 
     @GObjectProperty(named: "title") public var title: String?
