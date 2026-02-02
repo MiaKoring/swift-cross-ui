@@ -141,6 +141,17 @@ open class Widget: GObject {
         }
     }
     
+    /// Whether the widget or any of its descendents can accept the input focus.
+    /// Set to `false` to disable everything below it.
+    public var canFocus: Bool {
+        get {
+            gtk_widget_get_can_focus(widgetPointer).toBool()
+        }
+        set {
+            gtk_widget_set_can_focus(widgetPointer, newValue.toGBoolean())
+        }
+    }
+    
     /// Makes the widget the key view in the window it belongs to
     /// Equivalent to 'NSWindow/makeFirstResponder(_)'
     public func makeKey() {

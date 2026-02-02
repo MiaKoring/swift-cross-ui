@@ -96,12 +96,7 @@ extension GtkBackend {
         _ widget: Gtk.Widget,
         focusability: Focusability
     ) -> ObjectIdentifier? {
-        /*let container = widget as! FocusabilityContainer
-        if container.setFocusability(focusability),
-           let window = container.window
-        {
-            return ObjectIdentifier(window)
-        }*/
+        widget.canFocus = focusability != .disabled
         return nil
     }
     
