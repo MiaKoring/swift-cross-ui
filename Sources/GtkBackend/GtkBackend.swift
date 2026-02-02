@@ -38,6 +38,9 @@ public final class GtkBackend: AppBackend {
     public let deviceClass = DeviceClass.desktop
     public let defaultSheetCornerRadius = 10
     public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical]
+    
+    let focusManager = FocusStateManager()
+    public let updateGroup = UpdateGroup()
 
     var gtkApp: Application
 

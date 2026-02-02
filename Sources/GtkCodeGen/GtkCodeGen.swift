@@ -124,6 +124,7 @@ struct GtkCodeGen {
         let gtk4AllowListedClasses = [
             "Picture", "DropDown", "Popover", "ListBox", "EventControllerMotion",
             "EventControllerKey",
+            "EventControllerFocus",
         ]
 
         for class_ in gir.namespace.classes {

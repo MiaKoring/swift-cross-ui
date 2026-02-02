@@ -1,10 +1,3 @@
-//
-//  WidgetGalleryApp.swift
-//  Examples
-//
-//  Created by Mia Koring on 31.12.25.
-//
-
 import DefaultBackend
 import SwiftCrossUI
 
@@ -20,6 +13,7 @@ struct WidgetGalleryApp: App {
         WindowGroup("Widget Gallery") {
             #hotReloadable {
                 ContentView()
+                .environment(\.colorScheme, .dark)
             }
         }
         .defaultSize(width: 400, height: 200)

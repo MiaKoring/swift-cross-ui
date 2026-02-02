@@ -127,6 +127,25 @@ open class Widget: GObject {
         eventControllers.append(controller)
         controller.registerSignals()
     }
+    
+    /// Wether the widget is currently visible
+    public var isVisible: Bool { gtk_widget_is_visible(widgetPointer).toBool() }
+    
+    /// Wether the widget participates in the focus-chain
+    public var isFocusable: Bool {
+        get {
+            gtk_widget_get_focusable(widgetPointer).toBool()
+        }
+        set {
+            gtk_widget_set_focusable(widgetPointer, newValue.toGBoolean())
+        }
+    }
+    
+    /// Makes the widget the key view in the window it belongs to
+    /// Equivalent to 'NSWindow/makeFirstResponder(_)'
+    public func makeKey() -> Bool {
+        gtk_widget_grab_focus(widgetPointer).toBool()
+    }
 
     @GObjectProperty(named: "name") public var name: String?
 

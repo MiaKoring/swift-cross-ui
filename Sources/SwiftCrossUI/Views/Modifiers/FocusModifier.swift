@@ -16,16 +16,16 @@ extension View {
         }
     }
 
-    public func focused<T, Value>(
-        _ focusBinding: FocusState<Value>.Binding,
-        equals match: T
-    ) -> some View where Value == T?, T: Hashable {
+    public func focused<Value>(
+        _ focusBinding: FocusState<Value?>.Binding,
+        equals match: Value
+    ) -> some View where Value: Hashable {
         EnvironmentModifier(self) { environment in
             environment.with(
                 \.focusObservers,
                 environment.focusObservers + [
                     FocusData(
-                        type: T.self,
+                        type: Value.self,
                         match: match,
                         set: {
                             focusBinding.wrappedValue = match
@@ -40,15 +40,15 @@ extension View {
         }
     }
 
-    public func focused<T, Value>(
-        _ focusBinding: FocusState<Value>.Binding
-    ) -> some View where Value == T, T == Bool {
+    public func focused(
+        _ focusBinding: FocusState<Bool>.Binding
+    ) -> some View {
         EnvironmentModifier(self) { environment in
             environment.with(
                 \.focusObservers,
                 environment.focusObservers + [
                     FocusData(
-                        type: T.self,
+                        type: Bool.self,
                         match: true,
                         set: {
                             focusBinding.wrappedValue = true

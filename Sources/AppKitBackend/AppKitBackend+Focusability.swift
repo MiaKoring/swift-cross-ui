@@ -52,14 +52,6 @@ final class FocusabilityContainer: NSView, SwiftCrossUI.FocusabilityContainer {
 }
 
 extension AppKitBackend {
-    public func resignFirstResponder(as widget: NSView) {
-        widget.resignFirstResponder()
-    }
-
-    public func requestFirstResponder(as widget: NSView) -> Bool {
-        widget.becomeFirstResponder()
-    }
-
     public func registerFocusObservers(
         _ data: [FocusData],
         on widget: NSView
