@@ -5,30 +5,32 @@ import Gtk
 class FocusStateManager {
     private var focusData = [ObjectIdentifier: Set<FocusData>]()
     private var lastFocused: ObjectIdentifier? = nil
-    var shouldSkip: Bool = false
     
     func register(_ data: [FocusData], for widget: Gtk.Widget) {
         focusData[ObjectIdentifier(widget)] = Set(data)
-        
+        guard ObjectIdentifier(widget) != lastFocused else { return }
         if data.contains(where: { $0.matches }),
-           !widget.isVisible,
-           widget.isFocusable
+           widget.isVisible,
+           (
+                widget.isFocusable ||
+                widget is Entry
+           )
         {
-            _ = widget.makeKey()
+            widget.makeKey()
         }
     }
     
     func handleFocusChange(of identifier: ObjectIdentifier, toState isFocused: Bool) {
         guard let data = focusData[identifier] else {
-            print("no data for \(identifier)")
             return
         }
         if isFocused {
+            lastFocused = identifier
             data.forEach { binding in
                 binding.set()
             }
         } else {
-            
+            lastFocused = nil
             data.forEach { binding in
                 binding.reset()
             }
@@ -44,6 +46,7 @@ extension GtkBackend {
         // Some widget's focus is managed by descendants
         // Therefore widget.isFocusable would be false on them
         if widget is Gtk.Entry {
+            focusManager.register(data, for: widget)
             guard !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) else {
                 print("\(widget) already has EventControllerFocus")
                 return
@@ -65,7 +68,6 @@ extension GtkBackend {
                 )
             }
             widget.addEventController(focusController)
-            focusManager.register(data, for: widget)
             return
         }
         guard

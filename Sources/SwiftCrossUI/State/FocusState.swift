@@ -1,10 +1,3 @@
-//
-//  FocusState.swift
-//  swift-cross-ui
-//
-//  Created by Mia Koring on 31.12.25.
-//
-
 import Foundation
 
 /// A property wrapper type that can read and write a value that SwiftUI updates as the placement of focus within the scene changes.

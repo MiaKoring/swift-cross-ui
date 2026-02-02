@@ -27,6 +27,10 @@ struct ContentView: View {
     var body: some View {
         Text("Focused widget: \(focus?.rawValue ?? "nil")")
             .frame(width: 200)
+
+        Button("Focus TextField") {
+            focus = .textField
+        }
         ScrollView {
             TextField(text: $data.textField)
                 .focusable()
@@ -35,7 +39,6 @@ struct ContentView: View {
                 .focused($focus, equals: .slider)
             /*ForEach(Widget.allCases) { widget in
                 widget.view(with: $data)
-                    .focusable()
                     .focused($focus, equals: widget)
             }*/
         }

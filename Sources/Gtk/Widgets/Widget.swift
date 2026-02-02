@@ -143,8 +143,17 @@ open class Widget: GObject {
     
     /// Makes the widget the key view in the window it belongs to
     /// Equivalent to 'NSWindow/makeFirstResponder(_)'
-    public func makeKey() -> Bool {
-        gtk_widget_grab_focus(widgetPointer).toBool()
+    public func makeKey() {
+        g_idle_add({ (data) -> Int32 in
+            print("focus setting called")
+            gtk_widget_grab_focus(data?.assumingMemoryBound(to: GtkWidget.self))
+            if let window = gtk_widget_get_root(data?.assumingMemoryBound(to: GtkWidget.self)) {
+                let windowPtr = UnsafeMutablePointer<GtkWindow>(window)
+                gtk_window_set_focus_visible(windowPtr, true.toGBoolean())
+                print("set visible on window")
+            }
+            return 0
+        }, widgetPointer)
     }
 
     @GObjectProperty(named: "name") public var name: String?
