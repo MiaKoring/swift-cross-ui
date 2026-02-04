@@ -35,7 +35,15 @@ open class Widget: GObject {
     public lazy var css: CSSBlock = CSSBlock(forClass: customCSSClass) {
         didSet {
             guard oldValue != css else { return }
-            cssProvider.loadCss(from: css.stringRepresentation)
+            cssProvider.loadCss(from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)")
+        }
+    }
+    
+    /// The CSS rules applied directly to this widget.
+    public lazy var focusCSS: CSSBlock = CSSBlock(forClass: "\(customCSSClass):focus") {
+        didSet {
+            guard oldValue != focusCSS else { return }
+            cssProvider.loadCss(from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)")
         }
     }
 

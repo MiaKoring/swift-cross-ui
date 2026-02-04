@@ -30,7 +30,7 @@ struct HoverExample: App {
 
 struct CellView: View {
     @State var timer: Timer?
-    @State var opacity: Float = 0.0
+    @State var opacity: Double = 0.0
 
     var body: some View {
         Rectangle()

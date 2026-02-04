@@ -1,4 +1,5 @@
 import SwiftCrossUI
+import Foundation
 import Gtk
 // MARK: - FocusState
 
@@ -48,7 +49,7 @@ extension GtkBackend {
         if widget is Gtk.Entry {
             focusManager.register(data, for: widget)
             guard !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) else {
-                print("\(widget) already has EventControllerFocus")
+                print("\(widget) already has EventControllerFocus \(Date().timeIntervalSince1970)")
                 return
             }
             print("added focus controller to \(widget)")
@@ -102,8 +103,9 @@ extension GtkBackend {
     
     public func setFocusEffectDisabled(on widget:  Gtk.Widget, disabled: Bool) {
         if disabled {
-            
+            widget.focusCSS.set(property: CSSProperty(key: "outline", value: "none"))
+            return
         }
-        //widget.focusRingType = disabled ? .none : .default
+        widget.focusCSS = CSSBlock(forClass: widget.focusCSS.cssClass)
     }
 }
