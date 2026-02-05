@@ -726,12 +726,22 @@ public final class GtkBackend: AppBackend {
         environment: EnvironmentValues
     ) -> SIMD2<Int> {
         let pango = Pango(for: widget)
-        let (width, height) = pango.getTextSize(
-            text,
-            ellipsize: (widget as! CustomLabel).ellipsize,
-            proposedWidth: proposedWidth.map(Double.init),
-            proposedHeight: proposedHeight.map(Double.init)
-        )
+        var (width, height): (Int, Int)
+        if let widget = widget as? CustomLabel {
+           (width, height) = pango.getTextSize(
+                text,
+                ellipsize: widget.ellipsize,
+                proposedWidth: proposedWidth.map(Double.init),
+                proposedHeight: proposedHeight.map(Double.init)
+            )
+        } else {
+            (width, height) = pango.getTextSize(
+                text,
+                ellipsize: nil,
+                proposedWidth: proposedWidth.map(Double.init),
+                proposedHeight: proposedHeight.map(Double.init)
+            )
+        }
         return SIMD2(width, height)
     }
 

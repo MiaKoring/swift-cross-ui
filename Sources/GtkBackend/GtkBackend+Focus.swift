@@ -17,7 +17,8 @@ class FocusStateManager {
            widget.isVisible,
            (
                 widget.isFocusable ||
-                widget is Entry
+                widget is Gtk.Entry ||
+                widget is Gtk.DropDown
            )
         {
             widget.makeKey()
@@ -47,23 +48,28 @@ extension GtkBackend {
     ) {
         // Some widget's focus is managed by descendants
         // Therefore widget.isFocusable would be false on them
-        if widget is Gtk.Entry {
+        //
+        // In the case of Calendar there are multiple points inside it that can
+        // be focused in addition to itself, so enter and leave is the best
+        // approach here as well.
+        if
+            widget is Gtk.Entry ||
+            widget is Gtk.Calendar ||
+            widget is Gtk.DropDown
+        {
             focusManager.register(data, for: widget)
             guard !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) else {
-                print("\(widget) already has EventControllerFocus \(Date().timeIntervalSince1970)")
                 return
             }
-            print("added focus controller to \(widget)")
+            
             let focusController = EventControllerFocus()
             focusController.enter = { _ in
-                print("Entry focus entered")
                 self.focusManager.handleFocusChange(
                     of: ObjectIdentifier(widget),
                     toState: true
                 )
             }
             focusController.leave = { _ in
-                print("Entry focus left")
                 self.focusManager.handleFocusChange(
                     of: ObjectIdentifier(widget),
                     toState: false
@@ -80,7 +86,6 @@ extension GtkBackend {
         if !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) {
             let focusController = EventControllerFocus()
             focusController.notifyIsFocus = { _, _ in
-                print("Focus of \(widget) changed to \(focusController.isFocus)")
                 self.focusManager.handleFocusChange(
                     of: ObjectIdentifier(widget),
                     toState: focusController.isFocus
