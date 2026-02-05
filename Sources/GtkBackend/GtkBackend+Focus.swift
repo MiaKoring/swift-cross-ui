@@ -95,9 +95,8 @@ extension GtkBackend {
     public func updateFocusContainer(
         _ widget: Gtk.Widget,
         focusability: Focusability
-    ) -> ObjectIdentifier? {
+    ) {
         widget.canFocus = focusability != .disabled
-        return nil
     }
 
     public func setFocusEffectDisabled(on widget: Gtk.Widget, disabled: Bool) {

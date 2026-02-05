@@ -85,10 +85,9 @@ extension WinUIBackend {
     public func updateFocusContainer(
         _ widget: WinUIBackend.Widget,
         focusability: Focusability
-    ) -> ObjectIdentifier? {
+    ) {
         guard let container = widget as? FocusContainer else { return nil }
         container.focusability = focusability
-        return nil
     }
 
     public func setFocusEffectDisabled(on widget: WinUIBackend.Widget, disabled: Bool) {

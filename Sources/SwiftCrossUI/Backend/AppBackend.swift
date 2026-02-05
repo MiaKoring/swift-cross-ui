@@ -891,7 +891,7 @@ public protocol AppBackend: Sendable {
     func updateFocusContainer(
         _ widget: Widget,
         focusability: SwiftCrossUI.Focusability
-    ) -> ObjectIdentifier?
+    )
 
     func setFocusEffectDisabled(
         on widget: Widget,
@@ -943,6 +943,12 @@ extension AppBackend {
             logger.warning(
                 "\(type(of: self)): \(function) is being ignored; consult the documentation for further information"
             )
+        #endif
+    }
+
+    private func uncriticalTodo(_ function: String = #function) {
+        #if DEBUG
+            logger.warning("\(type(of: self)): \(function) not implemented")
         #endif
     }
 
@@ -1459,7 +1465,7 @@ extension AppBackend {
         _ data: [FocusData],
         on widget: Widget
     ) {
-        todo()
+        uncriticalTodo()
     }
 
     public func createFocusContainer() -> Widget {
@@ -1469,7 +1475,7 @@ extension AppBackend {
     public func updateFocusContainer(
         _ widget: Widget,
         focusability: SwiftCrossUI.Focusability
-    ) -> ObjectIdentifier? {
+    ) {
         todo()
     }
 
@@ -1477,6 +1483,6 @@ extension AppBackend {
         on widget: Widget,
         disabled: Bool
     ) {
-        todo()
+        uncriticalTodo()
     }
 }

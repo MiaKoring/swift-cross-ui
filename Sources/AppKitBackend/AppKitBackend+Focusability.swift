@@ -70,14 +70,9 @@ extension AppKitBackend {
     public func updateFocusContainer(
         _ widget: NSView,
         focusability: Focusability
-    ) -> ObjectIdentifier? {
+    ) {
         let container = widget as! FocusabilityContainer
-        if container.setFocusability(focusability),
-            let window = container.window
-        {
-            return ObjectIdentifier(window)
-        }
-        return nil
+        _ = container.setFocusability(focusability)
     }
 
     public func setFocusEffectDisabled(on widget: NSView, disabled: Bool) {
