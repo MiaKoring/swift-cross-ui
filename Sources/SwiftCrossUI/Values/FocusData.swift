@@ -1,10 +1,3 @@
-//
-//  FocusData.swift
-//  swift-cross-ui
-//
-//  Created by Mia Koring on 31.12.25.
-//
-
 public struct FocusData {
     let type: any Hashable.Type
     private let match: any Hashable

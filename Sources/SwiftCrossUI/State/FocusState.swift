@@ -2,85 +2,38 @@ import Foundation
 
 /// A property wrapper type that can read and write a value that SwiftUI updates as the placement of focus within the scene changes.
 @propertyWrapper
-public struct FocusState<Value: Hashable>: DynamicProperty, ObservableProperty {
-    class Storage {
-        // This inner box is what stays constant between view updates. The
-        // outer box (Storage) is used so that we can assign this box to
-        // future state instances from the non-mutating
-        // `update(with:previousValue:)` method. It's vital that the inner
-        // box remains the same so that bindings can be stored across view
-        // updates.
-        var box: InnerBox
-
-        class InnerBox {
-            var value: Value
-            var didChange = Publisher()
-            var downstreamObservation: Cancellable?
-
-            init(value: Value) {
-                self.value = value
-            }
-
-            /// Call this to publish an observation to all observers after
-            /// setting a new value. This isn't in a didSet property accessor
-            /// because we want more granular control over when it does and
-            /// doesn't trigger.
-            ///
-            /// Additionally updates the downstream observation if the
-            /// wrapped value is an Optional<some ObservableObject> and the
-            /// current case has toggled.
-            func postSet() {
-                // If the wrapped value is an Optional<some ObservableObject>
-                // then we need to observe/unobserve whenever the optional
-                // toggles between `.some` and `.none`.
-                if let value = value as? OptionalObservableObject {
-                    if let innerDidChange = value.didChange, downstreamObservation == nil {
-                        downstreamObservation = didChange.link(toUpstream: innerDidChange)
-                    } else if value.didChange == nil, let observation = downstreamObservation {
-                        observation.cancel()
-                        downstreamObservation = nil
-                    }
-                }
-                didChange.send()
-            }
-        }
+public struct FocusState<Value: Hashable>: ObservableProperty {
+    private final class Storage: StateStorageProtocol {
+        var value: Value
+        var didChange = Publisher()
+        var downstreamObservation: Cancellable?
 
         init(_ value: Value) {
-            self.box = InnerBox(value: value)
+            self.value = value
         }
     }
 
-    var storage: Storage
+    private let implementation: StateImpl<Storage>
 
-    public var didChange: Publisher {
-        storage.box.didChange
-    }
+    private var storage: Storage { implementation.storage }
+
+    public var didChange: Publisher { storage.didChange }
 
     public var wrappedValue: Value {
-        get {
-            storage.box.value
-        }
-        nonmutating set {
-            storage.box.value = newValue
-            storage.box.postSet()
-        }
+        get { implementation.wrappedValue }
+        nonmutating set { implementation.wrappedValue = newValue }
     }
 
     public var projectedValue: FocusState.Binding {
-        // Specifically link the binding to the inner box instead of the outer
-        // storage which changes with each view update.
-        let box = storage.box
         return FocusState.Binding(
             get: {
-                box.value
+                implementation.projectedValue.wrappedValue
             },
             set: { newValue in
-                box.value = newValue
-                box.postSet()
+                implementation.projectedValue.wrappedValue = newValue
             },
             reset: {
-                box.value = emptyState
-                box.postSet()
+                implementation.projectedValue.wrappedValue = emptyState
             }
         )
     }
@@ -88,24 +41,18 @@ public struct FocusState<Value: Hashable>: DynamicProperty, ObservableProperty {
     let emptyState: Value
 
     public init() where Value == Bool {
-        storage = Storage(false)
         emptyState = false
+        implementation = StateImpl(initialStorage: Storage(false))
     }
 
     public init<T>() where Value == T?, T: Hashable {
-        storage = Storage(nil)
         emptyState = nil
+        implementation = StateImpl(initialStorage: Storage(nil))
     }
 
     public func update(with environment: EnvironmentValues, previousValue: FocusState<Value>?) {
-        if let previousValue {
-            storage.box = previousValue.storage.box
-        }
+        implementation.update(with: environment, previousValue: previousValue?.implementation)
     }
-
-    public func tryRestoreFromSnapshot(_ snapshot: Data) {}
-
-    public func snapshot() throws -> Data? { nil }
 
     /// A property wrapper type that can read and write a value that indicates the current focus location.
     @propertyWrapper
@@ -121,7 +68,7 @@ public struct FocusState<Value: Hashable>: DynamicProperty, ObservableProperty {
 
         public var projectedValue: FocusState<Value>.Binding {
             // Just a handy helper so that you can use `@Binding` properties like
-            // you would `@State` properties.
+            // you would `@FocusBinding` properties.
             self
         }
 
@@ -129,13 +76,13 @@ public struct FocusState<Value: Hashable>: DynamicProperty, ObservableProperty {
         private let getValue: () -> Value
         /// The stored setter.
         private let setValue: (Value) -> Void
-
+        /// The stored resetter.
         private let resetValue: () -> Void
 
         /// Creates a binding with a custom getter and setter. To create a binding from
-        /// an `@State` property use its projected value instead: e.g. `$myStateProperty`
-        /// will give you a binding for reading and writing `myStateProperty` (assuming that
-        /// `myStateProperty` is marked with `@State` at its declaration site).
+        /// an `@FocusState` property use its projected value instead: e.g. `$myFocusStateProperty`
+        /// will give you a binding for reading and writing `myFocusStateProperty` (assuming that
+        /// `myFocusStateProperty` is marked with `@FocusState` at its declaration site).
         public init(
             get: @escaping () -> Value,
             set: @escaping (Value) -> Void,
