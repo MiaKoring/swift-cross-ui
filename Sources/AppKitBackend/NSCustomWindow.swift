@@ -25,12 +25,19 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
 
     class Delegate: NSObject, NSWindowDelegate {
         var resizeHandler: ((SIMD2<Int>) -> Void)?
+        var closeHandler: (() -> Void)?
 
-        func setHandler(_ resizeHandler: @escaping (SIMD2<Int>) -> Void) {
+        func setResizeHandler(_ resizeHandler: @escaping (SIMD2<Int>) -> Void) {
             self.resizeHandler = resizeHandler
         }
 
+        func setCloseHandler(_ closeHandler: @escaping () -> Void) {
+            self.closeHandler = closeHandler
+        }
+
         func windowWillClose(_ notification: Notification) {
+            closeHandler?()
+
             guard let window = notification.object as? NSCustomWindow else { return }
 
             // Not sure if this is actually needed

@@ -1,6 +1,6 @@
 import DefaultBackend
-import SwiftCrossUI
 import Foundation
+import SwiftCrossUI
 
 #if canImport(SwiftBundlerRuntime)
     import SwiftBundlerRuntime
@@ -14,7 +14,7 @@ struct WidgetGalleryApp: App {
         WindowGroup("Widget Gallery") {
             #hotReloadable {
                 ContentView()
-                .environment(\.colorScheme, .dark)
+                    .environment(\.colorScheme, .dark)
             }
         }
         .defaultSize(width: 400, height: 200)
@@ -25,7 +25,7 @@ struct ContentView: View {
     @State var data = ContentViewModel()
     @FocusState var focus: Widget?
     @State var currentWidgetFocusIndex = 0
-    
+
     var widgetToFocus: Widget {
         Widget.allCases[currentWidgetFocusIndex]
     }
@@ -43,7 +43,7 @@ struct ContentView: View {
             }
         }
         ScrollView {
-            Button ("Print something") { print("something") }
+            Button("Print something") { print("something") }
                 .focused($focus, equals: .button)
             TextField(text: data.$textField)
                 .focused($focus, equals: .textField)

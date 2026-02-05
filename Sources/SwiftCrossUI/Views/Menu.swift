@@ -112,7 +112,8 @@ extension Menu: TypeSafeView {
 
         var size = backend.naturalSize(of: widget)
         size.x = buttonWidth ?? size.x
-        return ViewLayoutResult
+        return
+            ViewLayoutResult
             .leafView(size: ViewSize(size))
             .with(\.shouldSetFocusData, true)
     }

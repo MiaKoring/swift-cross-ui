@@ -1,30 +1,27 @@
-import SwiftCrossUI
 import Foundation
 import Gtk
+import SwiftCrossUI
+
 // MARK: - FocusState
 
 class FocusStateManager {
     private var focusData = [ObjectIdentifier: Set<FocusData>]()
     private var lastFocused: ObjectIdentifier? = nil
-    
+
     func register(_ data: [FocusData], for widget: Gtk.Widget) {
         let id = ObjectIdentifier(widget)
         focusData[id] = Set(data)
-        
+
         guard id != lastFocused else { return }
-        
+
         if data.contains(where: { $0.matches }),
-           widget.isVisible,
-           (
-                widget.isFocusable ||
-                widget is Gtk.Entry ||
-                widget is Gtk.DropDown
-           )
+            widget.isVisible,
+            widget.isFocusable || widget is Gtk.Entry || widget is Gtk.DropDown
         {
             widget.makeKey()
         }
     }
-    
+
     func handleFocusChange(of identifier: ObjectIdentifier, toState isFocused: Bool) {
         guard let data = focusData[identifier] else { return }
         if isFocused {
@@ -44,7 +41,7 @@ class FocusStateManager {
 extension GtkBackend {
     public func registerFocusObservers(
         _ data: [FocusData],
-        on widget:  Gtk.Widget
+        on widget: Gtk.Widget
     ) {
         // Some widget's focus is managed by descendants
         // Therefore widget.isFocusable would be false on them
@@ -52,16 +49,12 @@ extension GtkBackend {
         // In the case of Calendar there are multiple points inside it that can
         // be focused in addition to itself, so enter and leave is the best
         // approach here as well.
-        if
-            widget is Gtk.Entry ||
-            widget is Gtk.Calendar ||
-            widget is Gtk.DropDown
-        {
+        if widget is Gtk.Entry || widget is Gtk.Calendar || widget is Gtk.DropDown {
             focusManager.register(data, for: widget)
             guard !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) else {
                 return
             }
-            
+
             let focusController = EventControllerFocus()
             focusController.enter = { _ in
                 self.focusManager.handleFocusChange(
@@ -81,7 +74,7 @@ extension GtkBackend {
         guard
             widget.isFocusable
         else { return }
-        
+
         focusManager.register(data, for: widget)
         if !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) {
             let focusController = EventControllerFocus()
@@ -94,11 +87,11 @@ extension GtkBackend {
             widget.addEventController(focusController)
         }
     }
-    
+
     public func createFocusContainer() -> Gtk.Widget {
         return Fixed()
     }
-    
+
     public func updateFocusContainer(
         _ widget: Gtk.Widget,
         focusability: Focusability
@@ -106,8 +99,8 @@ extension GtkBackend {
         widget.canFocus = focusability != .disabled
         return nil
     }
-    
-    public func setFocusEffectDisabled(on widget:  Gtk.Widget, disabled: Bool) {
+
+    public func setFocusEffectDisabled(on widget: Gtk.Widget, disabled: Bool) {
         if disabled {
             widget.focusCSS.set(property: CSSProperty(key: "outline", value: "none"))
             return

@@ -95,7 +95,7 @@ public final class WinUIBackend: AppBackend {
     private var windows: [Window] = []
 
     private var measurementTextBlock: TextBlock!
-    
+
     let focusManager = FocusStateManager()
 
     public init() {

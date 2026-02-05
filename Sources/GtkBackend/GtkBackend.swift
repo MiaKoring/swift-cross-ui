@@ -39,7 +39,7 @@ public final class GtkBackend: AppBackend {
     public let deviceClass = DeviceClass.desktop
     public let defaultSheetCornerRadius = 10
     public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical]
-    
+
     let focusManager = FocusStateManager()
 
     var gtkApp: Application
@@ -728,7 +728,7 @@ public final class GtkBackend: AppBackend {
         let pango = Pango(for: widget)
         var (width, height): (Int, Int)
         if let widget = widget as? CustomLabel {
-           (width, height) = pango.getTextSize(
+            (width, height) = pango.getTextSize(
                 text,
                 ellipsize: widget.ellipsize,
                 proposedWidth: proposedWidth.map(Double.init),

@@ -42,7 +42,7 @@ struct ControlsFocusabilityApp: App {
                                 Button("Click me!") {
                                     count += 1
                                 }
-                                .focusable(isButtonFocusable ? .unmodified: .disabled)
+                                .focusable(isButtonFocusable ? .unmodified : .disabled)
                                 .focused($focused, equals: 1)
                                 .focusEffectDisabled()
                                 Text("Count: \(count)")
@@ -58,7 +58,9 @@ struct ControlsFocusabilityApp: App {
                                     Text("Toggle button")
                                     Toggle("Toggle me!", isOn: $exampleButtonState)
                                         .toggleStyle(.button)
-                                        .focusable(isToggleButtonFocusable ? .unmodified: .disabled)
+                                        .focusable(
+                                            isToggleButtonFocusable ? .unmodified : .disabled
+                                        )
                                         .focused($focused, equals: 2)
                                     Text("Currently enabled: \(exampleButtonState)")
                                 }
@@ -73,7 +75,7 @@ struct ControlsFocusabilityApp: App {
                                 Text("Toggle switch")
                                 Toggle("Toggle me:", isOn: $exampleSwitchState)
                                     .toggleStyle(.switch)
-                                    .focusable(isToggleSwitchFocusable ? .unmodified: .disabled)
+                                    .focusable(isToggleSwitchFocusable ? .unmodified : .disabled)
                                     .focused($focused, equals: 3)
                                 Text("Currently enabled: \(exampleSwitchState)")
                             }
@@ -87,7 +89,7 @@ struct ControlsFocusabilityApp: App {
                                     Text("Checkbox")
                                     Toggle("Toggle me:", isOn: $exampleCheckboxState)
                                         .toggleStyle(.checkbox)
-                                        .focusable(isCheckboxFocusable ? .unmodified: .disabled)
+                                        .focusable(isCheckboxFocusable ? .unmodified : .disabled)
                                         .focused($focused, equals: 4)
                                     Text("Currently enabled: \(exampleCheckboxState)")
                                 }
@@ -101,7 +103,7 @@ struct ControlsFocusabilityApp: App {
                                     Text("Slider")
                                     Slider(value: $sliderValue, in: 0...10)
                                         .frame(maxWidth: 200)
-                                        .focusable(isSliderFocusable ? .unmodified: .disabled)
+                                        .focusable(isSliderFocusable ? .unmodified : .disabled)
                                         .focused($focused, equals: 5)
                                     Text("Value: \(String(format: "%.02f", sliderValue))")
                                 }
@@ -113,7 +115,7 @@ struct ControlsFocusabilityApp: App {
                             VStack {
                                 Text("Text field")
                                 TextField("Text field", text: $text)
-                                    .focusable(isTextFieldFocusable ? .unmodified: .disabled)
+                                    .focusable(isTextFieldFocusable ? .unmodified : .disabled)
                                     .focused($focused, equals: 6)
                                 Text("Value: \(text)")
                             }
@@ -130,7 +132,7 @@ struct ControlsFocusabilityApp: App {
                                         of: ["Vanilla", "Chocolate", "Strawberry"],
                                         selection: $flavor
                                     )
-                                    .focusable(isPickerFocusable ? .unmodified: .disabled)
+                                    .focusable(isPickerFocusable ? .unmodified : .disabled)
                                     .focused($focused, equals: 7)
                                 }
                                 Text("You chose: \(flavor ?? "Nothing yet!")")

@@ -127,7 +127,7 @@ public struct EnvironmentValues {
 
     /// Backing storage for observable subscript
     private var observableObjects: [ObjectIdentifier: any ObservableObject]
-    
+
     public var focusObservers: [FocusData]
 
     public var focusEffectDisabled: Bool

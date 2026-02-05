@@ -35,7 +35,7 @@ public struct TextEditor: ElementaryView {
                 proposedHeight: nil,
                 environment: environment
             )
-            
+
             size = ViewSize(
                 max(width, Double(idealSize.x)),
                 Double(idealSize.y)
