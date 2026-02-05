@@ -130,6 +130,10 @@ let package = Package(
             url: "https://github.com/apple/swift-log.git",
             exact: "1.6.4"
         ),
+        .package(
+            url: "https://github.com/swhitty/swift-mutex",
+            .upToNextMinor(from: "0.0.6")
+        ),
         // .package(
         //     url: "https://github.com/stackotter/TermKit",
         //     revision: "163afa64f1257a0c026cc83ed8bc47a5f8fc9704"
@@ -147,10 +151,11 @@ let package = Package(
         .target(
             name: "SwiftCrossUI",
             dependencies: [
-                "SwiftCrossUIMetadataSupport",
-                "HotReloadingMacrosPlugin",
+                "SwiftCrossUIMacrosPlugin",
+				"SwiftCrossUIMetadataSupport",
                 .product(name: "ImageFormats", package: "swift-image-formats"),
                 .product(name: "Logging", package: "swift-log"),
+                .product(name: "Mutex", package: "swift-mutex"),
             ],
             exclude: [
                 "Builders/ViewBuilder.swift.gyb",
@@ -168,6 +173,9 @@ let package = Package(
             dependencies: [
                 "SwiftCrossUI",
                 "DummyBackend",
+                "SwiftCrossUIMacrosPlugin",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .target(name: "AppKitBackend", condition: .when(platforms: [.macOS])),
             ]
         ),
@@ -250,16 +258,6 @@ let package = Package(
             name: "Gtk3CustomWidgets",
             dependencies: ["CGtk3"]
         ),
-        .macro(
-            name: "HotReloadingMacrosPlugin",
-            dependencies: [
-                .product(name: "SwiftSyntax", package: "swift-syntax"),
-                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
-                .product(name: "MacroToolkit", package: "swift-macro-toolkit"),
-            ],
-            swiftSettings: swiftSettings
-        ),
         .target(name: "UIKitBackend", dependencies: ["SwiftCrossUI"]),
         .target(
             name: "WinUIBackend",
@@ -286,6 +284,16 @@ let package = Package(
             ] + additionalLayoutPerformanceBenchmarkDependencies,
             path: "Benchmarks/LayoutPerformanceBenchmark",
             swiftSettings: layoutPerformanceSwiftSettings
+        ),
+        .macro(
+            name: "SwiftCrossUIMacrosPlugin",
+            dependencies: [
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                .product(name: "MacroToolkit", package: "swift-macro-toolkit"),
+            ],
+            swiftSettings: swiftSettings
         ),
 
         // .target(

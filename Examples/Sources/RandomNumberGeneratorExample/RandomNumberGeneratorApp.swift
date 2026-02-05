@@ -25,50 +25,65 @@ enum ColorOption: String, CaseIterable {
 @main
 @HotReloadable
 struct RandomNumberGeneratorApp: App {
-    @State var minNum = 0
-    @State var maxNum = 100
-    @State var randomNumber = 0
-    @State var colorOption: ColorOption? = ColorOption.red
+    @State var viewModel = ViewModel()
 
     var body: some Scene {
         WindowGroup("Random Number Generator") {
             #hotReloadable {
-                VStack {
-                    Text("Random Number: \(randomNumber)")
-                    Button("Generate") {
-                        randomNumber = Int.random(in: Int(minNum)...Int(maxNum))
-                    }
-
-                    Text("Minimum: \(minNum)")
-                    Slider(
-                        value: $minNum.onChange { newValue in
-                            if newValue > maxNum {
-                                minNum = maxNum
-                            }
-                        },
-                        in: 0...100
-                    )
-
-                    Text("Maximum: \(maxNum)")
-                    Slider(
-                        value: $maxNum.onChange { newValue in
-                            if newValue < minNum {
-                                maxNum = minNum
-                            }
-                        },
-                        in: 0...100
-                    )
-
-                    HStack {
-                        Text("Choose a color:")
-                        Picker(of: ColorOption.allCases, selection: $colorOption)
-                    }
-                }
-                .padding(10)
-                .foregroundColor(colorOption?.color ?? .red)
+                ContentView()
+                    .environment(viewModel)
             }
         }
         .defaultSize(width: 500, height: 0)
         .windowResizability(.contentMinSize)
     }
+}
+
+struct ContentView: View {
+    @Environment(ViewModel.self) var viewModel
+
+    var body: some View {
+        VStack {
+            Text("Random Number: \(viewModel.randomNumber)")
+            Button("Generate") {
+                viewModel.randomNumber = Int.random(
+                    in: Int(viewModel.minNum)...Int(viewModel.maxNum))
+            }
+
+            Text("Minimum: \(viewModel.minNum)")
+            Slider(
+                value: viewModel.$minNum.onChange { newValue in
+                    if newValue > viewModel.maxNum {
+                        viewModel.minNum = viewModel.maxNum
+                    }
+                },
+                in: 0...100
+            )
+
+            Text("Maximum: \(viewModel.maxNum)")
+            Slider(
+                value: viewModel.$maxNum.onChange { newValue in
+                    if newValue < viewModel.minNum {
+                        viewModel.maxNum = viewModel.minNum
+                    }
+                },
+                in: 0...100
+            )
+
+            HStack {
+                Text("Choose a color:")
+                Picker(of: ColorOption.allCases, selection: viewModel.$colorOption)
+            }
+        }
+        .padding(10)
+        .foregroundColor(viewModel.colorOption?.color ?? .red)
+    }
+}
+
+@ObservableObject
+class ViewModel {
+    var minNum = 0
+    var maxNum = 100
+    var randomNumber = 0
+    var colorOption: ColorOption? = ColorOption.red
 }

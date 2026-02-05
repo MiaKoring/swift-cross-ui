@@ -25,6 +25,7 @@ public final class AppKitBackend: AppBackend {
     public let requiresImageUpdateOnScaleFactorChange = false
     public let menuImplementationStyle = MenuImplementationStyle.dynamicPopover
     public let canRevealFiles = true
+    public let supportsMultipleWindows = true
     public let deviceClass = DeviceClass.desktop
     public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical, .compact]
 
@@ -71,6 +72,11 @@ public final class AppKitBackend: AppBackend {
         )
         window.delegate = window.customDelegate
 
+        // NB: If this isn't set, AppKit will crash within -[NSApplication run]
+        // the *second* time `openWindow` is called. I have absolutely no idea
+        // why.
+        window.isReleasedWhenClosed = false
+        
         window.addObserver(
             focusManager,
             forKeyPath: "firstResponder",
@@ -114,7 +120,7 @@ public final class AppKitBackend: AppBackend {
         ofWindow window: Window,
         to action: @escaping (SIMD2<Int>) -> Void
     ) {
-        window.customDelegate.setHandler(action)
+        window.customDelegate.setResizeHandler(action)
     }
 
     public func setTitle(ofWindow window: Window, to title: String) {
@@ -156,6 +162,17 @@ public final class AppKitBackend: AppBackend {
 
     public func activate(window: Window) {
         window.makeKeyAndOrderFront(nil)
+    }
+
+    public func close(window: Window) {
+        window.close()
+    }
+
+    public func setCloseHandler(
+        ofWindow window: Window,
+        to action: @escaping () -> Void
+    ) {
+        window.customDelegate.setCloseHandler(action)
     }
 
     public func openExternalURL(_ url: URL) throws {
