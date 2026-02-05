@@ -133,7 +133,7 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
         super.recalculateKeyViewLoop()
     }
 
-    // MARK: - FocusChainManager compatibility -
+    // MARK: - FocusChainManager implementation -
 
     public func cachedStop(following key: Widget) -> Widget? {
         forwardFocusChainBypassCache.object(forKey: key)

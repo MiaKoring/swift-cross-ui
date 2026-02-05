@@ -1,16 +1,22 @@
 extension View {
-    /// Set wether a View is focusable
-    /// Only has effect on out of the box interactable Views
+    /// Controls the focusability of a view.
+    /// Only affects out of the box interactable Views.
+    ///
+    /// Doesn't have an effect on UIKitBackend and WinUIBackend
     public func focusable(_ focusability: Focusability = .unmodified) -> some View {
         FocusModifier(body: TupleView1(self), focusability: focusability)
     }
 
+    /// Conditionally disables the focus indicator.
     public func focusEffectDisabled(_ disabled: Bool = true) -> some View {
         EnvironmentModifier(self) { environment in
             environment.with(\.focusEffectDisabled, disabled)
         }
     }
 
+    /// Modifies this view by binding its focus state to the given state value.
+    ///
+    /// Supported by ``AppKitBackend``, ``GtkBackend`` and ``WinUIBackend``.
     public func focused<Value>(
         _ focusBinding: FocusState<Value?>.Binding,
         equals match: Value
@@ -35,6 +41,9 @@ extension View {
         }
     }
 
+    /// Modifies this view by binding its focus state to the given Boolean state value.
+    ///
+    /// Supported by ``AppKitBackend``, ``GtkBackend`` and ``WinUIBackend``.
     public func focused(
         _ focusBinding: FocusState<Bool>.Binding
     ) -> some View {

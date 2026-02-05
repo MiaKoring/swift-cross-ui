@@ -1,27 +1,69 @@
+/// A protocol to simplify support for focus management in UI frameworks.
+///
+/// Use this protocol if the underlying backend does not natively support
+/// hierarchical focus control or if you need to override default tab-cycle behavior.
+///
+/// To use:
+/// 1. Conform your coordinator to ``FocusChainManager``.
+/// 2. Implement ``makeKey(_:)`` to trigger the framework's focus mechanism.
+/// 3. Call ``selectTabStop(following:)`` or ``selectTabStop(preceding:)`` when
+///    the framework requests a focus change (e.g., via Tab or Shift-Tab).
 public protocol FocusChainManager {
     associatedtype Widget: FocusChainParticipant
 
+    /// Returns the widget following a given widget from the cache, if available.
+    ///
+    /// Optional. Can be used to optimize traversal.
     func cachedStop(following key: Widget) -> Widget?
+
+    /// Returns the widget preceding a given widget from the cache, if available.
+    ///
+    /// Optional. Can be used to optimize traversal.
     func cachedStop(preceding key: Widget) -> Widget?
 
+    /// Returns the  widget following a given widget in the focus chain, suggested by the UI framework.
+    /// This widget will be validated for visibility and focusability by the caller.
+    /// Used by the provided functions for easier ``View/focusable`` compatibility.
     func closestValidStop(following view: Widget) -> Widget?
+
+    /// Returns the widget preceding a given widget in the focus chain, suggested by the UI framework.
+    /// This widget will be validated for visibility and focusability by the caller.
+    /// Used by the provided functions for easier ``View/focusable`` compatibility.
     func closestValidStop(preceding view: Widget) -> Widget?
 
+    /// Called by ``FocusChainManager/selectTabStop(following:)`` or ``FocusChainManager/selectTabStop(preceding:)``
+    /// Save relationship to cache if implemented, otherwise does nothing.
     func setRelationship(_ widget: Widget, following previous: Widget)
 
+    /// Makes a widget the "key view" or "first responder"
     func makeKey(_ widget: Widget)
 
+    /// Returns the immediate parent
     @inlinable
     @inline(__always)
     func getParent(of widget: Widget) -> Widget?
 }
 
+extension FocusChainManager {
+    public func cachedStop(following key: Widget) -> Widget? { nil }
+    public func cachedStop(preceding key: Widget) -> Widget? { nil }
+    public func setRelationship(_ widget: Widget, following previous: Widget) {}
+}
+
+/// A protocol to mark a widget as a focusability flag.
+/// Consumed by ``FocusChainManager``.
 public protocol FocusabilityContainer {
+    /// Whether the container and its children can gain focus by keyboard navigation.
     var focusability: Focusability { get }
 }
 
+/// Required by ``FocusChainManager``.
+/// Implement this protocol on widgets you want controlled by ``FocusChainManager``
+/// Implementing it on the base Widget type of the Backend is recommended. e.g. `NSView`
 public protocol FocusChainParticipant: Equatable {
+    /// Whether a widget participates in the focus chain, i.e. if it can gain focus on pressing `tab`.
     var canBeTabStop: Bool { get }
+    /// Whether a widget is hidden. Hidden widgets are skipped while selecting the next target.
     var isHidden: Bool { get }
 }
 
@@ -61,6 +103,8 @@ extension FocusChainManager {
         return nil
     }
 
+    /// Traverses the view graph upwards until it finds a ``FocusabilityContainer`` with ``FocusabilityContainer/focusability`` ``Focusability/disabled`` or reaches the root.
+    /// Returns `true` if the widget is contained by a disabled ``FocusabilityContainer``
     @inline(__always)
     private func isDescendantOfDisabledParent(_ widget: Widget) -> Bool {
         var current = getParent(of: widget)
@@ -77,11 +121,12 @@ extension FocusChainManager {
         return false
     }
 
+    /// Moves focus to the closest focusable widget following the currently focused widget.
+    /// The widget must be attached to a window.
     public func selectTabStop(following widget: Widget) {
         if let cached = cachedStop(following: widget),
             cached.canBeTabStop
         {
-            logger.info("used following cache for \(widget)")
             makeKey(cached)
             return
         }
@@ -91,18 +136,16 @@ extension FocusChainManager {
             let result = findNextAllowedFocusTarget(suggestion: next)
         else { return }
 
-        logger.info("found next: \(next)")
-        logger.info("\ncurrent: \(widget)\nnext:\(next)")
-
         makeKey(result)
         setRelationship(result, following: widget)
     }
 
+    /// Moves focus to the closest focusable widget preceding the currently focused widget.
+    /// The widget must be attached to a window.
     public func selectTabStop(preceding widget: Widget) {
         if let cached = cachedStop(preceding: widget),
             cached.canBeTabStop
         {
-            logger.info("used previous cache for \(widget)")
             makeKey(cached)
             return
         }
@@ -113,8 +156,6 @@ extension FocusChainManager {
                 forward: false
             )
         else { return }
-        logger.info("found previous: \(previous)")
-        logger.info("\ncurrent: \(widget)\nprevious:\(previous)")
 
         makeKey(result)
         setRelationship(widget, following: result)

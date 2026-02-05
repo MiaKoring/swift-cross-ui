@@ -138,10 +138,10 @@ open class Widget: GObject {
         controller.registerSignals()
     }
 
-    /// Wether the widget is currently visible
+    /// Whether the widget is currently visible
     public var isVisible: Bool { gtk_widget_is_visible(widgetPointer).toBool() }
 
-    /// Wether the widget participates in the focus-chain
+    /// Whether the widget participates in the focus-chain
     public var isFocusable: Bool {
         get {
             gtk_widget_get_focusable(widgetPointer).toBool()

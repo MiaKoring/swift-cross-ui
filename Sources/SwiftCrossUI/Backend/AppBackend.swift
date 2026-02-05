@@ -886,13 +886,16 @@ public protocol AppBackend: Sendable {
         on widget: Widget
     )
 
+    /// Creates a container controlling wether focus can enter any of its subviews.
     func createFocusContainer() -> Widget
 
+    /// Updates a focus container controlling wether focus can enter any of its subviews.
     func updateFocusContainer(
         _ widget: Widget,
         focusability: SwiftCrossUI.Focusability
     )
 
+    /// Disables the focus highlight effect for a given view.
     func setFocusEffectDisabled(
         on widget: Widget,
         disabled: Bool

@@ -2,6 +2,8 @@ import AppKit
 import SwiftCrossUI
 
 // MARK: - Focusability
+/// Creates a marker container, keeping focus from entering any of the subviews
+/// when ``FocusabilityContainer/focusability`` is ``Focusability/.disabled``
 final class FocusabilityContainer: NSView, SwiftCrossUI.FocusabilityContainer {
     private(set) var focusability: SwiftCrossUI.Focusability = .unmodified
 
@@ -19,12 +21,10 @@ final class FocusabilityContainer: NSView, SwiftCrossUI.FocusabilityContainer {
     }
 
     override var canBecomeKeyView: Bool {
-        //focusability == .enabled
         false
     }
 
     override var acceptsFirstResponder: Bool {
-        //focusability == .enabled
         false
     }
 
