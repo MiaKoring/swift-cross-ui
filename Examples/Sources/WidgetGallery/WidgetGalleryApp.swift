@@ -1,5 +1,6 @@
 import DefaultBackend
 import SwiftCrossUI
+import Foundation
 
 #if canImport(SwiftBundlerRuntime)
     import SwiftBundlerRuntime
@@ -23,74 +24,80 @@ struct WidgetGalleryApp: App {
 struct ContentView: View {
     @State var data = ContentViewModel()
     @FocusState var focus: Widget?
+    @State var currentWidgetFocusIndex = 0
+    
+    var widgetToFocus: Widget {
+        Widget.allCases[currentWidgetFocusIndex]
+    }
 
     var body: some View {
         Text("Focused widget: \(focus?.rawValue ?? "nil")")
             .frame(width: 200)
 
-        Button("Focus TextField") {
-            focus = .textField
+        Button(widgetToFocus.rawValue) {
+            focus = widgetToFocus
+            if currentWidgetFocusIndex < Widget.allCases.count - 1 {
+                currentWidgetFocusIndex += 1
+            } else {
+                currentWidgetFocusIndex = 0
+            }
         }
         ScrollView {
-            TextField(text: $data.textField)
-                .focusable()
+            Button ("Print something") { print("something") }
+                .focused($focus, equals: .button)
+            TextField(text: data.$textField)
                 .focused($focus, equals: .textField)
-            Slider($data.slider, minimum: -10, maximum: 10)
+            TextEditor(text: data.$textEditor)
+                .focused($focus, equals: .textEditor)
+            Slider(value: data.$slider, in: -10...10)
                 .focused($focus, equals: .slider)
-            /*ForEach(Widget.allCases) { widget in
-                widget.view(with: $data)
-                    .focused($focus, equals: widget)
-            }*/
+            Toggle("Toggle Switch", isOn: data.$toggleSwitch)
+                .toggleStyle(.switch)
+                .focused($focus, equals: .toggleSwitch)
+            Toggle("Checkbox", isOn: data.$checkbox)
+                .toggleStyle(.checkbox)
+                .focused($focus, equals: .checkbox)
+            Toggle("Toggle Button", isOn: data.$toggleButton)
+                .toggleStyle(.button)
+                .focused($focus, equals: .toggleButton)
+            Picker(of: Widget.allCases, selection: data.$picker)
+                .focused($focus, equals: .picker)
+            DatePicker("", selection: data.$datePicker)
+                .focused($focus, equals: .datePicker)
+            NavigationLink("Nav link", value: "destination", path: data.$navigationLink)
+                .focused($focus, equals: .navigationLink)
+            Menu("Menu") {
+                Button("Test Button") {}
+            }
+            .focused($focus, equals: .menu)
         }
     }
 }
 
-class ContentViewModel: ObservableObject {
-    @Published var textField = "TextField"
-    @Published var textEditor = "TextEditor"
-    @Published var slider: Double = 0.0
-    @Published var toggleSwitch = false
-    @Published var checkbox = false
-    @Published var toggleButton = false
+@ObservableObject
+class ContentViewModel {
+    var textField = "TextField"
+    var textEditor = "TextEditor"
+    var slider: Double = 0.0
+    var toggleSwitch = false
+    var checkbox = false
+    var toggleButton = false
+    var picker: Widget? = nil
+    var datePicker = Date()
+    var navigationLink = NavigationPath()
 }
 
 @MainActor
 enum Widget: String, CaseIterable {
-    case text
+    case button
     case textField
     case textEditor
     case slider
     case toggleSwitch
     case checkbox
     case toggleButton
-}
-
-extension Widget {
-    @ViewBuilder
-    func view(
-        with data: Binding<ContentViewModel>
-    ) -> some View {
-        switch self {
-            case .text:
-                Text("Text")
-            case .textField:
-                TextField(text: data.textField)
-            case .textEditor:
-                TextEditor(text: data.textEditor)
-                    .padding(3)
-                    .background(RoundedRectangle(cornerRadius: 5).stroke(.gray))
-                    .frame(maxHeight: 100)
-            case .slider:
-                Slider(data.slider, minimum: -10, maximum: 10)
-            case .toggleSwitch:
-                Toggle("", active: data.toggleSwitch)
-                    .toggleStyle(.switch)
-            case .checkbox:
-                Toggle("", active: data.checkbox)
-                    .toggleStyle(.checkbox)
-            case .toggleButton:
-                Toggle("", active: data.toggleButton)
-                    .toggleStyle(.button)
-        }
-    }
+    case picker
+    case datePicker
+    case navigationLink
+    case menu
 }

@@ -24,12 +24,11 @@ class FocusStateManager {
         guard id != lastFocused else { return }
         
         if data.contains(where: { $0.matches }),
-           widget.visibility == .visible,
-           (
-            widget.isTabStop
-           )
+           widget.visibility == .visible
         {
-            _ = try? widget.focus(.programmatic)
+            // .keyboard is used instead of .programmatic
+            // so WinUI displays the focus ring
+            _ = try? widget.focus(.keyboard)
         }
     }
     
@@ -59,6 +58,7 @@ extension WinUIBackend {
         
         focusManager.register(data, for: widget)
         if !focusManager.observersSetup.contains(id) {
+            print("Observer registered on \(widget)")
             widget.gotFocus.addHandler { [weak self, weak widget] _, _ in
                 guard let self, let widget else { return }
                 print("Focus entered \(widget)")
