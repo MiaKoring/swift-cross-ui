@@ -137,12 +137,6 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
     /// current view gets updated due to a state change and has potential to trigger its parent to
     /// update as well, or the current view's child has propagated such an update upwards).
     private func bottomUpUpdate() {
-        backend.updateGroup.enter()
-        defer {
-            backend.updateGroup
-                .leave(getResult: { self.currentLayout })
-        }
-
         // First we compute what size the view will be after the update. If it will change size,
         // propagate the update to this node's parent instead of updating straight away.
         let currentSize = currentLayout?.size
@@ -177,11 +171,6 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
         proposedSize: ProposedViewSize,
         environment: EnvironmentValues
     ) -> ViewLayoutResult {
-        backend.updateGroup.enter()
-        defer {
-            backend.updateGroup
-                .leave(getResult: { self.currentLayout })
-        }
 
         // Defensively ensure that all future scene implementations obey this
         // precondition. By putting the check here instead of only in views
@@ -248,12 +237,6 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
     /// size changes). Returns the most recently computed layout for convenience,
     /// although it's guaranteed to match the result of the last call to computeLayout.
     public func commit() -> ViewLayoutResult {
-        backend.updateGroup.enter()
-        defer {
-            backend.updateGroup
-                .leave(getResult: { self.currentLayout })
-        }
-
         if currentLayout?.shouldSetFocusData == true {
             backend.registerFocusObservers(parentEnvironment.focusObservers, on: widget)
             backend.setFocusEffectDisabled(

@@ -8,8 +8,11 @@ class FocusStateManager {
     private var lastFocused: ObjectIdentifier? = nil
     
     func register(_ data: [FocusData], for widget: Gtk.Widget) {
-        focusData[ObjectIdentifier(widget)] = Set(data)
-        guard ObjectIdentifier(widget) != lastFocused else { return }
+        let id = ObjectIdentifier(widget)
+        focusData[id] = Set(data)
+        
+        guard id != lastFocused else { return }
+        
         if data.contains(where: { $0.matches }),
            widget.isVisible,
            (
@@ -22,9 +25,7 @@ class FocusStateManager {
     }
     
     func handleFocusChange(of identifier: ObjectIdentifier, toState isFocused: Bool) {
-        guard let data = focusData[identifier] else {
-            return
-        }
+        guard let data = focusData[identifier] else { return }
         if isFocused {
             lastFocused = identifier
             data.forEach { binding in

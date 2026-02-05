@@ -40,7 +40,6 @@ public final class GtkBackend: AppBackend {
     public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical]
     
     let focusManager = FocusStateManager()
-    public let updateGroup = UpdateGroup()
 
     var gtkApp: Application
 

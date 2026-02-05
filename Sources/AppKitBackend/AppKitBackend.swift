@@ -27,7 +27,6 @@ public final class AppKitBackend: AppBackend {
     public let canRevealFiles = true
     public let deviceClass = DeviceClass.desktop
     public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical, .compact]
-    public let updateGroup = UpdateGroup()
 
     public var scrollBarWidth: Int {
         // We assume that all scrollers have their controlSize set to `.regular` by default.

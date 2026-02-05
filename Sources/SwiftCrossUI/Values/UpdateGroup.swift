@@ -1,10 +1,3 @@
-//
-//  UpdateGroup.swift
-//  swift-cross-ui
-//
-//  Created by Mia Koring on 31.12.25.
-//
-
 @MainActor
 public class UpdateGroup {
     // Tracks the amount of entries and leaves

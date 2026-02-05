@@ -102,9 +102,6 @@ public protocol AppBackend: Sendable {
     /// are supported at all.
     nonisolated var supportedDatePickerStyles: [DatePickerStyle] { get }
 
-    /// Provides a central place to observe view update cycle completion
-    var updateGroup: UpdateGroup { get }
-
     /// Often in UI frameworks (such as Gtk), code is run in a callback
     /// after starting the app, and hence this generic root window creation
     /// API must reflect that. This is always the first method to be called
@@ -1416,10 +1413,6 @@ extension AppBackend {
         components: DatePickerComponents,
         onChange: @escaping (Date) -> Void
     ) { todo() }
-
-    public var updateGroup: UpdateGroup {
-        todo()
-    }
 
     public func registerFocusObservers(
         _ data: [FocusData],
