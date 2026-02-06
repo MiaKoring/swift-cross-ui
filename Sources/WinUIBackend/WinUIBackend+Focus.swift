@@ -58,16 +58,16 @@ extension WinUIBackend {
 
         focusManager.register(data, for: widget)
         if !focusManager.observersSetup.contains(id) {
-            widget.gotFocus.addHandler { [weak self, weak widget] _, _ in
-                guard let self, let widget else { return }
+            widget.gotFocus.addHandler { [weak self] _, _ in
+                guard let self else { return }
                 self.focusManager.handleFocusChange(
                     of: id,
                     toState: true
                 )
             }
 
-            widget.lostFocus.addHandler { [weak self, weak widget] _, _ in
-                guard let self, let widget else { return }
+            widget.lostFocus.addHandler { [weak self] _, _ in
+                guard let self else { return }
                 self.focusManager.handleFocusChange(
                     of: id,
                     toState: false
@@ -86,7 +86,7 @@ extension WinUIBackend {
         _ widget: WinUIBackend.Widget,
         focusability: Focusability
     ) {
-        guard let container = widget as? FocusContainer else { return nil }
+        guard let container = widget as? FocusContainer else { return }
         container.focusability = focusability
     }
 
