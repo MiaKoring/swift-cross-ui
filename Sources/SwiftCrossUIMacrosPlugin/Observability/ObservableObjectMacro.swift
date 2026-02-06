@@ -31,11 +31,10 @@ public struct ObservableObjectMacro: MemberAttributeMacro, ExtensionMacro {
                 return
                     [
                         "Published",
-                        "SwiftCrossUI.Published",
-                        "ObservationIgnored",
-                        "SwiftCrossUI.ObservationIgnored",
-                    ].contains(attr.attribute?.name.name)
+                        "SwiftCrossUI.Published"
+                    ].contains(attr.attribute?._syntax.trimmedDescription)
             }),
+            !variable.hasMacroApplication("ObservationIgnored"),
             // Only include properties without accessors
             let binding = destructureSingle(variable.bindings),
             // Don't allow any accessors, because even when the property is
@@ -70,12 +69,8 @@ public struct ObservableObjectMacro: MemberAttributeMacro, ExtensionMacro {
     }
 }
 
-public struct ObservationIgnoredMacro: AccessorMacro {
-    public static func expansion(
-        of node: SwiftSyntax.AttributeSyntax,
-        providingAccessorsOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
-        in context: some SwiftSyntaxMacros.MacroExpansionContext
-    ) throws -> [SwiftSyntax.AccessorDeclSyntax] {
-        return []
+struct ObservationIgnoredMacro: AccessorMacro {
+    static func expansion(of node: SwiftSyntax.AttributeSyntax, providingAccessorsOf declaration: some SwiftSyntax.DeclSyntaxProtocol, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> [SwiftSyntax.AccessorDeclSyntax] {
+        []
     }
 }

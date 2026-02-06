@@ -68,8 +68,6 @@ struct LatestGreetingKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
-    var latestGreeting: String? {
-        get { self[LatestGreetingKey.self] }
-        set { self[LatestGreetingKey.self] = newValue }
-    }
+    @Entry
+    var latestGreeting: String? = nil
 }

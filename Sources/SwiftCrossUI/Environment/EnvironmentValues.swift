@@ -335,3 +335,9 @@ public protocol EnvironmentKey<Value> {
     /// The default value for the key.
     static var defaultValue: Value { get }
 }
+
+@attached(accessor) @attached(peer, names: prefixed(__Key_))
+public macro Entry() = #externalMacro(
+    module: "SwiftCrossUIMacrosPlugin",
+    type: "EntryMacro"
+)

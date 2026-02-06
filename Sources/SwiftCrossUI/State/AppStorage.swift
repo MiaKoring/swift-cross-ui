@@ -164,6 +164,10 @@ extension AppStorage {
     public init<Key: AppStorageKey<Value>>(_: Key.Type) {
         self.init(wrappedValue: Key.defaultValue, Key.name)
     }
+    
+    public init<Key: AppStorageKey<Value>>(_ keyPath: KeyPath<AppStorageValues, Key.Type>) {
+        self.init(AppStorageValues.shared[keyPath: keyPath])
+    }
 }
 
 /// A type safe key for ``AppStorage`` properties, similar in spirit
@@ -175,4 +179,9 @@ public protocol AppStorageKey<Value> {
     static var name: String { get }
     /// The default value for the key.
     static var defaultValue: Value { get }
+}
+
+/// The type to define values on, nicer way of using @AppStorage
+public struct AppStorageValues {
+    public static let shared = AppStorageValues()
 }
