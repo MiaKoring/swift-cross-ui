@@ -1,4 +1,4 @@
-struct StateImpl<Storage: StateStorageProtocol> {
+public struct StateImpl<Storage: StateStorageProtocol> {
     /// The inner `Storage` is what stays constant between view updates.
     /// The wrapping box is used so that we can assign the storage to future
     /// state instances from the non-mutating ``update(with:previousValue:)``
@@ -58,7 +58,7 @@ struct StateImpl<Storage: StateStorageProtocol> {
     }
 }
 
-protocol StateStorageProtocol: AnyObject {
+public protocol StateStorageProtocol: AnyObject {
     associatedtype Value
     var value: Value { get set }
     var didChange: Publisher { get }

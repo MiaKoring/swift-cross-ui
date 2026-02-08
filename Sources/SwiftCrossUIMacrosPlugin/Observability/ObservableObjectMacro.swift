@@ -31,7 +31,7 @@ public struct ObservableObjectMacro: MemberAttributeMacro, ExtensionMacro {
                 return
                     [
                         "Published",
-                        "SwiftCrossUI.Published"
+                        "SwiftCrossUI.Published",
                     ].contains(attr.attribute?._syntax.trimmedDescription)
             }),
             !variable.hasMacroApplication("ObservationIgnored"),
@@ -70,7 +70,11 @@ public struct ObservableObjectMacro: MemberAttributeMacro, ExtensionMacro {
 }
 
 struct ObservationIgnoredMacro: AccessorMacro {
-    static func expansion(of node: SwiftSyntax.AttributeSyntax, providingAccessorsOf declaration: some SwiftSyntax.DeclSyntaxProtocol, in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> [SwiftSyntax.AccessorDeclSyntax] {
+    static func expansion(
+        of node: SwiftSyntax.AttributeSyntax,
+        providingAccessorsOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
+        in context: some SwiftSyntaxMacros.MacroExpansionContext
+    ) throws -> [SwiftSyntax.AccessorDeclSyntax] {
         []
     }
 }

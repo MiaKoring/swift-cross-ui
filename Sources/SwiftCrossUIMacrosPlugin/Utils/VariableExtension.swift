@@ -8,7 +8,9 @@ extension Variable {
         for attribute in _syntax.attributes {
             switch attribute {
                 case .attribute(let attr):
-                    if attr.attributeName.tokens(viewMode: .all).map({ $0.tokenKind }) == [.identifier(name)] {
+                    if attr.attributeName.tokens(viewMode: .all).map({ $0.tokenKind }) == [
+                        .identifier(name)
+                    ] {
                         return true
                     }
                 default:

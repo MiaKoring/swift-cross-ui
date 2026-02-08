@@ -337,7 +337,8 @@ public protocol EnvironmentKey<Value> {
 }
 
 @attached(accessor) @attached(peer, names: prefixed(__Key_))
-public macro Entry() = #externalMacro(
-    module: "SwiftCrossUIMacrosPlugin",
-    type: "EntryMacro"
-)
+public macro Entry() =
+    #externalMacro(
+        module: "SwiftCrossUIMacrosPlugin",
+        type: "EntryMacro"
+    )

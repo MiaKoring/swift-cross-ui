@@ -83,6 +83,10 @@ struct EntryMacroTests {
             expandedSource: """
             extension EnvironmentValues {
                 var test: UInt64
+            
+                private struct __Key_test: SwiftCrossUI.EnvironmentKey {
+            
+                }
             }
             """,
             diagnostics: [
@@ -133,6 +137,53 @@ struct EntryMacroTests {
 
                 private struct __Key_test1: SwiftCrossUI.EnvironmentKey {
                     static let defaultValue: Optional<UInt64> = nil
+                }
+            }
+            """,
+            diagnostics: [],
+            macroSpecs: testMacros,
+            failureHandler: { spec in
+                Issue.record(spec.issueComment)
+            }
+        )
+    }
+    
+    @Test("Entry generates for AppStorage")
+    func entryGeneratesForAppStorage() {
+        assertMacroExpansion(
+            """
+            extension AppStorageValues {
+                @Entry var test: UInt64?
+                @Entry var name = "default"
+            }
+            """,
+            expandedSource: """
+            extension AppStorageValues {
+                var test: UInt64? {
+                    get {
+                        __getValue(__Key_test.self)
+                    }
+                    set {
+                        __setValue(__Key_test.self, newValue: newValue)
+                    }
+                }
+            
+                private struct __Key_test: SwiftCrossUI.AppStorageKey {
+                    static let defaultValue: UInt64? = nil
+                    static let name = "test"
+                }
+                var name {
+                    get {
+                        __getValue(__Key_name.self)
+                    }
+                    set {
+                        __setValue(__Key_name.self, newValue: newValue)
+                    }
+                }
+            
+                private struct __Key_name: SwiftCrossUI.AppStorageKey {
+                    static let defaultValue = "default"
+                    static let name = "name"
                 }
             }
             """,
