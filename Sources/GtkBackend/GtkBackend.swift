@@ -50,6 +50,8 @@ public final class GtkBackend: AppBackend {
     /// All current windows associated with the application. Doesn't include the
     /// precreated window until it gets 'created' via `createWindow`.
     var windows: [Window] = []
+    
+    private var measurementCustomLabel: CustomLabel!
 
     private struct LogLocation: Hashable, Equatable {
         let file: String
@@ -92,6 +94,7 @@ public final class GtkBackend: AppBackend {
 
     public func runMainLoop(_ callback: @escaping @MainActor () -> Void) {
         gtkApp.run { window in
+            self.measurementCustomLabel = (self.createTextView() as! CustomLabel)
             self.precreatedWindow = window
             callback()
 
@@ -735,11 +738,24 @@ public final class GtkBackend: AppBackend {
         var usedHeight = height
 
         if let lineLimitSettings = environment.lineLimitSettings {
-            let height = Int(
-                Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight)
+            let multilineString = [String](repeating: "a", count: lineLimitSettings.limit)
+                .joined(separator: "\n")
+            updateTextView(
+                measurementCustomLabel,
+                content: "",
+                environment: environment
+            )
+            
+            let pango = Pango(for: measurementCustomLabel)
+            let (_, potentialHeight) = pango.getTextSize(
+                multilineString,
+                ellipsize: (widget as! CustomLabel).ellipsize,
+                proposedWidth: proposedWidth.map(Double.init),
+                proposedHeight: proposedHeight.map(Double.init)
+            )
 
-            if height < usedHeight || lineLimitSettings.reservesSpace {
-                usedHeight = height
+            if potentialHeight < usedHeight || lineLimitSettings.reservesSpace {
+                usedHeight = potentialHeight
             }
         }
 
