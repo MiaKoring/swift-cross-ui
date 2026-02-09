@@ -79,3 +79,8 @@ version = '0.1.0'
 identifier = 'dev.swiftcrossui.ColorsExample'
 product = 'ColorsExample'
 version = '0.1.0'
+
+[apps.LineWrapReproducer]
+identifier = 'dev.swiftcrossui.LineWrapReproducer'
+product = 'LineWrapReproducer'
+version = '0.1.0'
