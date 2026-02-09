@@ -689,7 +689,7 @@ public final class WinUIBackend: AppBackend {
 
         // Make sure the text doesn't get shorter than a single line of text even if
         // it's empty.
-        size.y = max(usedHeight, lineHeight)
+        size.y = max(usedHeight, Int(lineHeight))
         return size
     }
 
