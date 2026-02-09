@@ -144,7 +144,7 @@ extension AppStorage {
 
 // MARK: - AppStorageProviderExtension
 extension AppStorageProvider {
-    public func getValue<T: Codable>(key: String, defaultValue: T) -> T {
+    public func getValue<T: Codable & Sendable>(key: String, defaultValue: T) -> T {
         return appStorageCache.withLock { cache in
             // If this is the very first time we're reading from this key, it won't
             // be in the cache yet. In that case, we return the already-persisted value
@@ -174,7 +174,7 @@ extension AppStorageProvider {
         }
     }
 
-    public func setValue<T: Codable>(key: String, newValue: T) {
+    public func setValue<T: Codable & Sendable>(key: String, newValue: T) {
         appStorageCache.withLock { cache in
             cache[key] = newValue
             do {
@@ -212,12 +212,12 @@ public struct AppStorageValues {
         self.__provider = __provider
     }
 
-    public func __getValue<T: Codable>(_ key: AppStorageKey<T>.Type) -> T {
+    public func __getValue<T: Codable>(_ key: any AppStorageKey<T>.Type) -> T {
         guard let __provider else { return key.defaultValue }
         return __provider.getValue(key: key.name, defaultValue: key.defaultValue)
     }
 
-    public func __setValue<T: Codable>(_ key: AppStorageKey<T>.Type, newValue: T) {
+    public func __setValue<T: Codable>(_ key: any AppStorageKey<T>.Type, newValue: T) {
         __provider?.setValue(key: key.name, newValue: newValue)
     }
 }
