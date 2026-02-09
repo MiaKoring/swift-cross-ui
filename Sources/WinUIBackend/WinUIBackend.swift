@@ -666,15 +666,9 @@ public final class WinUIBackend: AppBackend {
         environment: EnvironmentValues
     ) -> SIMD2<Int> {
         // Update the text view's environment and measure its desired line height
-        updateTextView(measurementTextBlock, content: "a", environment: environment)
-        let lineHeight = Self.measure(
-            measurementTextBlock,
-            proposedWidth: nil,
-            proposedHeight: nil
-        ).y
+        updateTextView(measurementTextBlock, content: text, environment: environment)
 
         // Measure the text's size
-        measurementTextBlock.text = text
         var size = Self.measure(
             measurementTextBlock,
             proposedWidth: proposedWidth,
@@ -682,10 +676,11 @@ public final class WinUIBackend: AppBackend {
         )
 
         var usedHeight = size.y
+        let lineHeight = environment.resolvedFont.lineHeight
 
         if let lineLimitSettings = environment.lineLimitSettings {
             let height = Int(
-                Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight)
+                Double(max(lineLimitSettings.limit, 1)) * lineHeight)
 
             if height < usedHeight || lineLimitSettings.reservesSpace {
                 usedHeight = height
