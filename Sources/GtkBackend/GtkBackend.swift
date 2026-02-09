@@ -735,8 +735,7 @@ public final class GtkBackend: AppBackend {
         var usedHeight = height
 
         if let lineLimitSettings = environment.lineLimitSettings {
-            let height =
-                Int(Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight)
+            let height = Int(Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight)
 
             if height < usedHeight || lineLimitSettings.reservesSpace {
                 usedHeight = height

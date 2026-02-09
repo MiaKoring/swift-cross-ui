@@ -680,10 +680,20 @@ public final class WinUIBackend: AppBackend {
             proposedWidth: proposedWidth,
             proposedHeight: proposedHeight
         )
+        
+        var usedHeight = size.y
+        
+        if let lineLimitSettings = environment.lineLimitSettings {
+            let height = Int(Double(max(lineLimitSettings.limit, 1))  * environment.resolvedFont.lineHeight)
+            
+            if height < usedHeight || lineLimitSettings.reservesSpace {
+                usedHeight = height
+            }
+        }
 
         // Make sure the text doesn't get shorter than a single line of text even if
         // it's empty.
-        size.y = max(size.y, lineHeight)
+        size.y = max(usedHeight, lineHeight)
         return size
     }
 
@@ -709,6 +719,7 @@ public final class WinUIBackend: AppBackend {
         let textBlock = TextBlock()
         textBlock.textWrapping = .wrap
         textBlock.textTrimming = .characterEllipsis
+        textBlock.lineStackingStrategy = .blockLineHeight
         return textBlock
     }
 
@@ -1960,6 +1971,8 @@ extension EnvironmentValues {
         textBlock.fontSize = resolvedFont.pointSize
         textBlock.fontWeight.weight = resolvedFont.winUIFontWeight
         textBlock.foreground = winUIForegroundBrush
+        textBlock.lineHeight = resolvedFont.lineHeight
+        
         if resolvedFont.isItalic {
             textBlock.fontStyle = .italic
         }
