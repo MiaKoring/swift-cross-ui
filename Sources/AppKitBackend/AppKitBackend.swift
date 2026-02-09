@@ -639,7 +639,8 @@ public final class AppKitBackend: AppBackend {
         var usedHeight = rect.size.height
 
         if let lineLimitSettings = environment.lineLimitSettings {
-            let height = Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight
+            let height =
+                Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight
 
             if height < usedHeight || lineLimitSettings.reservesSpace {
                 usedHeight = height

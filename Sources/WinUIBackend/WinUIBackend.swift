@@ -680,12 +680,13 @@ public final class WinUIBackend: AppBackend {
             proposedWidth: proposedWidth,
             proposedHeight: proposedHeight
         )
-        
+
         var usedHeight = size.y
-        
+
         if let lineLimitSettings = environment.lineLimitSettings {
-            let height = Int(Double(max(lineLimitSettings.limit, 1))  * environment.resolvedFont.lineHeight)
-            
+            let height = Int(
+                Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight)
+
             if height < usedHeight || lineLimitSettings.reservesSpace {
                 usedHeight = height
             }
@@ -1972,7 +1973,7 @@ extension EnvironmentValues {
         textBlock.fontWeight.weight = resolvedFont.winUIFontWeight
         textBlock.foreground = winUIForegroundBrush
         textBlock.lineHeight = resolvedFont.lineHeight
-        
+
         if resolvedFont.isItalic {
             textBlock.fontStyle = .italic
         }
