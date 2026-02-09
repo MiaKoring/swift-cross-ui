@@ -4,11 +4,11 @@ extension View {
         EnvironmentModifier(self) { environment in
             if let limit {
                 environment
-                    .with(\.lineLimit, LineLimit(limit: limit, reservesSpace: reservesSpace))
+                    .with(
+                        \.lineLimitSettings, LineLimit(limit: limit, reservesSpace: reservesSpace))
             } else {
-                environment.with(\.lineLimit, nil)
+                environment.with(\.lineLimitSettings, nil)
             }
         }
     }
 }
-

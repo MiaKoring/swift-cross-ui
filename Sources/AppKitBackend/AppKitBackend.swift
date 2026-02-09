@@ -635,18 +635,14 @@ public final class AppKitBackend: AppBackend {
             options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine],
             attributes: Self.attributes(forTextIn: environment)
         )
-        
+
         var usedHeight = rect.size.height
 
-        if
-            let envLimit = environment.lineLimit,
-            let lineLimit = envLimit.limit
-        {
-            let height = Double(max(lineLimit, 1)) * environment.resolvedFont.lineHeight
-            if
-                height < usedHeight ||
-                envLimit.reservesSpace
-            {
+        if let lineLimitSettings = environment.lineLimitSettings {
+            let height =
+                Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight
+
+            if height < usedHeight || lineLimitSettings.reservesSpace {
                 usedHeight = height
             }
         }
