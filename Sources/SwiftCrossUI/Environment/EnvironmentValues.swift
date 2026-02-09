@@ -311,6 +311,9 @@ extension EnvironmentValues {
 
     /// The display style used by ``DatePicker``.
     @Entry public var datePickerStyle: DatePickerStyle = .automatic
+    
+    /// The maximum number of lines that text can occupy in a view.
+    @Entry public var lineLimit: LineLimit?
 }
 
 /// A key that can be used to extend the environment with new properties.
