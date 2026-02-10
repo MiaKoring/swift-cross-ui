@@ -9,35 +9,19 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
         providingAccessorsOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
         in context: some SwiftSyntaxMacros.MacroExpansionContext
     ) throws -> [SwiftSyntax.AccessorDeclSyntax] {
-        guard
-            let extensionDecl = context.lexicalContext.first?.as(ExtensionDeclSyntax.self),
-            let enclosingValueType = EnclosingType(
-                rawValue: extensionDecl.extendedType.trimmedDescription)
-        else {
-            throw MacroError(
-                "@Entry-annotated properties must be direct children of an EnvironmentValues or AppStorageValues extension."
-            )
-        }
-
-        guard
-            let variable = Decl(declaration).asVariable,
-            let patternBinding = destructureSingle(variable.bindings),
-            let identifier = patternBinding.identifier,
-            variable._syntax.bindingSpecifier.text == "var"
-        else {
-            throw MacroError("@Entry is only supported on single binding `var` declarations.")
-        }
-
-        if patternBinding.initialValue == nil,
-            patternBinding.type?.isOptional != true
-        {
-            throw MacroError("@Entry requires an initial value for non-optional properties.")
-        }
+        let (
+            enclosingType,
+            identifier,
+            _
+        ) = try ensureValidApplication(
+            context: context,
+            declaration: declaration
+        )
 
         let getterContent: String
         let setterContent: String
 
-        switch enclosingValueType {
+        switch enclosingType {
             case .environment:
                 getterContent = "self[__Key_\(identifier).self]"
                 setterContent = "self[__Key_\(identifier).self] = newValue"
@@ -67,41 +51,22 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
         providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
         in context: some SwiftSyntaxMacros.MacroExpansionContext
     ) throws -> [SwiftSyntax.DeclSyntax] {
-        // Information about extension context
         guard
-            let extensionDecl = context.lexicalContext.first?.as(ExtensionDeclSyntax.self),
-            let enclosingValueType = EnclosingType(
-                rawValue: extensionDecl.extendedType.trimmedDescription)
-        else { return [] }  // No throw here, as it already throws at the accessor macro
-
-        // Information about variable
-        guard
-            let variable = Decl(declaration).asVariable,
-            let patternBinding = destructureSingle(variable.bindings),
-            let identifier = patternBinding.identifier,
-            variable._syntax.bindingSpecifier.text == "var"
-        else { return [] }
-
-        let typeDeclaration: String
-        if let typeName = patternBinding.type?.normalizedDescription {
-            typeDeclaration = ": \(typeName)"
-        } else {
-            typeDeclaration = ""
+            let (
+                enclosingType,
+                identifier,
+                defaultValueDeclaration
+            ) = try? ensureValidApplication(
+                context: context,
+                declaration: declaration
+            )
+        else {
+            return []
         }
-
-        // Optional types get nil as default value if no initial value is provided
-        var defaultValueDeclaration = ""
-        if patternBinding.initialValue == nil,
-            patternBinding.type?.isOptional == true
-        {
-            defaultValueDeclaration = "static let defaultValue\(typeDeclaration) = nil"
-        } else if let initialValue = patternBinding.initialValue?._syntax.trimmedDescription {
-            defaultValueDeclaration = "static let defaultValue\(typeDeclaration) = \(initialValue)"
-        }  // No else case here, as it already throws at the accessor macro
 
         // AppStorage has got a special requirement to know the key name as string
         let nameDeclaration: String
-        switch enclosingValueType {
+        switch enclosingType {
             case .environment:
                 nameDeclaration = ""
             case .appStorage:
@@ -111,11 +76,67 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
         return [
             DeclSyntax(
                 stringLiteral: """
-                    private struct __Key_\(identifier): \(enclosingValueType.keyName) {
+                    private struct __Key_\(identifier): \(enclosingType.keyName) {
                         \(defaultValueDeclaration)\(nameDeclaration)
                     } 
                     """)
         ]
+    }
+
+    private static func ensureValidApplication(
+        context: some SwiftSyntaxMacros.MacroExpansionContext,
+        declaration: some SwiftSyntax.DeclSyntaxProtocol
+    ) throws -> (
+        enclosingType: EnclosingType,
+        identifier: String,
+        defaultValueDeclaration: String
+    ) {
+        // Verify extension context
+        guard
+            let extensionDecl = context.lexicalContext.first?.as(ExtensionDeclSyntax.self),
+            let enclosingValueType = EnclosingType(
+                rawValue: extensionDecl.extendedType.trimmedDescription)
+        else {
+            throw MacroError(
+                "@Entry-annotated properties must be direct children of an EnvironmentValues or AppStorageValues extension."
+            )
+        }
+
+        // Verify variable
+        guard
+            let variable = Decl(declaration).asVariable,
+            let patternBinding = destructureSingle(variable.bindings),
+            let identifier = patternBinding.identifier,
+            variable._syntax.bindingSpecifier.text == "var"
+        else {
+            throw MacroError(
+                "@Entry is only supported on single binding `var` declarations."
+            )
+        }
+
+        let typeDeclaration: String
+        if let typeName = patternBinding.type?.normalizedDescription {
+            typeDeclaration = ": \(typeName)"
+        } else {
+            typeDeclaration = ""
+        }
+
+        // Verify defaultValue
+        var defaultValueDeclaration = ""
+        if patternBinding.initialValue == nil,
+            patternBinding.type?.isOptional == true
+        {
+            defaultValueDeclaration = "static let defaultValue\(typeDeclaration) = nil"
+        } else if let initialValue = patternBinding.initialValue?._syntax.trimmedDescription {
+            defaultValueDeclaration = "static let defaultValue\(typeDeclaration) = \(initialValue)"
+        } else {
+            throw MacroError("@Entry requires an initial value for non-optional properties.")
+        }
+
+        return (
+            enclosingType: enclosingValueType, identifier: identifier,
+            defaultValueDeclaration: defaultValueDeclaration
+        )
     }
 
     enum EnclosingType: String {

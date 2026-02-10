@@ -83,10 +83,6 @@ struct EntryMacroTests {
             expandedSource: """
             extension EnvironmentValues {
                 var test: UInt64
-            
-                private struct __Key_test: SwiftCrossUI.EnvironmentKey {
-            
-                }
             }
             """,
             diagnostics: [
