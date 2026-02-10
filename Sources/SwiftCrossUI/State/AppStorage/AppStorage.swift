@@ -142,9 +142,8 @@ extension AppStorage {
     }
 }
 
-// MARK: - AppStorageProviderExtension
 extension AppStorageProvider {
-    public func getValue<T: Codable>(key: String, defaultValue: T) -> T {
+    public func getValue<T: Codable & Sendable>(key: String, defaultValue: T) -> T {
         return appStorageCache.withLock { cache in
             // If this is the very first time we're reading from this key, it won't
             // be in the cache yet. In that case, we return the already-persisted value
@@ -174,7 +173,7 @@ extension AppStorageProvider {
         }
     }
 
-    public func setValue<T: Codable>(key: String, newValue: T) {
+    public func setValue<T: Codable & Sendable>(key: String, newValue: T) {
         appStorageCache.withLock { cache in
             cache[key] = newValue
             do {
@@ -190,34 +189,5 @@ extension AppStorageProvider {
                 )
             }
         }
-    }
-}
-
-/// A type safe key for ``AppStorage`` properties, similar in spirit
-/// to ``EnvironmentKey``.
-public protocol AppStorageKey<Value> {
-    associatedtype Value: Codable
-
-    /// The name to use when persisting the key.
-    static var name: String { get }
-    /// The default value for the key.
-    static var defaultValue: Value { get }
-}
-
-public struct AppStorageValues {
-    private let __provider: AppStorageProvider?
-
-    /// Only to be used by AppStorage
-    internal init(__provider: AppStorageProvider?) {
-        self.__provider = __provider
-    }
-
-    public func __getValue<T: Codable>(_ key: AppStorageKey<T>.Type) -> T {
-        guard let __provider else { return key.defaultValue }
-        return __provider.getValue(key: key.name, defaultValue: key.defaultValue)
-    }
-
-    public func __setValue<T: Codable>(_ key: AppStorageKey<T>.Type, newValue: T) {
-        __provider?.setValue(key: key.name, newValue: newValue)
     }
 }

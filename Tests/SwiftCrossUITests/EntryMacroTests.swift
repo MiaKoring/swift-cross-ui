@@ -72,7 +72,7 @@ struct EntryMacroTests {
         )
     }
     
-    @Test("Entry throws without initial value")
+    @Test("@Entry requires an initial value for non-optional properties.")
     func entryThrowsWithoutInitialValue() {
         assertMacroExpansion(
             """
@@ -91,7 +91,7 @@ struct EntryMacroTests {
             """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "MacroError(message: \"@Entry requires an initial value to be set.\")",
+                    message: "MacroError(message: \"@Entry requires an initial value for non-optional properties.\")",
                     line: 2,
                     column: 5
                 )
@@ -188,6 +188,64 @@ struct EntryMacroTests {
             }
             """,
             diagnostics: [],
+            macroSpecs: testMacros,
+            failureHandler: { spec in
+                Issue.record(spec.issueComment)
+            }
+        )
+    }
+    
+    @Test("@Entry-annotated properties must be direct children of an EnvironmentValues or AppStorageValues extension.")
+    func entryOnValueWithoutDirectParentSupportedValuesExtensionFails() {
+        assertMacroExpansion(
+            """
+            extension EnvironmentValues {
+                struct WrongParent {
+                    @Entry var test: UInt64 = 1
+                }
+            }
+            """,
+            expandedSource: """
+            extension EnvironmentValues {
+                struct WrongParent {
+                    var test: UInt64 = 1
+                }
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "MacroError(message: \"@Entry-annotated properties must be direct children of an EnvironmentValues or AppStorageValues extension.\")",
+                    line: 3,
+                    column: 9
+                )
+            ],
+            macroSpecs: testMacros,
+            failureHandler: { spec in
+                Issue.record(spec.issueComment)
+            }
+        )
+    }
+    
+    @Test("@Entry is only supported on single binding `var` declarations.")
+    func entryFailsWhenAppliedToLet() {
+        assertMacroExpansion(
+            """
+            extension EnvironmentValues {
+                @Entry let test: UInt64?
+            }
+            """,
+            expandedSource: """
+            extension EnvironmentValues {
+                let test: UInt64?
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "MacroError(message: \"@Entry is only supported on single binding `var` declarations.\")",
+                    line: 2,
+                    column: 5
+                )
+            ],
             macroSpecs: testMacros,
             failureHandler: { spec in
                 Issue.record(spec.issueComment)

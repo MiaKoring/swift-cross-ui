@@ -10,30 +10,34 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
         in context: some SwiftSyntaxMacros.MacroExpansionContext
     ) throws -> [SwiftSyntax.AccessorDeclSyntax] {
         guard
-            let extensionDecl = context.lexicalContext.compactMap({ syntax in
-                syntax.as(ExtensionDeclSyntax.self)
-            }).first
-        else { return [] }
-        let extendedType = extensionDecl.extendedType.trimmedDescription
-
-        guard let keyName = KeyName(rawValue: extendedType) else { return [] }
+            let extensionDecl = context.lexicalContext.first?.as(ExtensionDeclSyntax.self),
+            let enclosingValueType = EnclosingType(
+                rawValue: extensionDecl.extendedType.trimmedDescription)
+        else {
+            throw MacroError(
+                "@Entry-annotated properties must be direct children of an EnvironmentValues or AppStorageValues extension."
+            )
+        }
 
         guard
             let variable = Decl(declaration).asVariable,
             let patternBinding = destructureSingle(variable.bindings),
-            let identifier = patternBinding.identifier
-        else { return [] }
+            let identifier = patternBinding.identifier,
+            variable._syntax.bindingSpecifier.text == "var"
+        else {
+            throw MacroError("@Entry is only supported on single binding `var` declarations.")
+        }
 
         if patternBinding.initialValue == nil,
             patternBinding.type?.isOptional != true
         {
-            throw MacroError("@Entry requires an initial value to be set.")
+            throw MacroError("@Entry requires an initial value for non-optional properties.")
         }
 
         let getterContent: String
         let setterContent: String
 
-        switch keyName {
+        switch enclosingValueType {
             case .environment:
                 getterContent = "self[__Key_\(identifier).self]"
                 setterContent = "self[__Key_\(identifier).self] = newValue"
@@ -65,19 +69,17 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
     ) throws -> [SwiftSyntax.DeclSyntax] {
         // Information about extension context
         guard
-            let extensionDecl = context.lexicalContext.compactMap({ syntax in
-                syntax.as(ExtensionDeclSyntax.self)
-            }).first
-        else { return [] }
-        let extendedType = extensionDecl.extendedType.trimmedDescription
-
-        guard let keyName = KeyName(rawValue: extendedType) else { return [] }
+            let extensionDecl = context.lexicalContext.first?.as(ExtensionDeclSyntax.self),
+            let enclosingValueType = EnclosingType(
+                rawValue: extensionDecl.extendedType.trimmedDescription)
+        else { return [] }  // No throw here, as it already throws at the accessor macro
 
         // Information about variable
         guard
             let variable = Decl(declaration).asVariable,
             let patternBinding = destructureSingle(variable.bindings),
-            let identifier = patternBinding.identifier
+            let identifier = patternBinding.identifier,
+            variable._syntax.bindingSpecifier.text == "var"
         else { return [] }
 
         let typeDeclaration: String
@@ -99,7 +101,7 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
 
         // AppStorage has got a special requirement to know the key name as string
         let nameDeclaration: String
-        switch keyName {
+        switch enclosingValueType {
             case .environment:
                 nameDeclaration = ""
             case .appStorage:
@@ -109,16 +111,14 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
         return [
             DeclSyntax(
                 stringLiteral: """
-                    private struct __Key_\(identifier): SwiftCrossUI.\(keyName.rawValue)Key {
+                    private struct __Key_\(identifier): \(enclosingValueType.keyName) {
                         \(defaultValueDeclaration)\(nameDeclaration)
                     } 
                     """)
         ]
-
-        return []
     }
 
-    enum KeyName: String {
+    enum EnclosingType: String {
         case environment = "Environment"
         case appStorage = "AppStorage"
 
@@ -131,6 +131,10 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
                 default:
                     return nil
             }
+        }
+
+        var keyName: String {
+            "SwiftCrossUI.\(self.rawValue)Key"
         }
     }
 }
