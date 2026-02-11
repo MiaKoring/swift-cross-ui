@@ -21,7 +21,16 @@ class FocusStateManager {
         let id = ObjectIdentifier(widget)
         focusData[id] = Set(data)
 
-        guard id != lastFocused else { return }
+        guard id != lastFocused else {
+            if
+                widget.focusState != .unfocused,
+                data.contains(where: { $0.shouldUnfocus }),
+                let root = widget.xamlRoot.content
+            {
+                _ = try? root.focus(.programmatic)
+            }
+            return
+        }
 
         if data.contains(where: { $0.matches }),
             widget.visibility == .visible

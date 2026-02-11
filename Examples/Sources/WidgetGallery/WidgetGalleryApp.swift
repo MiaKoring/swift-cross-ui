@@ -80,6 +80,11 @@ struct ContentView: View {
             }
             .focused($focus, equals: .menu)
         }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                focus = nil
+            }
+        }
     }
 }
 

@@ -17,6 +17,9 @@ extension View {
     /// Modifies this view by binding its focus state to the given state value.
     ///
     /// Supported by ``AppKitBackend``, ``GtkBackend`` and ``WinUIBackend``.
+    ///
+    /// Setting to `nil` on ``WinUIBackend`` causes the first focusable widget to gain focus
+    /// due to WinUI not supporting setting an "unfocused" state.
     public func focused<Value>(
         _ focusBinding: FocusState<Value?>.Binding,
         equals match: Value
@@ -45,6 +48,9 @@ extension View {
     /// Modifies this view by binding its focus state to the given Boolean state value.
     ///
     /// Supported by ``AppKitBackend``, ``GtkBackend`` and ``WinUIBackend``.
+    ///
+    /// Setting to `false` on ``WinUIBackend`` causes the first focusable widget to gain focus
+    /// due to WinUI not supporting setting an "unfocused" state.
     public func focused(
         _ focusBinding: FocusState<Bool>.Binding
     ) -> some View {

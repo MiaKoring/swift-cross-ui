@@ -61,6 +61,7 @@ public class CustomWindow: WinUI.Window {
         grid.rowDefinitions.append(contentRowDefinition)
         grid.children.append(menuBar)
         WinUI.Grid.setRow(menuBar, 0)
+        
         self.content = grid
 
         // Caching appWindow is apparently a good idea in terms of performance:
@@ -70,6 +71,7 @@ public class CustomWindow: WinUI.Window {
 
     public func setChild(_ child: WinUIBackend.Widget) {
         self.child = child
+        
         grid.children.append(child)
         WinUI.Grid.setRow(child, 1)
     }
