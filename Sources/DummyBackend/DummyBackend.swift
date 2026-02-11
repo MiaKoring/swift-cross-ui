@@ -63,21 +63,37 @@ public final class DummyBackend: AppBackend {
         }
     }
 
-    public class Button: Widget {
+    public class Control: Widget {
+        public enum Signal {
+            case focusDidChange
+        }
+
+        public var signalHandlers = [Signal: [(Control) -> Void]]()
+
+        var isFocused: Bool = false {
+            didSet {
+                for handler in signalHandlers[.focusDidChange, default: []] {
+                    handler(self)
+                }
+            }
+        }
+    }
+
+    public class Button: Control {
         public var label = ""
         public var font: Font.Resolved?
         public var action: (() -> Void)?
         public var menu: Menu?
     }
 
-    public class ToggleButton: Widget {
+    public class ToggleButton: Control {
         public var label = ""
         public var font: Font.Resolved?
         public var toggleHandler: ((Bool) -> Void)?
         public var state = false
     }
 
-    public class ToggleSwitch: Widget {
+    public class ToggleSwitch: Control {
         public var toggleHandler: ((Bool) -> Void)?
         public var state = false
 
@@ -86,7 +102,7 @@ public final class DummyBackend: AppBackend {
         }
     }
 
-    public class Checkbox: Widget {
+    public class Checkbox: Control {
         public var toggleHandler: ((Bool) -> Void)?
         public var state = false
 
@@ -95,7 +111,7 @@ public final class DummyBackend: AppBackend {
         }
     }
 
-    public class Slider: Widget {
+    public class Slider: Control {
         public var value: Double = 0
         public var minimumValue: Double = 0
         public var maximumValue: Double = 100
@@ -107,7 +123,7 @@ public final class DummyBackend: AppBackend {
         }
     }
 
-    public class TextField: Widget {
+    public class TextField: Control {
         public var value = ""
         public var placeholder = ""
         public var font: Font.Resolved?
@@ -115,7 +131,7 @@ public final class DummyBackend: AppBackend {
         public var submitHandler: (() -> Void)?
     }
 
-    public class TextView: Widget {
+    public class TextView: Control {
         public var content: String = ""
         public var font: Font.Resolved?
         public var color = Color.Resolved(red: 0.0, green: 0.0, blue: 0.0)
@@ -234,6 +250,52 @@ public final class DummyBackend: AppBackend {
         }
     }
 
+    public class FocusContainer: Container {
+        var focusability: Focusability = .unmodified
+    }
+
+    class FocusStateManager: NSObject {
+        private var focusData = [ObjectIdentifier: Set<FocusData>]()
+        private let backend: DummyBackend!
+
+        init(backend: DummyBackend) {
+            self.backend = backend
+        }
+
+        @MainActor
+        func register(_ data: [FocusData], for widget: Widget) {
+            let id = ObjectIdentifier(widget)
+            focusData[id] = Set(data)
+
+            if let control = widget as? Control {
+                control.signalHandlers[.focusDidChange] = [
+                    { widget in
+                        self.handleFocusChange(of: id, toState: widget.isFocused)
+                    }
+                ]
+            }
+
+            if data.contains(where: { $0.matches }) {
+                backend.focus(widget)
+            }
+        }
+
+        private func handleFocusChange(of identifier: ObjectIdentifier, toState isFocused: Bool) {
+            guard let data = focusData[identifier] else {
+                return
+            }
+            if isFocused {
+                data.forEach { binding in
+                    binding.set()
+                }
+            } else {
+                data.forEach { binding in
+                    binding.reset()
+                }
+            }
+        }
+    }
+
     public class Menu {}
 
     public class Alert {}
@@ -254,9 +316,14 @@ public final class DummyBackend: AppBackend {
     public var supportsMultipleWindows = true
     public var supportedDatePickerStyles: [DatePickerStyle] = []
 
+    public var focusedWidget: Control?
+    private var focusStateManager: FocusStateManager!
+
     public var incomingURLHandler: ((URL) -> Void)?
 
-    public init() {}
+    public init() {
+        focusStateManager = FocusStateManager(backend: self)
+    }
 
     public func runMainLoop(_ callback: @escaping @MainActor () -> Void) {
         callback()
@@ -658,6 +725,34 @@ public final class DummyBackend: AppBackend {
     public func getContent(ofTextField textField: Widget) -> String {
         (textField as! TextField).value
     }
+
+    public func createFocusContainer() -> Widget {
+        FocusContainer()
+    }
+
+    public func updateFocusContainer(
+        _ widget: Widget,
+        focusability: Focusability
+    ) {
+        (widget as! FocusContainer).focusability = focusability
+    }
+
+    public func registerFocusObservers(
+        _ data: [FocusData],
+        on widget: Widget
+    ) {
+        focusStateManager.register(data, for: widget)
+    }
+
+    // not part of AppBackend
+    public func focus(_ widget: Widget) {
+        focusedWidget?.isFocused = false
+        guard let control = widget as? Control else { return }
+        control.isFocused = true
+        focusedWidget = control
+    }
+
+    public func setFocusEffectDisabled(on widget: Widget, disabled: Bool) {}
 
     // public func createTextEditor() -> Widget {
 
