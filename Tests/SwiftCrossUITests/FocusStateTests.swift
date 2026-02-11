@@ -71,5 +71,14 @@ struct FocusStateTests {
         } else {
             Issue.record("Unexpectedly found nil on DummyBackend.focusedWidget after setting FocusState")
         }
+        
+        focusState = nil
+        let _ = viewGraph.computeLayout(
+            proposedSize: .unspecified,
+            environment: environment
+        )
+        viewGraph.commit()
+        
+        #expect(backend.focusedWidget == nil)
     }
 }

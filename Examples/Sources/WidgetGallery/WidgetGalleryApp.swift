@@ -42,6 +42,9 @@ struct ContentView: View {
                 currentWidgetFocusIndex = 0
             }
         }
+        Button("Resign focus") {
+            focus = nil
+        }
         ScrollView {
             Button("Print something") { print("something") }
                 .focused($focus, equals: .button)

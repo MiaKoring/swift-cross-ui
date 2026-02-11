@@ -12,7 +12,15 @@ class FocusStateManager {
         let id = ObjectIdentifier(widget)
         focusData[id] = Set(data)
 
-        guard id != lastFocused else { return }
+        guard id != lastFocused else {
+            if widget.containsFocused,
+                data.contains(where: { $0.shouldUnfocus })
+            {
+                widget.root?.setFocus(to: nil)
+            }
+
+            return
+        }
 
         if data.contains(where: { $0.matches }),
             widget.isVisible,

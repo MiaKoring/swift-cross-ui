@@ -90,6 +90,13 @@ class FocusStateManager: NSObject {
     func register(_ data: [FocusData], for widget: NSView) {
         focusData[ObjectIdentifier(widget)] = Set(data)
 
+        if let window = widget.window,
+            window.firstResponder == widget,
+            data.contains(where: { $0.shouldUnfocus })
+        {
+            window.makeFirstResponder(nil)
+        }
+
         if data.contains(where: { $0.matches }),
             !widget.isHidden,
             widget.acceptsFirstResponder

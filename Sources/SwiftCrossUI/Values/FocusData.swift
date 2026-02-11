@@ -4,6 +4,7 @@ public struct FocusData {
     public let set: () -> Void
     public let reset: () -> Void
 
+    public let shouldUnfocus: Bool
     public let matches: Bool
 
     public init(
@@ -11,13 +12,15 @@ public struct FocusData {
         match: any Hashable,
         set: @escaping () -> Void,
         reset: @escaping () -> Void,
-        matches: Bool
+        matches: Bool,
+        shouldUnfocus: Bool
     ) {
         self.type = type
         self.match = match
         self.set = set
         self.reset = reset
         self.matches = matches
+        self.shouldUnfocus = shouldUnfocus
     }
 }
 

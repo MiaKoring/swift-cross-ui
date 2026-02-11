@@ -34,7 +34,8 @@ extension View {
                         reset: {
                             focusBinding.reset()
                         },
-                        matches: focusBinding.wrappedValue == match
+                        matches: focusBinding.wrappedValue == match,
+                        shouldUnfocus: focusBinding.wrappedValue == nil
                     )
                 ]
             )
@@ -60,7 +61,8 @@ extension View {
                         reset: {
                             focusBinding.reset()
                         },
-                        matches: focusBinding.wrappedValue == true
+                        matches: focusBinding.wrappedValue == true,
+                        shouldUnfocus: focusBinding.wrappedValue == false
                     )
                 ]
             )

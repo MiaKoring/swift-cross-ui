@@ -273,6 +273,10 @@ public final class DummyBackend: AppBackend {
                         self.handleFocusChange(of: id, toState: widget.isFocused)
                     }
                 ]
+
+                if control.isFocused, data.contains(where: { $0.shouldUnfocus }) {
+                    backend.resignFocusedWidget()
+                }
             }
 
             if data.contains(where: { $0.matches }) {
@@ -750,6 +754,11 @@ public final class DummyBackend: AppBackend {
         guard let control = widget as? Control else { return }
         control.isFocused = true
         focusedWidget = control
+    }
+
+    public func resignFocusedWidget() {
+        focusedWidget?.isFocused = false
+        focusedWidget = nil
     }
 
     public func setFocusEffectDisabled(on widget: Widget, disabled: Bool) {}

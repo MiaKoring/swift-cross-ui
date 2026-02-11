@@ -162,6 +162,16 @@ open class Widget: GObject {
         }
     }
 
+    public var containsFocused: Bool {
+        let flags = gtk_widget_get_state_flags(widgetPointer)
+        return flags.rawValue & GTK_STATE_FLAG_FOCUS_WITHIN.rawValue != 0
+    }
+
+    public var root: Gtk.CustomRootWidget? {
+        guard let ptr = gtk_widget_get_root(widgetPointer) else { return nil }
+        return CustomRootWidget(ptr)
+    }
+
     /// Makes the widget the key view in the window it belongs to
     /// Equivalent to 'NSWindow/makeFirstResponder(_)'
     public func makeKey() {
