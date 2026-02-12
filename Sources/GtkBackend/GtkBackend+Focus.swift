@@ -13,8 +13,7 @@ class FocusStateManager {
         focusData[id] = Set(data)
 
         guard id != lastFocused else {
-            if
-                widget.containsFocused,
+            if widget.containsFocused,
                 data.contains(where: { $0.shouldUnfocus })
             {
                 widget.root?.setFocus(to: nil)

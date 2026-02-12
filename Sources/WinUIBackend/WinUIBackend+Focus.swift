@@ -22,8 +22,7 @@ class FocusStateManager {
         focusData[id] = Set(data)
 
         guard id != lastFocused else {
-            if
-                widget.focusState != .unfocused,
+            if widget.focusState != .unfocused,
                 data.contains(where: { $0.shouldUnfocus }),
                 let root = widget.xamlRoot.content
             {
