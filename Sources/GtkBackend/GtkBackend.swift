@@ -894,7 +894,7 @@ public final class GtkBackend: AppBackend {
 
     public func setState(ofToggle toggle: Widget, to state: Bool) {
         let toggle = toggle as! Gtk.ToggleButton
-        toggle.shouldBlockNextChangedSignal
+        toggle.shouldBlockNextChangedSignal = true
         toggle.active = state
     }
 
