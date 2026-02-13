@@ -880,6 +880,10 @@ public final class GtkBackend: AppBackend {
         toggle.sensitive = environment.isEnabled
         toggle.label = label
         toggle.toggled = { widget in
+            guard !widget.shouldBlockNextChangedSignal else {
+                widget.shouldBlockNextChangedSignal = false
+                return
+            }
             onChange(widget.active)
         }
         toggle.css.clear()
@@ -889,7 +893,9 @@ public final class GtkBackend: AppBackend {
     }
 
     public func setState(ofToggle toggle: Widget, to state: Bool) {
-        (toggle as! Gtk.ToggleButton).active = state
+        let toggle = toggle as! Gtk.ToggleButton
+        toggle.shouldBlockNextChangedSignal
+        toggle.active = state
     }
 
     public func createSwitch() -> Widget {
@@ -952,12 +958,18 @@ public final class GtkBackend: AppBackend {
         slider.maximum = maximum
         slider.digits = decimalPlaces
         slider.valueChanged = { widget in
+            guard !slider.shouldBlockNextChangedSignal else {
+                slider.shouldBlockNextChangedSignal = false
+                return
+            }
             onChange(widget.value)
         }
     }
 
     public func setValue(ofSlider slider: Widget, to value: Double) {
-        (slider as! Scale).value = value
+        let slider = slider as! Scale
+        slider.shouldBlockNextChangedSignal = true
+        slider.value = value
     }
 
     public func createTextField() -> Widget {
@@ -975,6 +987,10 @@ public final class GtkBackend: AppBackend {
         textField.sensitive = environment.isEnabled
         textField.placeholderText = placeholder
         textField.changed = { widget in
+            guard !widget.shouldBlockNextChangedSignal else {
+                widget.shouldBlockNextChangedSignal = false
+                return
+            }
             onChange(widget.text)
         }
         textField.activate = { _ in
@@ -986,7 +1002,9 @@ public final class GtkBackend: AppBackend {
     }
 
     public func setContent(ofTextField textField: Widget, to content: String) {
-        (textField as! Entry).text = content
+        let textField = textField as! Entry
+        textField.shouldBlockNextChangedSignal = true
+        textField.text = content
     }
 
     public func getContent(ofTextField textField: Widget) -> String {
@@ -1006,6 +1024,10 @@ public final class GtkBackend: AppBackend {
     ) {
         let textEditor = textEditor as! Gtk.TextView
         textEditor.buffer.changed = { buffer in
+            guard !textEditor.shouldBlockNextChangedSignal else {
+                textEditor.shouldBlockNextChangedSignal = false
+                return
+            }
             onChange(buffer.text)
         }
 
@@ -1016,6 +1038,7 @@ public final class GtkBackend: AppBackend {
 
     public func setContent(ofTextEditor textEditor: Widget, to content: String) {
         let textEditor = textEditor as! Gtk.TextView
+        textEditor.shouldBlockNextChangedSignal = true
         textEditor.buffer.text = content
     }
 
@@ -1074,6 +1097,10 @@ public final class GtkBackend: AppBackend {
         )
 
         picker.notifySelected = { picker, _ in
+            guard !picker.shouldBlockNextChangedSignal else {
+                picker.shouldBlockNextChangedSignal = false
+                return
+            }
             if picker.selected == Int(Int32(bitPattern: GTK_INVALID_LIST_POSITION)) {
                 onChange(nil)
             } else {
@@ -1085,6 +1112,7 @@ public final class GtkBackend: AppBackend {
     public func setSelectedOption(ofPicker picker: Widget, to selectedOption: Int?) {
         let picker = picker as! DropDown
         if selectedOption != picker.selected {
+            picker.shouldBlockNextChangedSignal = true
             picker.selected = selectedOption ?? Int(Int32(bitPattern: GTK_INVALID_LIST_POSITION))
         }
     }
@@ -2025,6 +2053,32 @@ final class TimePicker: Box {
             #if os(macOS)
                 @unknown default: fatalError("Unrecognized hourCycle \(hourCycle)")
             #endif
+        }
+    }
+}
+
+extension Gtk.Widget {
+    var shouldBlockNextChangedSignal: Bool {
+        get {
+            g_object_get_data(
+                widgetPointer.cast(),
+                "shouldBlockNextChangedSignal"
+            ) != nil
+        }
+        set {
+            guard newValue else {
+                g_object_set_data(
+                    widgetPointer.cast(),
+                    "shouldBlockNextChangedSignal",
+                    nil
+                )
+                return
+            }
+            g_object_set_data(
+                widgetPointer.cast(),
+                "shouldBlockNextChangedSignal",
+                UnsafeMutableRawPointer(bitPattern: 1)
+            )
         }
     }
 }
