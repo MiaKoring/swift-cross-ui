@@ -29,7 +29,8 @@ public struct UserDefaultsAppStorageProvider: AppStorageProvider {
         let jsonData = try JSONEncoder().encode(value)
         let jsonString = String.init(data: jsonData, encoding: .utf8)
         UserDefaults.standard.set(jsonString, forKey: key)
-
+        
+        print("written: \(key)")
         // NB: The UserDefaults store isn't automatically synced to disk on
         // Linux and Windows.
         // https://github.com/swiftlang/swift-corelibs-foundation/issues/4837

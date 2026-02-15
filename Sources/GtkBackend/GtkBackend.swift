@@ -880,10 +880,6 @@ public final class GtkBackend: AppBackend {
         toggle.sensitive = environment.isEnabled
         toggle.label = label
         toggle.toggled = { widget in
-            guard !widget.shouldBlockNextChangedSignal else {
-                widget.shouldBlockNextChangedSignal = false
-                return
-            }
             onChange(widget.active)
         }
         toggle.css.clear()
@@ -894,7 +890,6 @@ public final class GtkBackend: AppBackend {
 
     public func setState(ofToggle toggle: Widget, to state: Bool) {
         let toggle = toggle as! Gtk.ToggleButton
-        toggle.shouldBlockNextChangedSignal = true
         toggle.active = state
     }
 
@@ -958,17 +953,12 @@ public final class GtkBackend: AppBackend {
         slider.maximum = maximum
         slider.digits = decimalPlaces
         slider.valueChanged = { widget in
-            guard !slider.shouldBlockNextChangedSignal else {
-                slider.shouldBlockNextChangedSignal = false
-                return
-            }
             onChange(widget.value)
         }
     }
 
     public func setValue(ofSlider slider: Widget, to value: Double) {
         let slider = slider as! Scale
-        slider.shouldBlockNextChangedSignal = true
         slider.value = value
     }
 
@@ -987,8 +977,8 @@ public final class GtkBackend: AppBackend {
         textField.sensitive = environment.isEnabled
         textField.placeholderText = placeholder
         textField.changed = { widget in
-            guard !widget.shouldBlockNextChangedSignal else {
-                widget.shouldBlockNextChangedSignal = false
+            guard !textField.shouldBlockNextChangedSignal else {
+                textField.shouldBlockNextChangedSignal = false
                 return
             }
             onChange(widget.text)

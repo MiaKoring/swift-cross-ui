@@ -891,11 +891,6 @@ public final class WinUIBackend: AppBackend {
                 let slider
             else { return }
 
-            guard !slider.shouldBlockNextChangedSignal else {
-                slider.shouldBlockNextChangedSignal = false
-                return
-            }
-
             internalState.sliderChangeActions[ObjectIdentifier(slider)]?(
                 Double(event?.newValue ?? 0)
             )
@@ -921,7 +916,6 @@ public final class WinUIBackend: AppBackend {
 
     public func setValue(ofSlider slider: Widget, to value: Double) {
         let slider = slider as! WinUI.Slider
-        slider.shouldBlockNextChangedSignal = true
         slider.value = value
     }
 
@@ -1009,15 +1003,8 @@ public final class WinUIBackend: AppBackend {
 
     public func createTextField() -> Widget {
         let textField = TextBox()
-        textField.textChanged.addHandler { [weak internalState, weak textField] _, _ in
-            guard
-                let internalState,
-                let textField
-            else { return }
-            guard !textField.shouldBlockNextChangedSignal else {
-                textField.shouldBlockNextChangedSignal = false
-                return
-            }
+        textField.textChanged.addHandler { [weak internalState] _, _ in
+            guard let internalState else { return }
             internalState.textFieldChangeActions[ObjectIdentifier(textField)]?(textField.text)
         }
         textField.keyUp.addHandler { [weak internalState] _, event in
@@ -1048,7 +1035,6 @@ public final class WinUIBackend: AppBackend {
 
     public func setContent(ofTextField textField: Widget, to content: String) {
         let textField = textField as! TextBox
-        textField.shouldBlockNextChangedSignal = true
         textField.text = content
     }
 
