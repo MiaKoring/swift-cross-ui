@@ -58,7 +58,9 @@ public struct TextEditor: ElementaryView {
         backend.updateTextEditor(widget, environment: environment) { newValue in
             #if DEBUG
                 if text == newValue {
-                    logger.warning("Unnecessary write to text Binding of TextEditor detected, please open an issue on the SwiftCrossUI GitHub repository so we can fix it on the backend. Known issue on GtkBackend.")
+                    logger.warning(
+                        "Unnecessary write to text Binding of TextEditor detected, please open an issue on the SwiftCrossUI GitHub repository so we can fix it on the backend. Known issue on GtkBackend."
+                    )
                 }
             #endif
             self.text = newValue

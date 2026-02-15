@@ -57,8 +57,7 @@ public struct TextField: ElementaryView, View {
             placeholder: placeholder,
             environment: environment,
             onChange: { newValue in
-                if
-                    let value,
+                if let value,
                     value.wrappedValue != newValue
                 {
                     value.wrappedValue = newValue
