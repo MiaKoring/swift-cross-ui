@@ -287,6 +287,8 @@ extension EnvironmentValues {
     /// The menu ordering to use.
     @Entry public var menuOrder: MenuOrder = .automatic
 
+    /// Backing store for ``EnvironmentValues/openWindowFunctionsByID``.
+    /// Used to resolve "non-sendable type" warnings in Swift 5 and errors in Swift 6 language mode.
     @Entry private var openWindowFunctionsByIDStore = UncheckedSendable(
         wrappedValue: Box<[String: @MainActor () -> Void]>([:]))
 
@@ -300,6 +302,8 @@ extension EnvironmentValues {
         }
     }
 
+    /// Backing store for ``EnvironmentValues/window``.
+    /// Used to resolve "non-sendable type" warnings in Swift 5 and errors in Swift 6 language mode.
     @Entry private var windowStore = UncheckedSendable<Any?>(wrappedValue: nil)
 
     /// The backend's representation of the window that the current view is
@@ -314,6 +318,8 @@ extension EnvironmentValues {
         }
     }
 
+    /// Backing store for ``EnvironmentValues/sheet``.
+    /// Used to resolve "non-sendable type" warnings in Swift 5 and errors in Swift 6 language mode.
     @Entry private var sheetStore = UncheckedSendable<Any?>(wrappedValue: nil)
 
     /// The backend's representation of the sheet that the current view is

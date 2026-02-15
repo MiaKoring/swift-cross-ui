@@ -21,13 +21,15 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
         let getterContent: String
         let setterContent: String
 
+        let trimmedIdentifier = identifier.trimmingCharacters(in: ["`"])
+
         switch enclosingType {
             case .environment:
-                getterContent = "self[__Key_\(identifier).self]"
-                setterContent = "self[__Key_\(identifier).self] = newValue"
+                getterContent = "self[`__Key_\(trimmedIdentifier)`.self]"
+                setterContent = "self[`__Key_\(trimmedIdentifier)`.self] = newValue"
             case .appStorage:
-                getterContent = "__getValue(__Key_\(identifier).self)"
-                setterContent = "__setValue(__Key_\(identifier).self, newValue: newValue)"
+                getterContent = "getValue(`__Key_\(trimmedIdentifier)`.self)"
+                setterContent = "setValue(`__Key_\(trimmedIdentifier)`.self, newValue: newValue)"
         }
 
         return [
@@ -64,19 +66,23 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
             return []
         }
 
+        let escapedIdentifier = identifier.replacingOccurrences(of: "\"", with: "\\\"")
+
         // AppStorage has got a special requirement to know the key name as string
         let nameDeclaration: String
         switch enclosingType {
             case .environment:
                 nameDeclaration = ""
             case .appStorage:
-                nameDeclaration = "\nstatic let name = \"\(identifier)\""
+                nameDeclaration = "\nstatic let name = \"\(escapedIdentifier)\""
         }
+
+        let trimmedIdentifier = identifier.trimmingCharacters(in: ["`"])
 
         return [
             DeclSyntax(
                 stringLiteral: """
-                    private struct __Key_\(identifier): \(enclosingType.keyName) {
+                    private struct `__Key_\(trimmedIdentifier)`: \(enclosingType.keyName) {
                         \(defaultValueDeclaration)\(nameDeclaration)
                     } 
                     """)
@@ -98,7 +104,7 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
                 rawValue: extensionDecl.extendedType.trimmedDescription)
         else {
             throw MacroError(
-                "@Entry-annotated properties must be direct children of an EnvironmentValues or AppStorageValues extension."
+                "@Entry-annotated properties must be direct children of EnvironmentValues or AppStorageValues extensions."
             )
         }
 
@@ -122,7 +128,7 @@ public struct EntryMacro: AccessorMacro, PeerMacro {
         }
 
         // Verify defaultValue
-        var defaultValueDeclaration = ""
+        let defaultValueDeclaration: String
         if patternBinding.initialValue == nil,
             patternBinding.type?.isOptional == true
         {
