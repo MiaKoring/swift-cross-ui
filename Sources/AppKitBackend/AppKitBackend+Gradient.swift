@@ -1,0 +1,191 @@
+import AppKit
+import SwiftCrossUI
+
+extension AppKitBackend {
+    public func createLinearGradient() -> Widget {
+        GradientView()
+    }
+
+    public func updateLinearGradient(
+        _ widget: Widget,
+        gradient: LinearGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    ) {
+        let widget = widget as! GradientView
+        widget.setGradientLayer(
+            to: CAGradientLayer.linearGradientLayer(
+                for: gradient,
+                with: environment,
+                frame: size
+            )
+        )
+    }
+
+    public func createRadialGradient() -> NSView {
+        RadialGradientView()
+    }
+
+    public func updateRadialGradient(
+        _ widget: NSView,
+        gradient: RadialGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    ) {
+        let widget = widget as! RadialGradientView
+        widget.gradient = gradient
+        widget.lastEnvironment = environment
+    }
+
+    public func createAngularGradient() -> NSView {
+        GradientView()
+    }
+
+    public func updateAngularGradient(
+        _ widget: NSView,
+        gradient: AngularGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    ) {
+        let widget = widget as! GradientView
+        widget.setGradientLayer(
+            to: CAGradientLayer.angularGradientLayer(
+                for: gradient,
+                with: environment,
+                frame: size
+            )
+        )
+    }
+}
+
+class RadialGradientView: NSView {
+    var gradient: RadialGradient?
+    var lastEnvironment: EnvironmentValues?
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        guard
+            let gradient,
+            let environment = lastEnvironment,
+            let start = gradient.gradient.stops.first,
+            let end = gradient.gradient.stops.last
+        else { return }
+
+        let colors = gradient.gradient.stops.map {
+            $0.color.resolve(in: environment).nsColor
+        }
+
+        NSBezierPath(rect: bounds).addClip()
+
+        let nsGradient = NSGradient(
+            colors: colors,
+            atLocations: gradient.gradient.stops.map { CGFloat($0.location) },
+            colorSpace: .extendedSRGB
+        )!
+
+        let center = CGPoint(
+            x: bounds.width * gradient.center.x,
+            y: bounds.height * (1 - gradient.center.y)
+        )
+
+        nsGradient.draw(
+            fromCenter: center,
+            radius: gradient.startRadius,
+            toCenter: center,
+            radius: gradient.endRadius,
+            options: .drawsAfterEndingLocation
+        )
+    }
+
+    override func viewDidMoveToWindow() {
+        self.wantsLayer = true
+        self.layer?.drawsAsynchronously = true
+    }
+}
+
+class GradientView: NSView {
+    override var isFlipped: Bool { true }
+    func setGradientLayer(to layer: CAGradientLayer) {
+        self.layer = layer
+        layer.drawsAsynchronously = true
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        self.wantsLayer = true
+    }
+}
+
+extension CAGradientLayer {
+    @MainActor
+    static func linearGradientLayer(
+        for gradient: LinearGradient,
+        with environment: EnvironmentValues,
+        frame: SIMD2<Int>
+    ) -> Self {
+        let layer = Self()
+        let rect = CGRect(origin: .zero, size: .init(width: frame.x, height: frame.y))
+
+        layer.frame = rect
+        layer.colors = gradient.gradient.stops.map {
+            $0.color.resolve(in: environment).cgColor
+        }
+        layer.locations = gradient.gradient.stops.map {
+            NSNumber(floatLiteral: $0.location)
+        }
+
+        layer.startPoint = gradient.startPoint.cgPoint
+        layer.endPoint = gradient.endPoint.cgPoint
+
+        return layer
+    }
+
+    @MainActor
+    static func angularGradientLayer(
+        for gradient: AngularGradient,
+        with environment: EnvironmentValues,
+        frame: SIMD2<Int>
+    ) -> Self {
+        let layer = Self()
+        layer.type = .conic
+
+        layer.locations = gradient.gradient.stops.map {
+            NSNumber(floatLiteral: $0.location)
+        }
+
+        layer.colors = gradient.gradient.stops.map {
+            $0.color.resolve(in: environment).cgColor
+        }
+
+        layer.startPoint = gradient.center.cgPoint
+        layer.endPoint = UnitPoint.trailing.cgPoint
+
+        return layer
+    }
+}
+
+extension Angle {
+    var cgPoint: CGPoint {
+        let x = 0.5 + cos(radians) * 0.5
+        let y = 0.5 + sin(radians) * 0.5
+
+        return CGPoint(x: x, y: 1 - y)
+    }
+}
+
+extension Color.Resolved {
+    var cgColor: CGColor {
+        CGColor(
+            red: CGFloat(red),
+            green: CGFloat(green),
+            blue: CGFloat(blue),
+            alpha: CGFloat(opacity)
+        )
+    }
+}
+
+extension UnitPoint {
+    var cgPoint: CGPoint {
+        CGPoint(x: x, y: y)
+    }
+}

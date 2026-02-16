@@ -877,6 +877,36 @@ public protocol AppBackend: Sendable {
     )
     /// Navigates a web view to a given URL.
     func navigateWebView(_ webView: Widget, to url: URL)
+
+    // MARK: Gradients
+
+    /// Create a linear gradient
+    func createLinearGradient() -> Widget
+    /// Update a linear gradient
+    func updateLinearGradient(
+        _ widget: Widget,
+        gradient: LinearGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    )
+    /// Create a radial gradient
+    func createRadialGradient() -> Widget
+    /// Update a radial gradient
+    func updateRadialGradient(
+        _ widget: Widget,
+        gradient: RadialGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    )
+    /// Create an angular gradient
+    func createAngularGradient() -> Widget
+    /// Update an angular gradient
+    func updateAngularGradient(
+        _ widget: Widget,
+        gradient: AngularGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    )
 }
 
 extension AppBackend {
@@ -1434,4 +1464,43 @@ extension AppBackend {
         components: DatePickerComponents,
         onChange: @escaping (Date) -> Void
     ) { todo() }
+
+    public func createLinearGradient() -> Widget {
+        todo()
+    }
+
+    public func updateLinearGradient(
+        _ widget: Widget,
+        gradient: LinearGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    ) {
+        todo()
+    }
+
+    public func createRadialGradient() -> Widget {
+        todo()
+    }
+
+    public func updateRadialGradient(
+        _ widget: Widget,
+        gradient: RadialGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    ) {
+        todo()
+    }
+
+    public func createAngularGradient() -> Widget {
+        todo()
+    }
+
+    public func updateAngularGradient(
+        _ widget: Widget,
+        gradient: AngularGradient,
+        withSize size: SIMD2<Int>,
+        in environment: EnvironmentValues
+    ) {
+        todo()
+    }
 }

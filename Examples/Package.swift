@@ -98,6 +98,10 @@ let package = Package(
         .executableTarget(
             name: "ColorsExample",
             dependencies: exampleDependencies
+        ),
+        .executableTarget(
+            name: "GradientsExample",
+            dependencies: exampleDependencies
         )
     ]
 )
