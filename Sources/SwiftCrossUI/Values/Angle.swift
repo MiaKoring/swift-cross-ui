@@ -12,7 +12,7 @@ public struct Angle {
         self.radians = radians
     }
 
-    private static let conversionFactor = Double.pi / 180
+    public static let conversionFactor = Double.pi / 180
 }
 
 extension Angle {
