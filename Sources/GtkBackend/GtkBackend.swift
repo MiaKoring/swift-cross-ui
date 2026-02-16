@@ -50,7 +50,7 @@ public final class GtkBackend: AppBackend {
     /// All current windows associated with the application. Doesn't include the
     /// precreated window until it gets 'created' via `createWindow`.
     var windows: [Window] = []
-    
+
     private var measurementCustomLabel: CustomLabel!
 
     private struct LogLocation: Hashable, Equatable {
@@ -745,7 +745,7 @@ public final class GtkBackend: AppBackend {
                 content: "",
                 environment: environment
             )
-            
+
             let pango = Pango(for: measurementCustomLabel)
             let (_, potentialHeight) = pango.getTextSize(
                 multilineString,

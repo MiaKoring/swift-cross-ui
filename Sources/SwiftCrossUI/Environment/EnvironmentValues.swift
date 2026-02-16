@@ -43,9 +43,6 @@ public struct EnvironmentValues {
     /// Backing storage for extensible subscript
     private var values: [ObjectIdentifier: Any]
 
-    /// Whether user interaction is enabled. Set by ``View/disabled(_:)``.
-    public var isEnabled: Bool = true
-
     /// An internal environment value used to control whether layout caching is
     /// enabled or not. This is set to true when computing non-final layouts. E.g.
     /// when a stack computes the minimum and maximum sizes of its children, it
@@ -243,7 +240,7 @@ extension EnvironmentValues {
 
     /// Called when a text field gets submitted (usually due to the user
     /// pressing Enter/Return).
-    @Entry public var onSubmit: (@MainActor () -> Void)?
+    @Entry public var onSubmit: (@MainActor @Sendable () -> Void)?
 
     /// The scale factor of the current window.
     @Entry public var windowScaleFactor: Double = 1
@@ -290,18 +287,52 @@ extension EnvironmentValues {
     /// The menu ordering to use.
     @Entry public var menuOrder: MenuOrder = .automatic
 
+    /// Backing store for ``EnvironmentValues/openWindowFunctionsByID``.
+    /// Used to resolve "non-sendable type" warnings in Swift 5 and errors in Swift 6 language mode.
+    @Entry private var openWindowFunctionsByIDStore = UncheckedSendable(
+        wrappedValue: Box<[String: @MainActor () -> Void]>([:]))
+
     /// A mapping of window IDs to functions that open the corresponding windows.
-    @Entry internal var openWindowFunctionsByID: Box<[String: @MainActor () -> Void]> = Box([:])
+    internal var openWindowFunctionsByID: Box<[String: @MainActor () -> Void]> {
+        get {
+            openWindowFunctionsByIDStore.wrappedValue
+        }
+        set {
+            openWindowFunctionsByIDStore.wrappedValue = newValue
+        }
+    }
+
+    /// Backing store for ``EnvironmentValues/window``.
+    /// Used to resolve "non-sendable type" warnings in Swift 5 and errors in Swift 6 language mode.
+    @Entry private var windowStore = UncheckedSendable<Any?>(wrappedValue: nil)
 
     /// The backend's representation of the window that the current view is
     /// in, if any. This is a very internal detail that should never get
     /// exposed to users.
-    @Entry package var window: Any?
+    package var window: Any? {
+        get {
+            windowStore.wrappedValue
+        }
+        set {
+            windowStore.wrappedValue = newValue
+        }
+    }
+
+    /// Backing store for ``EnvironmentValues/sheet``.
+    /// Used to resolve "non-sendable type" warnings in Swift 5 and errors in Swift 6 language mode.
+    @Entry private var sheetStore = UncheckedSendable<Any?>(wrappedValue: nil)
 
     /// The backend's representation of the sheet that the current view is
     /// in, if any. This is a very internal detail that should never get
     /// exposed to users.
-    @Entry package var sheet: Any?
+    package var sheet: Any? {
+        get {
+            sheetStore.wrappedValue
+        }
+        set {
+            sheetStore.wrappedValue = newValue
+        }
+    }
 
     /// The current calendar that views should use when handling dates.
     @Entry public var calendar: Calendar = .current
@@ -311,6 +342,9 @@ extension EnvironmentValues {
 
     /// The display style used by ``DatePicker``.
     @Entry public var datePickerStyle: DatePickerStyle = .automatic
+
+    /// Whether user interaction is enabled. Set by ``View/disabled(_:)``.
+    @Entry public var isEnabled: Bool = true
 
     @Entry public var lineLimitSettings: LineLimit?
 
@@ -327,10 +361,3 @@ public protocol EnvironmentKey<Value> {
     /// The default value for the key.
     static var defaultValue: Value { get }
 }
-
-@attached(accessor) @attached(peer, names: prefixed(__Key_))
-public macro Entry() =
-    #externalMacro(
-        module: "SwiftCrossUIMacrosPlugin",
-        type: "EntryMacro"
-    )

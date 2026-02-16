@@ -22,14 +22,14 @@ struct EntryMacroTests {
             extension EnvironmentValues {
                 var test {
                     get {
-                        self[__Key_test.self]
+                        self[`__Key_test`.self]
                     }
                     set {
-                        self[__Key_test.self] = newValue
+                        self[`__Key_test`.self] = newValue
                     }
                 }
             
-                private struct __Key_test: SwiftCrossUI.EnvironmentKey {
+                private struct `__Key_test`: SwiftCrossUI.EnvironmentKey {
                     static let defaultValue = 22
                 }
             }
@@ -53,14 +53,14 @@ struct EntryMacroTests {
             extension EnvironmentValues {
                 var test: UInt64 {
                     get {
-                        self[__Key_test.self]
+                        self[`__Key_test`.self]
                     }
                     set {
-                        self[__Key_test.self] = newValue
+                        self[`__Key_test`.self] = newValue
                     }
                 }
 
-                private struct __Key_test: SwiftCrossUI.EnvironmentKey {
+                private struct `__Key_test`: SwiftCrossUI.EnvironmentKey {
                     static let defaultValue: UInt64 = 22
                 }
             }
@@ -72,7 +72,7 @@ struct EntryMacroTests {
         )
     }
     
-    @Test("Entry throws without initial value")
+    @Test("@Entry requires an initial value for non-optional properties.")
     func entryThrowsWithoutInitialValue() {
         assertMacroExpansion(
             """
@@ -83,15 +83,11 @@ struct EntryMacroTests {
             expandedSource: """
             extension EnvironmentValues {
                 var test: UInt64
-            
-                private struct __Key_test: SwiftCrossUI.EnvironmentKey {
-            
-                }
             }
             """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "MacroError(message: \"@Entry requires an initial value to be set.\")",
+                    message: "MacroError(message: \"@Entry requires an initial value for non-optional properties.\")",
                     line: 2,
                     column: 5
                 )
@@ -116,26 +112,26 @@ struct EntryMacroTests {
             extension EnvironmentValues {
                 var test: UInt64? {
                     get {
-                        self[__Key_test.self]
+                        self[`__Key_test`.self]
                     }
                     set {
-                        self[__Key_test.self] = newValue
+                        self[`__Key_test`.self] = newValue
                     }
                 }
             
-                private struct __Key_test: SwiftCrossUI.EnvironmentKey {
+                private struct `__Key_test`: SwiftCrossUI.EnvironmentKey {
                     static let defaultValue: UInt64? = nil
                 }
                 var test1: Optional<UInt64> {
                     get {
-                        self[__Key_test1.self]
+                        self[`__Key_test1`.self]
                     }
                     set {
-                        self[__Key_test1.self] = newValue
+                        self[`__Key_test1`.self] = newValue
                     }
                 }
 
-                private struct __Key_test1: SwiftCrossUI.EnvironmentKey {
+                private struct `__Key_test1`: SwiftCrossUI.EnvironmentKey {
                     static let defaultValue: Optional<UInt64> = nil
                 }
             }
@@ -161,27 +157,27 @@ struct EntryMacroTests {
             extension AppStorageValues {
                 var test: UInt64? {
                     get {
-                        __getValue(__Key_test.self)
+                        getValue(`__Key_test`.self)
                     }
                     set {
-                        __setValue(__Key_test.self, newValue: newValue)
+                        setValue(`__Key_test`.self, newValue: newValue)
                     }
                 }
             
-                private struct __Key_test: SwiftCrossUI.AppStorageKey {
+                private struct `__Key_test`: SwiftCrossUI.AppStorageKey {
                     static let defaultValue: UInt64? = nil
                     static let name = "test"
                 }
                 var name {
                     get {
-                        __getValue(__Key_name.self)
+                        getValue(`__Key_name`.self)
                     }
                     set {
-                        __setValue(__Key_name.self, newValue: newValue)
+                        setValue(`__Key_name`.self, newValue: newValue)
                     }
                 }
             
-                private struct __Key_name: SwiftCrossUI.AppStorageKey {
+                private struct `__Key_name`: SwiftCrossUI.AppStorageKey {
                     static let defaultValue = "default"
                     static let name = "name"
                 }
@@ -194,5 +190,65 @@ struct EntryMacroTests {
             }
         )
     }
+    
+    @Test("@Entry-annotated properties must be direct children of an EnvironmentValues or AppStorageValues extension.")
+    func entryOnValueWithoutDirectParentSupportedValuesExtensionFails() {
+        assertMacroExpansion(
+            """
+            extension EnvironmentValues {
+                struct WrongParent {
+                    @Entry var test: UInt64 = 1
+                }
+            }
+            """,
+            expandedSource: """
+            extension EnvironmentValues {
+                struct WrongParent {
+                    var test: UInt64 = 1
+                }
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "MacroError(message: \"@Entry-annotated properties must be direct children of EnvironmentValues or AppStorageValues extensions.\")",
+                    line: 3,
+                    column: 9
+                )
+            ],
+            macroSpecs: testMacros,
+            failureHandler: { spec in
+                Issue.record(spec.issueComment)
+            }
+        )
+    }
+    
+    @Test("@Entry is only supported on single binding `var` declarations.")
+    func entryFailsWhenAppliedToLet() {
+        assertMacroExpansion(
+            """
+            extension EnvironmentValues {
+                @Entry let test: UInt64?
+            }
+            """,
+            expandedSource: """
+            extension EnvironmentValues {
+                let test: UInt64?
+            }
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "MacroError(message: \"@Entry is only supported on single binding `var` declarations.\")",
+                    line: 2,
+                    column: 5
+                )
+            ],
+            macroSpecs: testMacros,
+            failureHandler: { spec in
+                Issue.record(spec.issueComment)
+            }
+        )
+    }
+    
+    // TODO: Add test for raw identifiers after SwiftSyntax version bump to 602.0.0+
 }
 

@@ -1,7 +1,7 @@
 import Foundation
 import Mutex
 
-private let appStorageCache: Mutex<[String: any Codable & Sendable]> = Mutex([:])
+let appStorageCache: Mutex<[String: any Codable & Sendable]> = Mutex([:])
 private let appStoragePublisherCache: Mutex<[String: Publisher]> = Mutex([:])
 
 /// Like ``State``, but persists its value to disk so that it survives betweeen
@@ -42,7 +42,7 @@ public struct AppStorage<Value: Codable & Sendable>: ObservableProperty {
                         }
                         return provider.getValue(key: key, defaultValue: defaultValue)
                     case .path(let keyPath):
-                        return AppStorageValues(__provider: provider)[keyPath: keyPath]
+                        return AppStorageValues(provider: provider)[keyPath: keyPath]
                 }
             }
 
@@ -60,7 +60,7 @@ public struct AppStorage<Value: Codable & Sendable>: ObservableProperty {
                     case .key(let key, _):
                         provider.setValue(key: key, newValue: newValue)
                     case .path(let keyPath):
-                        var values = AppStorageValues(__provider: provider)
+                        var values = AppStorageValues(provider: provider)
                         values[keyPath: keyPath] = newValue
                 }
 
@@ -139,85 +139,5 @@ extension AppStorage {
 
     public init(_ keyPath: WritableKeyPath<AppStorageValues, Value>) {
         implementation = StateImpl(initialStorage: Storage(mode: .path(keyPath)))
-    }
-}
-
-// MARK: - AppStorageProviderExtension
-extension AppStorageProvider {
-    public func getValue<T: Codable & Sendable>(key: String, defaultValue: T) -> T {
-        return appStorageCache.withLock { cache in
-            // If this is the very first time we're reading from this key, it won't
-            // be in the cache yet. In that case, we return the already-persisted value
-            // if it exists, or the default value otherwise; either way, we add it to the
-            // cache so subsequent accesses of `value` won't have to read from disk again.
-            guard let cachedValue = cache[key] else {
-                let value =
-                    self.retrieveValue(ofType: T.self, forKey: key) ?? defaultValue
-                cache[key] = value
-                return value
-            }
-
-            // Make sure that we have the right type.
-            guard let cachedValue = cachedValue as? T else {
-                logger.warning(
-                    "'@AppStorage' property is of the wrong type; using default value",
-                    metadata: [
-                        "key": "\(key)",
-                        "providedType": "\(T.self)",
-                        "actualType": "\(type(of: cachedValue))",
-                    ]
-                )
-                return defaultValue
-            }
-
-            return cachedValue
-        }
-    }
-
-    public func setValue<T: Codable & Sendable>(key: String, newValue: T) {
-        appStorageCache.withLock { cache in
-            cache[key] = newValue
-            do {
-                logger.trace("persisting '\(newValue)' for '\(key)'")
-                try self.persistValue(newValue, forKey: key)
-            } catch {
-                logger.warning(
-                    "failed to encode '@AppStorage' data",
-                    metadata: [
-                        "value": "\(newValue)",
-                        "error": "\(error.localizedDescription)",
-                    ]
-                )
-            }
-        }
-    }
-}
-
-/// A type safe key for ``AppStorage`` properties, similar in spirit
-/// to ``EnvironmentKey``.
-public protocol AppStorageKey<Value> {
-    associatedtype Value: Codable
-
-    /// The name to use when persisting the key.
-    static var name: String { get }
-    /// The default value for the key.
-    static var defaultValue: Value { get }
-}
-
-public struct AppStorageValues {
-    private let __provider: AppStorageProvider?
-
-    /// Only to be used by AppStorage
-    internal init(__provider: AppStorageProvider?) {
-        self.__provider = __provider
-    }
-
-    public func __getValue<T: Codable>(_ key: any AppStorageKey<T>.Type) -> T {
-        guard let __provider else { return key.defaultValue }
-        return __provider.getValue(key: key.name, defaultValue: key.defaultValue)
-    }
-
-    public func __setValue<T: Codable>(_ key: any AppStorageKey<T>.Type, newValue: T) {
-        __provider?.setValue(key: key.name, newValue: newValue)
     }
 }
