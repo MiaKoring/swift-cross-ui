@@ -23,6 +23,12 @@ open class GObject: GObjectRepresentable {
 
     private var signals: [(UInt, Any)] = []
 
+    private static let blockableSignalNames: Set<String> = [
+        "changed"
+    ]
+
+    private var blockableSignalIDs = [String: UInt]()
+
     open func registerSignals() {}
 
     func removeSignals() {
@@ -31,6 +37,7 @@ open class GObject: GObjectRepresentable {
         }
 
         signals = []
+        blockableSignalIDs = [:]
     }
 
     /// Adds a signal that is not carrying any additional information.
@@ -51,7 +58,7 @@ open class GObject: GObjectRepresentable {
             handler: unsafeBitCast(handler, to: GCallback.self)
         )
 
-        signals.append((handlerId, box))
+        storeHandler(handlerId, box: box, for: name)
     }
 
     func addSignal<T1>(name: String, handler: GCallback, callback: @escaping (T1) -> Void) {
@@ -64,7 +71,7 @@ open class GObject: GObjectRepresentable {
             handler: handler
         )
 
-        signals.append((handlerId, box))
+        storeHandler(handlerId, box: box, for: name)
     }
 
     func addSignal<T1, T2>(name: String, handler: GCallback, callback: @escaping (T1, T2) -> Void) {
@@ -77,7 +84,7 @@ open class GObject: GObjectRepresentable {
             handler: handler
         )
 
-        signals.append((handlerId, box))
+        storeHandler(handlerId, box: box, for: name)
     }
 
     func addSignal<T1, T2, T3>(
@@ -92,7 +99,7 @@ open class GObject: GObjectRepresentable {
             handler: handler
         )
 
-        signals.append((handlerId, box))
+        storeHandler(handlerId, box: box, for: name)
     }
 
     func addSignal<T1, T2, T3, T4>(
@@ -107,7 +114,7 @@ open class GObject: GObjectRepresentable {
             handler: handler
         )
 
-        signals.append((handlerId, box))
+        storeHandler(handlerId, box: box, for: name)
     }
 
     func addSignal<T1, T2, T3, T4, T5>(
@@ -122,7 +129,7 @@ open class GObject: GObjectRepresentable {
             handler: handler
         )
 
-        signals.append((handlerId, box))
+        storeHandler(handlerId, box: box, for: name)
     }
 
     func addSignal<T1, T2, T3, T4, T5, T6>(
@@ -137,6 +144,38 @@ open class GObject: GObjectRepresentable {
             handler: handler
         )
 
-        signals.append((handlerId, box))
+        storeHandler(handlerId, box: box, for: name)
+    }
+
+    @inline(__always)
+    private func storeHandler(_ id: UInt, box: Any, for signalName: String) {
+        signals.append((id, box))
+        if Self.blockableSignalNames.contains(signalName) {
+            blockableSignalIDs[signalName] = id
+        }
+    }
+
+    /// Executes a closure while temporarily suppressing a specific signal handler.
+    ///
+    /// - Parameters:
+    ///   - named: The name of the GObject signal to block (e.g., "changed").
+    ///   - block: The closure to execute while the signal is suppressed.
+    /// - Note: If no signal ID is stored for the given name, the block executes normally without suppression.
+    public func withBlockedSignal(
+        named signalName: String,
+        block: @escaping () -> Void
+    ) {
+        guard let signalID = blockableSignalIDs[signalName] else {
+            print(
+                """
+                Notice: Skipping signal block for '\(signalName)' (ID missing). \
+                Proceeding with block execution anyway.
+                """)
+            block()
+            return
+        }
+        g_signal_handler_block(gobjectPointer, signalID)
+        block()
+        g_signal_handler_unblock(gobjectPointer, signalID)
     }
 }

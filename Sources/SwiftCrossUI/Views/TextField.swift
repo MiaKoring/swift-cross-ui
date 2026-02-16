@@ -61,6 +61,16 @@ public struct TextField: ElementaryView, View {
                     value.wrappedValue != newValue
                 {
                     value.wrappedValue = newValue
+                } else {
+                    #if DEBUG
+                        logger.warning(
+                            """
+                            Unnecessary write to text Binding of TextField detected, \
+                            please open an issue on the SwiftCrossUI GitHub repository \
+                            so we can fix it on \(type(of: backend)).
+                            """
+                        )
+                    #endif
                 }
             },
             onSubmit: environment.onSubmit ?? {}

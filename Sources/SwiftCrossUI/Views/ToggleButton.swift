@@ -26,6 +26,16 @@ struct ToggleButton: ElementaryView, View {
         backend.updateToggle(widget, label: label, environment: environment) { newActiveState in
             if active.wrappedValue != newActiveState {
                 active.wrappedValue = newActiveState
+            } else {
+                #if DEBUG
+                    logger.warning(
+                        """
+                        Unnecessary write to text Binding of TextEditor detected, \
+                        please open an issue on the SwiftCrossUI GitHub repository \
+                        so we can fix it on \(type(of: backend)).
+                        """
+                    )
+                #endif
             }
         }
         return ViewLayoutResult.leafView(
