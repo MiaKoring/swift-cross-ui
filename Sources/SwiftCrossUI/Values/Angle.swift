@@ -1,3 +1,5 @@
+import Foundation
+
 public struct Angle {
     public var degrees: Double
     public var radians: Double
@@ -12,7 +14,22 @@ public struct Angle {
         self.radians = radians
     }
 
+    public init(origin: UnitPoint, destination: UnitPoint) {
+        let deltaX = destination.x - origin.x
+        let deltaY = destination.y - origin.y
+
+        self.init(radians: atan2(deltaY, deltaX))
+    }
+
     public static let conversionFactor = Double.pi / 180
+
+    public static func + (lhs: Self, rhs: Self) -> Self {
+        Angle(degrees: lhs.degrees + rhs.degrees)
+    }
+
+    public static func - (lhs: Self, rhs: Self) -> Self {
+        Angle(degrees: lhs.degrees - rhs.degrees)
+    }
 }
 
 extension Angle {

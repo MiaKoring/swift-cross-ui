@@ -3,7 +3,7 @@ import SwiftCrossUI
 
 extension AppKitBackend {
     public func createLinearGradient() -> Widget {
-        GradientView()
+        LinearGradientView()
     }
 
     public func updateLinearGradient(
@@ -12,14 +12,9 @@ extension AppKitBackend {
         withSize size: SIMD2<Int>,
         in environment: EnvironmentValues
     ) {
-        let widget = widget as! GradientView
-        widget.setGradientLayer(
-            to: CAGradientLayer.linearGradientLayer(
-                for: gradient,
-                with: environment,
-                frame: size
-            )
-        )
+        let widget = widget as! LinearGradientView
+        widget.gradient = gradient
+        widget.lastEnvironment = environment
     }
 
     public func createRadialGradient() -> NSView {
@@ -58,7 +53,55 @@ extension AppKitBackend {
     }
 }
 
-class RadialGradientView: NSView {
+final class LinearGradientView: NSView {
+    var gradient: LinearGradient?
+    var lastEnvironment: EnvironmentValues?
+
+    override var isFlipped: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        guard
+            let gradient,
+            let environment = lastEnvironment,
+            let start = gradient.gradient.stops.first,
+            let end = gradient.gradient.stops.last
+        else { return }
+
+        let colors = gradient.gradient.stops.map {
+            $0.color.resolve(in: environment).nsColor
+        }
+
+        NSBezierPath(rect: bounds).addClip()
+
+        let nsGradient = NSGradient(
+            colors: colors,
+            atLocations: gradient.gradient.stops.map { CGFloat($0.location) },
+            colorSpace: .extendedSRGB
+        )!
+
+        let startPoint = UnitPoint(
+            x: Double(bounds.width) * gradient.startPoint.x,
+            y: Double(bounds.height) * gradient.startPoint.y
+        )
+
+        let endPoint = UnitPoint(
+            x: Double(bounds.width) * gradient.endPoint.x,
+            y: Double(bounds.height) * gradient.endPoint.y
+        )
+
+        let angle = Angle(origin: startPoint, destination: endPoint)
+
+        nsGradient.draw(in: bounds, angle: angle.degrees)
+    }
+
+    override func viewDidMoveToWindow() {
+        self.wantsLayer = true
+        self.layer?.drawsAsynchronously = true
+    }
+}
+
+final class RadialGradientView: NSView {
     var gradient: RadialGradient?
     var lastEnvironment: EnvironmentValues?
 
@@ -117,29 +160,6 @@ class GradientView: NSView {
 }
 
 extension CAGradientLayer {
-    @MainActor
-    static func linearGradientLayer(
-        for gradient: LinearGradient,
-        with environment: EnvironmentValues,
-        frame: SIMD2<Int>
-    ) -> Self {
-        let layer = Self()
-        let rect = CGRect(origin: .zero, size: .init(width: frame.x, height: frame.y))
-
-        layer.frame = rect
-        layer.colors = gradient.gradient.stops.map {
-            $0.color.resolve(in: environment).cgColor
-        }
-        layer.locations = gradient.gradient.stops.map {
-            NSNumber(floatLiteral: $0.location)
-        }
-
-        layer.startPoint = gradient.startPoint.cgPoint
-        layer.endPoint = gradient.endPoint.cgPoint
-
-        return layer
-    }
-
     @MainActor
     static func angularGradientLayer(
         for gradient: AngularGradient,

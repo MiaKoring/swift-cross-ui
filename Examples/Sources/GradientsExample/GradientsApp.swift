@@ -158,7 +158,12 @@ struct AngularGradientView: View {
                 .frame(width: 300)
 
                 AngularGradient(
-                    stops: stops,
+                    stops: [
+                        .init(color: .white, location: 0),
+                        .init(color: .black, location: 0.1),
+                        .init(color: .white, location: 0.2),
+                        .init(color: .white, location: 0.5),
+                    ],
                     center: .center
                 )
                 .frame(width: 300)
