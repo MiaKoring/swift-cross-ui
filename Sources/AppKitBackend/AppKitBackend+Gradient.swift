@@ -63,9 +63,7 @@ final class LinearGradientView: NSView {
         super.draw(dirtyRect)
         guard
             let gradient,
-            let environment = lastEnvironment,
-            let start = gradient.gradient.stops.first,
-            let end = gradient.gradient.stops.last
+            let environment = lastEnvironment
         else { return }
 
         let colors = gradient.gradient.stops.map {
@@ -109,9 +107,7 @@ final class RadialGradientView: NSView {
         super.draw(dirtyRect)
         guard
             let gradient,
-            let environment = lastEnvironment,
-            let start = gradient.gradient.stops.first,
-            let end = gradient.gradient.stops.last
+            let environment = lastEnvironment
         else { return }
 
         let colors = gradient.gradient.stops.map {

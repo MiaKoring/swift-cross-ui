@@ -34,7 +34,13 @@ struct GradientsApp: App {
                     case .radial:
                         RadialGradientView()
                     case .angular:
-                        AngularGradientView()
+                        #if canImport(UIKitBackend)
+                            ScrollView(.horizontal) {
+                                AngularGradientView()
+                            }
+                        #else
+                            AngularGradientView()
+                        #endif
                 }
             }
         }
@@ -149,32 +155,30 @@ struct AngularGradientView: View {
     ]
 
     var body: some View {
-        VStack {
-            HStack {
-                AngularGradient(
-                    colors: colors,
-                    center: .center
-                )
-                .frame(width: 300)
+        HStack {
+            AngularGradient(
+                colors: colors,
+                center: .center
+            )
+            .frame(width: 300)
 
-                AngularGradient(
-                    stops: [
-                        .init(color: .white, location: 0),
-                        .init(color: .black, location: 0.1),
-                        .init(color: .white, location: 0.2),
-                        .init(color: .white, location: 0.5),
-                    ],
-                    center: .center
-                )
-                .frame(width: 300)
+            AngularGradient(
+                stops: [
+                    .init(color: .white, location: 0),
+                    .init(color: .black, location: 0.1),
+                    .init(color: .white, location: 0.2),
+                    .init(color: .white, location: 0.5),
+                ],
+                center: .center
+            )
+            .frame(width: 300)
 
-                AngularGradient(
-                    stops: specialStops,
-                    center: .center
-                )
-                .frame(width: 300)
-            }
-            .frame(height: 300)
+            AngularGradient(
+                stops: specialStops,
+                center: .center
+            )
+            .frame(width: 300)
         }
+        .frame(height: 300)
     }
 }
