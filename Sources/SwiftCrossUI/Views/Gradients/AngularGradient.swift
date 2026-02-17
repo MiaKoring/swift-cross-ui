@@ -1,4 +1,6 @@
 /// An angular gradient.
+///
+/// Currently unsupported on WinUIBackend.
 public struct AngularGradient: ElementaryView {
     /// The gradient represented as an array of color stops, each having a parametric location value.
     public let gradient: Gradient
