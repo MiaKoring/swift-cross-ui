@@ -22,6 +22,7 @@ public struct Gradient {
                 Stop(color: first, location: 0),
                 Stop(color: first, location: 1),
             ]
+            return
         }
 
         let locationDifference = 1.0 / Double(colors.count - 1)
