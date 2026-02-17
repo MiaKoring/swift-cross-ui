@@ -1,11 +1,19 @@
+/// A radial gradient.
 public struct RadialGradient: ElementaryView {
+    /// The gradient represented as an array of color stops, each having a parametric location value.
     public let gradient: Gradient
+    /// The radius the gradient starts laying out colors.
+    /// The circle smaller than this radius gets filled with the first color.
     public let startRadius: Double
+    /// The radius the gradient stops laying out colors.
+    /// The circle bigger than this radius gets filled with the last color.
     public let endRadius: Double
+    /// The normalized center point of the gradient in its coordinate space.
     public let center: UnitPoint
 
     private static let idealSize = ViewSize(10, 10)
 
+    /// Creates a radial gradient from a base gradient.
     public init(
         gradient: Gradient,
         center: UnitPoint,
@@ -52,6 +60,7 @@ public struct RadialGradient: ElementaryView {
 }
 
 extension RadialGradient {
+    /// Creates a radial gradient from a collection of colors.
     public init(
         stops: [Gradient.Stop],
         center: UnitPoint,
@@ -66,6 +75,7 @@ extension RadialGradient {
         )
     }
 
+    /// Creates a radial gradient from a collection of color stops.
     public init(
         colors: [Color],
         center: UnitPoint,

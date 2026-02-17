@@ -1,10 +1,19 @@
+/// A linear gradient.
 public struct LinearGradient: ElementaryView {
+    /// The gradient represented as an array of color stops, each having a parametric location value.
     public let gradient: Gradient
+    /// The normalized point where the gradient begins, defined in the views coordinate space.
+    ///
+    /// Use values like `.top`, `.leading`, or custom `UnitPoint(x:y:)` offsets.
     public let startPoint: UnitPoint
+    /// The normalized point where the gradient ends, defined in the views coordinate space.
+    ///
+    /// The color interpolation moves linearly from the start point to this point.
     public let endPoint: UnitPoint
 
     private static let idealSize = ViewSize(10, 10)
 
+    /// Creates a linear gradient from a base gradient.
     public init(
         gradient: Gradient,
         startPoint: UnitPoint,
@@ -49,6 +58,7 @@ public struct LinearGradient: ElementaryView {
 }
 
 extension LinearGradient {
+    /// Creates a linear gradient from a collection of colors.
     public init(
         stops: [Gradient.Stop],
         startPoint: UnitPoint,
@@ -61,6 +71,7 @@ extension LinearGradient {
         )
     }
 
+    /// Creates a linear gradient from a collection of color stops.
     public init(
         colors: [Color],
         startPoint: UnitPoint,

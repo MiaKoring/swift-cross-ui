@@ -1,9 +1,13 @@
+/// An angular gradient.
 public struct AngularGradient: ElementaryView {
+    /// The gradient represented as an array of color stops, each having a parametric location value.
     public let gradient: Gradient
+    /// The normalized center point of the gradient in its coordinate space.
     public let center: UnitPoint
 
     private static let idealSize = ViewSize(10, 10)
 
+    /// Creates a conic gradient that completes a full turn.
     public init(
         gradient: Gradient,
         center: UnitPoint
@@ -46,6 +50,7 @@ public struct AngularGradient: ElementaryView {
 }
 
 extension AngularGradient {
+    /// Creates a conic gradient from a collection of colors that completes a full turn.
     public init(
         colors: [Color],
         center: UnitPoint
@@ -56,6 +61,7 @@ extension AngularGradient {
         )
     }
 
+    /// Creates a conic gradient from a collection of color stops that completes a full turn.
     public init(
         stops: [Gradient.Stop],
         center: UnitPoint

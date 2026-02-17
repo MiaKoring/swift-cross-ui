@@ -880,27 +880,42 @@ public protocol AppBackend: Sendable {
 
     // MARK: Gradients
 
-    /// Create a linear gradient
+    /// Create a linear gradient.
     func createLinearGradient() -> Widget
-    /// Update a linear gradient
+    /// Update a linear gradient.
+    /// - Parameters:
+    ///   - widget: The widget to update.
+    ///   - gradient: The SwiftCrossUI representation of the widget.
+    ///   - withSize: The size dictated by ``ViewLayoutResult``.
+    ///   - in: The environment of the gradient.
     func updateLinearGradient(
         _ widget: Widget,
         gradient: LinearGradient,
         withSize size: SIMD2<Int>,
         in environment: EnvironmentValues
     )
-    /// Create a radial gradient
+    /// Create a radial gradient.
     func createRadialGradient() -> Widget
-    /// Update a radial gradient
+    /// Update a radial gradient.
+    /// - Parameters:
+    ///   - widget: The widget to update.
+    ///   - gradient: The SwiftCrossUI representation of the widget.
+    ///   - withSize: The size dictated by ``ViewLayoutResult``.
+    ///   - in: The environment of the gradient.
     func updateRadialGradient(
         _ widget: Widget,
         gradient: RadialGradient,
         withSize size: SIMD2<Int>,
         in environment: EnvironmentValues
     )
-    /// Create an angular gradient
+    /// Create an angular gradient.
     func createAngularGradient() -> Widget
-    /// Update an angular gradient
+    /// Update an angular gradient.
+    /// - Parameters:
+    ///   - widget: The widget to update.
+    ///   - gradient: The SwiftCrossUI representation of the widget.
+    ///   - withSize: The size dictated by ``ViewLayoutResult``.
+    ///   - in: The environment of the gradient.
     func updateAngularGradient(
         _ widget: Widget,
         gradient: AngularGradient,

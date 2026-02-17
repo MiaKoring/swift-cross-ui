@@ -1,5 +1,6 @@
 import Foundation
 
+/// A geometric angle whose value you access in either radians or degrees.
 public struct Angle {
     public var degrees: Double
     public var radians: Double
@@ -14,6 +15,10 @@ public struct Angle {
         self.radians = radians
     }
 
+    /// Creates an angle based on the direction between two unit points.
+    /// - Parameters:
+    ///   - origin: The starting point of the vector.
+    ///   - destination: The end point used to calculate the angle from the origin.
     public init(origin: UnitPoint, destination: UnitPoint) {
         let deltaX = destination.x - origin.x
         let deltaY = destination.y - origin.y

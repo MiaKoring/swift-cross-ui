@@ -1,4 +1,5 @@
 /// A normalized 2D point in a view’s coordinate space.
+@frozen
 public struct UnitPoint {
     /// The normalized distance from the origin to the point in the horizontal direction.
     public var x: Double

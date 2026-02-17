@@ -1,10 +1,16 @@
+/// A color gradient represented as an array of color stops, each having a parametric location value.
 public struct Gradient {
+    /// The array of color stops.
     public var stops: [Gradient.Stop]
 
+    /// Creates a gradient from an array of color stops.
     init(stops: [Gradient.Stop]) {
         self.stops = stops
     }
 
+    /// Creates a gradient from an array of colors.
+    ///
+    /// The gradient synthesizes its location values to evenly space the colors along the gradient.
     init(colors: [Color]) {
         guard
             let first = colors.first
@@ -40,12 +46,17 @@ public struct Gradient {
         self.stops = stops
     }
 
+    /// One color stop in the gradient.
     public struct Stop {
+        /// Creates a color stop with a color and location.
         public init(color: Color, location: Double) {
             self.color = color
             self.location = location
         }
+
+        /// The color for the stop.
         public var color: Color
+        /// The parametric location of the stop.
         public var location: Double
     }
 }
