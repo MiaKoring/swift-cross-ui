@@ -120,7 +120,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/stackotter/swift-winui",
-            revision: "42c47f4e4129c8b5a5d9912f05e1168c924ac180"
+            revision: "1e3d14aaab0795add5e0586365767c15119942fb"
         ),
         .package(
             url: "https://github.com/stackotter/swift-benchmark",
