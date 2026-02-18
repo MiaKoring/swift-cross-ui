@@ -6,8 +6,9 @@ public struct AngularGradient: ElementaryView {
     public let gradient: Gradient
     /// The normalized center point of the gradient in its coordinate space.
     public let center: UnitPoint
-
+    /// The angle at which the gradient starts drawing. 0° is trailing center.
     public let startAngle: Angle
+    /// The angle at which the gradient stops drawing. Everything after is filled with the last used color.
     public let endAngle: Angle?
 
     private static let idealSize = ViewSize(10, 10)
@@ -24,6 +25,9 @@ public struct AngularGradient: ElementaryView {
         self.endAngle = nil
     }
 
+    /// Creates a conic gradient that completes a partial rotation.
+    ///
+    /// Stops are expected to be in 360° unit space.
     public init(
         gradient: Gradient,
         center: UnitPoint,
@@ -96,6 +100,7 @@ extension AngularGradient {
         )
     }
 
+    /// Creates a conic gradient from a collection of colors that completes a partial rotation.
     public init(
         colors: [Color],
         center: UnitPoint,
@@ -110,6 +115,9 @@ extension AngularGradient {
         )
     }
 
+    /// Creates a conic gradient from a collection of color stops that completes a partial rotation.
+    ///
+    /// Stops are expected to be in 360° unit space.
     public init(
         stops: [Gradient.Stop],
         center: UnitPoint,
