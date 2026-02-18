@@ -155,30 +155,57 @@ struct AngularGradientView: View {
     ]
 
     var body: some View {
-        HStack {
-            AngularGradient(
-                colors: colors,
-                center: .center
-            )
-            .frame(width: 300)
+        VStack {
+            HStack {
+                AngularGradient(
+                    colors: colors,
+                    center: .center,
+                    angle: .degrees(90),
+                )
+                .frame(width: 300)
 
-            AngularGradient(
-                stops: [
-                    .init(color: .white, location: 0),
-                    .init(color: .black, location: 0.1),
-                    .init(color: .white, location: 0.2),
-                    .init(color: .white, location: 0.5),
-                ],
-                center: .center
-            )
-            .frame(width: 300)
+                AngularGradient(
+                    stops: stops,
+                    center: .center
+                )
+                .frame(width: 300)
 
-            AngularGradient(
-                stops: specialStops,
-                center: .center
-            )
-            .frame(width: 300)
+                AngularGradient(colors: colors, center: .center)
+                    .frame(width: 300)
+            }
+            .frame(height: 300)
+
+            HStack {
+                AngularGradient(
+                    stops: specialStops,
+                    center: .center,
+                    startAngle: .degrees(260),
+                    endAngle: .degrees(500)
+                )
+                .frame(width: 300)
+
+                AngularGradient(
+                    stops: specialStops,
+                    center: .center,
+                    startAngle: .degrees(260),
+                    endAngle: .degrees(620)
+                )
+                .frame(width: 300)
+
+                AngularGradient(
+                    stops: [
+                        .init(color: .white, location: 0),
+                        .init(color: .black, location: 0.1),
+                        .init(color: .white, location: 0.2),
+                        .init(color: .white, location: 0.5),
+                    ],
+                    center: .center,
+                    angle: .degrees(230)
+                )
+                .frame(width: 300)
+            }
+            .frame(height: 300)
+
         }
-        .frame(height: 300)
     }
 }

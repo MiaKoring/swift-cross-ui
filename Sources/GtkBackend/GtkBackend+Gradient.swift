@@ -77,7 +77,9 @@ extension GtkBackend {
     ) {
         let widget = widget as! Box
 
-        let stops = gradient.gradient.stops.map {
+        let adjustedStops = gradient.adjustedStops
+
+        let stops = adjustedStops.map {
             let resolved = $0.color.resolve(in: environment)
             let red = resolved.red * 255
             let green = resolved.green * 255
@@ -93,7 +95,7 @@ extension GtkBackend {
             property: .init(
                 key: "background",
                 value: """
-                    conic-gradient(from 90deg \
+                    conic-gradient(from \(gradient.startAngle.degrees + 90)deg \
                     at \(gradient.center.x * 100)% \(gradient.center.y * 100)%, \
                     \(stops.joined(separator: ", ")))
                     """

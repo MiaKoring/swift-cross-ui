@@ -165,16 +165,18 @@ extension CAGradientLayer {
         let layer = Self()
         layer.type = .conic
 
-        layer.locations = gradient.gradient.stops.map {
+        let adjustedStops = gradient.adjustedStops
+
+        layer.locations = adjustedStops.map {
             NSNumber(floatLiteral: $0.location)
         }
 
-        layer.colors = gradient.gradient.stops.map {
+        layer.colors = adjustedStops.map {
             $0.color.resolve(in: environment).cgColor
         }
 
         layer.startPoint = gradient.center.cgPoint
-        layer.endPoint = UnitPoint.trailing.cgPoint
+        layer.endPoint = (Angle(degrees: 360) - gradient.startAngle).cgPoint
 
         return layer
     }

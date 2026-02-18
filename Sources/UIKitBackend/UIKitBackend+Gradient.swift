@@ -190,21 +190,31 @@ extension CAGradientLayer {
     ) {
         self.type = .conic
 
-        self.locations = gradient.gradient.stops.map {
+        let adjustedStops = gradient.adjustedStops
+
+        self.locations = adjustedStops.map {
             NSNumber(floatLiteral: $0.location)
         }
 
-        self.colors = gradient.gradient.stops.map {
+        self.colors = adjustedStops.map {
             $0.color.resolve(in: environment).cgColor
         }
 
         self.startPoint = gradient.center.cgPoint
-        self.endPoint = UnitPoint.trailing.cgPoint
+        self.endPoint = (Angle(degrees: 360) - gradient.startAngle).cgPoint
     }
 }
 
 extension UnitPoint {
     var cgPoint: CGPoint {
         CGPoint(x: x, y: y)
+    }
+}
+extension Angle {
+    var cgPoint: CGPoint {
+        let x = 0.5 + cos(radians) * 0.5
+        let y = 0.5 + sin(radians) * 0.5
+
+        return CGPoint(x: x, y: 1 - y)
     }
 }

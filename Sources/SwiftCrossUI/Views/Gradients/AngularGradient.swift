@@ -7,15 +7,33 @@ public struct AngularGradient: ElementaryView {
     /// The normalized center point of the gradient in its coordinate space.
     public let center: UnitPoint
 
+    public let startAngle: Angle
+    public let endAngle: Angle?
+
     private static let idealSize = ViewSize(10, 10)
 
     /// Creates a conic gradient that completes a full turn.
     public init(
         gradient: Gradient,
-        center: UnitPoint
+        center: UnitPoint,
+        angle: Angle = .zero
     ) {
         self.gradient = gradient
         self.center = center
+        self.startAngle = angle
+        self.endAngle = nil
+    }
+
+    public init(
+        gradient: Gradient,
+        center: UnitPoint,
+        startAngle: Angle,
+        endAngle: Angle
+    ) {
+        self.gradient = gradient
+        self.center = center
+        self.startAngle = startAngle
+        self.endAngle = endAngle
     }
 
     func asWidget<Backend>(
@@ -55,22 +73,82 @@ extension AngularGradient {
     /// Creates a conic gradient from a collection of colors that completes a full turn.
     public init(
         colors: [Color],
-        center: UnitPoint
+        center: UnitPoint,
+        angle: Angle = .zero
     ) {
         self.init(
             gradient: Gradient(colors: colors),
-            center: center
+            center: center,
+            angle: angle
         )
     }
 
     /// Creates a conic gradient from a collection of color stops that completes a full turn.
     public init(
         stops: [Gradient.Stop],
-        center: UnitPoint
+        center: UnitPoint,
+        angle: Angle = .zero
     ) {
         self.init(
             gradient: Gradient(stops: stops),
-            center: center
+            center: center,
+            angle: angle
         )
+    }
+
+    public init(
+        colors: [Color],
+        center: UnitPoint,
+        startAngle: Angle,
+        endAngle: Angle
+    ) {
+        self.init(
+            gradient: Gradient(colors: colors),
+            center: center,
+            startAngle: startAngle,
+            endAngle: endAngle
+        )
+    }
+
+    public init(
+        stops: [Gradient.Stop],
+        center: UnitPoint,
+        startAngle: Angle,
+        endAngle: Angle
+    ) {
+        self.init(
+            gradient: Gradient(stops: stops),
+            center: center,
+            startAngle: startAngle,
+            endAngle: endAngle
+        )
+    }
+
+    public var adjustedStops: [Gradient.Stop] {
+        guard let endAngle else { return gradient.stops }
+
+        var stops = gradient.stops
+
+        let range = (endAngle - startAngle).degrees
+
+        if range < 0 {
+            stops = stops.reversed().map {
+                Gradient.Stop(color: $0.color, location: 1 - $0.location)
+            }
+        }
+
+        let absoluteRange = abs(range)
+
+        let dividableRange = absoluteRange / 360
+
+        stops = stops.map {
+            Gradient.Stop(color: $0.color, location: $0.location * dividableRange)
+        }
+
+        stops.append(
+            Gradient.Stop(color: stops.last!.color, location: 1)
+        )
+
+        return stops
     }
 }
