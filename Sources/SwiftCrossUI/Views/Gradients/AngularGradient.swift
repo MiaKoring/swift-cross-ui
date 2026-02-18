@@ -132,7 +132,7 @@ extension AngularGradient {
         let range = (endAngle - startAngle).degrees
 
         if range < 0 {
-            stops = stops.reversed().map {
+            stops = stops.map {
                 Gradient.Stop(color: $0.color, location: 1 - $0.location)
             }
         }
@@ -145,10 +145,6 @@ extension AngularGradient {
             Gradient.Stop(color: $0.color, location: $0.location * dividableRange)
         }
 
-        stops.append(
-            Gradient.Stop(color: stops.last!.color, location: 1)
-        )
-
-        return stops
+        return stops.sorted(by: { $0.location < $1.location })
     }
 }

@@ -5,6 +5,30 @@ public struct Gradient {
 
     /// Creates a gradient from an array of color stops.
     init(stops: [Gradient.Stop]) {
+        guard
+            let first = stops.first
+        else {
+            let invisible = Color.black.opacity(0)
+            self.stops = [
+                Stop(color: invisible, location: 0),
+                Stop(color: invisible, location: 1),
+            ]
+            return
+        }
+
+        #if DEBUG
+            if stops != stops.sorted(by: { $0.location < $1.location }) {
+                logger.warning("Gradient stop locations must be ordered")
+            }
+        #endif
+
+        if stops.count == 1 {
+            self.stops = [
+                Stop(color: first.color, location: 0),
+                Stop(color: first.color, location: 1),
+            ]
+            return
+        }
         self.stops = stops
     }
 
@@ -60,3 +84,5 @@ public struct Gradient {
         public var location: Double
     }
 }
+
+extension Gradient.Stop: Equatable {}
