@@ -6,7 +6,7 @@ extension WinUIBackend {
     public func createLinearGradient() -> Widget {
         WinUI.Rectangle()
     }
-    
+
     public func updateLinearGradient(
         _ widget: Widget,
         gradient: LinearGradient,
@@ -14,9 +14,9 @@ extension WinUIBackend {
         in environment: EnvironmentValues
     ) {
         let widget = widget as! WinUI.Rectangle
-        
+
         let collection = GradientStopCollection()
-        
+
         gradient.gradient.stops.forEach {
             let color = $0.color.resolve(in: environment)
             let stop = GradientStop()
@@ -27,22 +27,22 @@ extension WinUIBackend {
                 b: UInt8(color.blue * 255)
             )
             stop.offset = $0.location
-            
+
             collection.append(stop)
         }
-        
+
         let brush = LinearGradientBrush()
         brush.startPoint = gradient.startPoint.point
         brush.endPoint = gradient.endPoint.point
         brush.gradientStops = collection
-        
+
         widget.fill = brush
     }
-    
+
     public func createRadialGradient() -> Widget {
         WinUI.Rectangle()
     }
-    
+
     public func updateRadialGradient(
         _ widget: Widget,
         gradient: RadialGradient,
@@ -50,9 +50,9 @@ extension WinUIBackend {
         in environment: EnvironmentValues
     ) {
         let widget = widget as! WinUI.Rectangle
-        
+
         let brush = RadialGradientBrush()
-        
+
         gradient.adjustedStops.forEach {
             let color = $0.color.resolve(in: environment)
             let stop = GradientStop()
@@ -63,16 +63,16 @@ extension WinUIBackend {
                 b: UInt8(color.blue * 255)
             )
             stop.offset = $0.location
-            
+
             brush.gradientStops.append(stop)
         }
-        
+
         brush.gradientOrigin = gradient.center.point
         brush.center = gradient.center.point
-        
+
         brush.radiusX = gradient.endRadius / Double(size.x)
         brush.radiusY = gradient.endRadius / Double(size.y)
-        
+
         widget.fill = brush
     }
 }

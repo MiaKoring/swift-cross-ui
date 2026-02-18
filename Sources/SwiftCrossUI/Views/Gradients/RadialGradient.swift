@@ -10,9 +10,9 @@ public struct RadialGradient: ElementaryView {
     public let endRadius: Double
     /// The normalized center point of the gradient in its coordinate space.
     public let center: UnitPoint
-    
+
     private static let idealSize = ViewSize(10, 10)
-    
+
     /// Creates a radial gradient from a base gradient.
     public init(
         gradient: Gradient,
@@ -25,13 +25,13 @@ public struct RadialGradient: ElementaryView {
         self.center = center
         self.endRadius = endRadius
     }
-    
+
     func asWidget<Backend>(
         backend: Backend
     ) -> Backend.Widget where Backend: AppBackend {
         backend.createRadialGradient()
     }
-    
+
     func computeLayout<Backend>(
         _ widget: Backend.Widget,
         proposedSize: ProposedViewSize,
@@ -42,7 +42,7 @@ public struct RadialGradient: ElementaryView {
             size: proposedSize.replacingUnspecifiedDimensions(by: Self.idealSize)
         )
     }
-    
+
     func commit<Backend>(
         _ widget: Backend.Widget,
         layout: ViewLayoutResult,
@@ -74,7 +74,7 @@ extension RadialGradient {
             endRadius: endRadius
         )
     }
-    
+
     /// Creates a radial gradient from a collection of color stops.
     public init(
         colors: [Color],
@@ -89,26 +89,28 @@ extension RadialGradient {
             endRadius: endRadius
         )
     }
-    
+
     /// Stops adjusted to accomodate startRadius on backends without native support.
     public var adjustedStops: [Gradient.Stop] {
         let range = endRadius - startRadius
-        
-#if DEBUG
-        if range < 0 {
-            logger.warning(
-                """
-                The difference between endRadius and startRadius \
-                must be >= 0 on 'RadialGradient'.
-                """
-            )
-            return gradient.stops
-        }
-#endif
-        
+
+        guard range != endRadius else { return gradient.stops }
+
+        #if DEBUG
+            if range < 0 {
+                logger.warning(
+                    """
+                    The difference between endRadius and startRadius \
+                    must be >= 0 on 'RadialGradient'.
+                    """
+                )
+                return gradient.stops
+            }
+        #endif
+
         let dividableRange = range / endRadius
         let innerCircle = (endRadius - range) / endRadius
-        
+
         return gradient.stops.map {
             Gradient.Stop(
                 color: $0.color,

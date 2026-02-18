@@ -61,7 +61,7 @@ struct GradientTests {
         }
     }
     
-    @Test("AngularGradient: Unspecified end angle returns original stops")
+    @Test("Angular: Unspecified end angle returns original stops")
     func nilEndAngleReturnsOriginalStops() async throws {
         let gradient = AngularGradient(
             stops: [
@@ -78,7 +78,7 @@ struct GradientTests {
         #expect(result == gradient.gradient.stops)
     }
     
-    @Test("AngularGradient: Positive range scales correctly")
+    @Test("Angular: Positive range scales correctly")
     func positiveRangeScalesCorrectly() async throws {
         let gradient = AngularGradient(
             stops: [
@@ -98,7 +98,7 @@ struct GradientTests {
         #expect(result[2].location ~= 0.5)
     }
     
-    @Test("AngularGradient: Negative range inverts locations")
+    @Test("Angular: Negative range inverts locations")
     func negativeRangeReversesAndInverts() async throws {
         let gradient = AngularGradient(
             stops: [
@@ -119,7 +119,7 @@ struct GradientTests {
         #expect(result[2].location ~= 0.5)
     }
     
-    @Test("AngularGradient: Full circle range")
+    @Test("Angular: Full circle range")
     func fullCircleRange() async throws {
         let gradient = AngularGradient(
             stops: [
@@ -137,21 +137,58 @@ struct GradientTests {
         #expect(result[1].location ~= 1.0)
     }
     
-    @Test("Final Color matches last Original")
-    func finalColorMatchesLastOriginal() async throws {
-        let gradient = AngularGradient(
+    @Test("Radial: negative range returns original stops")
+    func radialNegativeRangeReturnsOriginalStops() async throws {
+        let gradient = RadialGradient(
             stops: [
                 .init(color: .red, location: 0),
                 .init(color: .blue, location: 1)
             ],
             center: .center,
-            startAngle: .degrees(0),
-            endAngle: .degrees(180)
+            startRadius: 300,
+            endRadius: 0
         )
         
         let result = gradient.adjustedStops
         
-        #expect(result.last?.color == .blue)
+        #expect(result == gradient.gradient.stops)
+    }
+    
+    @Test("Radial: starting at 0 returns original stops")
+    func radialStartingAtZeroReturnsOriginalStops() async throws {
+        let gradient = RadialGradient(
+            stops: [
+                .init(color: .red, location: 0),
+                .init(color: .blue, location: 1)
+            ],
+            center: .center,
+            startRadius: 0,
+            endRadius: 300
+        )
+        
+        let result = gradient.adjustedStops
+        
+        #expect(result == gradient.gradient.stops)
+    }
+    
+    @Test("Radial: stops location gets adjusted correctly")
+    func radialStopsLocationAdjustedCorrectly() async throws {
+        let gradient = RadialGradient(
+            stops: [
+                .init(color: .red, location: 0),
+                .init(color: .green, location: 0.5),
+                .init(color: .blue, location: 1)
+            ],
+            center: .center,
+            startRadius: 100,
+            endRadius: 200
+        )
+        
+        let result = gradient.adjustedStops
+        
+        #expect(result[0].location ~= 0.5)
+        #expect(result[1].location ~= 0.75)
+        #expect(result[2].location ~= 1)
     }
 }
 
