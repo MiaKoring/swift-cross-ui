@@ -784,7 +784,7 @@ public final class GtkBackend: AppBackend {
         proposedHeight: Int?,
         environment: EnvironmentValues
     ) -> SIMD2<Int> {
-        let ellipsize: EllipsizeMode
+        var ellipsize: EllipsizeMode?
         if let widget = widget as? CustomLabel {
             ellipsize = widget.ellipsize
         } else if let widget = widget as? TextView {
@@ -798,13 +798,6 @@ public final class GtkBackend: AppBackend {
         }
 
         let pango = Pango(for: widget)
-        let ellipsize: EllipsizeMode?
-
-        if let widget = widget as? CustomLabel {
-            ellipsize = widget.ellipsize
-        } else {
-            ellipsize = nil
-        }
 
         let (width, height) = pango.getTextSize(
             text,
