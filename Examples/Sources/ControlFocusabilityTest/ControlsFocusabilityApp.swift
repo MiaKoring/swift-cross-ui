@@ -1,157 +1,297 @@
 import DefaultBackend
+import Foundation
 import SwiftCrossUI
 
 #if canImport(SwiftBundlerRuntime)
-    import SwiftBundlerRuntime
+import SwiftBundlerRuntime
 #endif
+
+enum BuiltInPickerStyle: CaseIterable, Equatable {
+    case automatic, inline, menu, radioGroup, segmented, wheel
+    
+    var asPickerStyle: any PickerStyle {
+        switch self {
+            case .automatic: .automatic
+            case .inline: .inline
+            case .menu: .menu
+            case .radioGroup: .radioGroup
+            case .segmented: .segmented
+            case .wheel: .wheel
+        }
+    }
+}
 
 @main
 @HotReloadable
-struct ControlsFocusabilityApp: App {
-    @State var count = 0
+struct ControlsApp: App {
+    @AppStorage(\.count) var count
     @State var exampleButtonState = false
     @State var exampleSwitchState = false
     @State var exampleCheckboxState = false
     @State var sliderValue = 5.0
     @State var text = ""
+    @State var secureText = ""
     @State var flavor: String? = nil
     @State var enabled = true
+    @State var date = Date()
+    @State var datePickerStyle: DatePickerStyle? = .automatic
+    @State var menuToggleState = false
+    @State var progressViewSize: Int = 10
+    @State var isProgressViewResizable = true
+    @State var pickerStyle: BuiltInPickerStyle? = .automatic
+    
     @State var isButtonFocusable = true
+    @State var isMenuFocusable = true
     @State var isToggleButtonFocusable = true
     @State var isToggleSwitchFocusable = true
     @State var isCheckboxFocusable = true
     @State var isSliderFocusable = true
+    @State var isProgressSliderFocusable = true
     @State var isTextFieldFocusable = true
-    @State var isPickerFocusable = true
-
+    @State var isSecureTextFieldFocusable = true
+    @State var isPickerStyleFocusable = true
+    @State var isFlavorPickerFocusable = true
+    @State var isDatePickerStyleFocusable = true
+    @State var isDatePickerFocusable = true
+    
     @FocusState var focused: Int?
-
+    
+    @Environment(\.supportedDatePickerStyles) var supportedDatePickerStyles
+    @Environment(\.isPickerStyleSupported) var isPickerStyleSupported
+    
     var body: some Scene {
-        WindowGroup("ControlsApp") {
+        WindowGroup("ControlsApp focused: \(focused ?? -1)") {
             #hotReloadable {
                 ScrollView {
                     VStack(spacing: 30) {
                         Button("randomize focus") {
-                            focused = Int.random(in: 1...7)
+                            focused = Int.random(in: 1...13)
                         }
                         .padding(.bottom, 20)
-
+                        
                         HStack {
                             VStack {
-                                Text("Button")
+                                Text("Button (persisted)")
                                 Button("Click me!") {
                                     count += 1
                                 }
                                 .focusable(isButtonFocusable ? .unmodified : .disabled)
                                 .focused($focused, equals: 1)
-                                .focusEffectDisabled()
+                                
                                 Text("Count: \(count)")
                             }
                             Toggle("focusable", isOn: $isButtonFocusable)
                                 .focusable(.disabled)
                         }
                         .padding(.bottom, 20)
-
-                        #if !canImport(UIKitBackend)
-                            HStack {
-                                VStack {
-                                    Text("Toggle button")
-                                    Toggle("Toggle me!", isOn: $exampleButtonState)
-                                        .toggleStyle(.button)
-                                        .focusable(
-                                            isToggleButtonFocusable ? .unmodified : .disabled
-                                        )
-                                        .focused($focused, equals: 2)
-                                    Text("Currently enabled: \(exampleButtonState)")
+                        
+                        HStack {
+                            VStack {
+                                Text("Menu button")
+                                Menu("Menu") {
+                                    Button("Button item") {
+                                        print("Button item clicked")
+                                    }
+                                    Toggle("Toggle item", isOn: $menuToggleState)
+                                    Menu("Submenu") {
+                                        Text("Text item 1")
+                                        Text("Text item 2")
+                                    }
                                 }
-                                Toggle("focusable", isOn: $isToggleButtonFocusable)
-                                    .focusable(.disabled)
+                                .focusable(isMenuFocusable ? .unmodified : .disabled)
+                                .focused($focused, equals: 2)
                             }
-                            .padding(.bottom, 20)
-                        #endif
-
+                            Toggle("focusable", isOn: $isMenuFocusable)
+                                .focusable(.disabled)
+                        }
+                        
+#if !canImport(UIKitBackend)
+                        HStack {
+                            VStack {
+                                Text("Toggle button")
+                                Toggle("Toggle me!", isOn: $exampleButtonState)
+                                    .toggleStyle(.button)
+                                    .focusable(
+                                        isToggleButtonFocusable ? .unmodified : .disabled
+                                    )
+                                    .focused($focused, equals: 3)
+                                Text("Currently enabled: \(exampleButtonState)")
+                            }
+                            Toggle("focusable", isOn: $isToggleButtonFocusable)
+                                .focusable(.disabled)
+                        }
+                        .padding(.bottom, 20)
+#endif
+                        
                         HStack {
                             VStack {
                                 Text("Toggle switch")
                                 Toggle("Toggle me:", isOn: $exampleSwitchState)
                                     .toggleStyle(.switch)
                                     .focusable(isToggleSwitchFocusable ? .unmodified : .disabled)
-                                    .focused($focused, equals: 3)
+                                    .focused($focused, equals: 4)
                                 Text("Currently enabled: \(exampleSwitchState)")
                             }
                             Toggle("focusable", isOn: $isToggleSwitchFocusable)
                                 .focusable(.disabled)
                         }
-
-                        #if !canImport(UIKitBackend)
-                            HStack {
-                                VStack {
-                                    Text("Checkbox")
-                                    Toggle("Toggle me:", isOn: $exampleCheckboxState)
-                                        .toggleStyle(.checkbox)
-                                        .focusable(isCheckboxFocusable ? .unmodified : .disabled)
-                                        .focused($focused, equals: 4)
-                                    Text("Currently enabled: \(exampleCheckboxState)")
-                                }
-                                Toggle("focusable", isOn: $isCheckboxFocusable)
-                                    .focusable(.disabled)
+                        
+                        HStack {
+                            VStack {
+                                Text("Checkbox")
+                                Toggle("Toggle me:", isOn: $exampleCheckboxState)
+                                    .toggleStyle(.checkbox)
+                                    .focusable(isCheckboxFocusable ? .unmodified : .disabled)
+                                    .focused($focused, equals: 5)
+                                Text("Currently enabled: \(exampleCheckboxState)")
                             }
-                        #endif
-                        #if !os(tvOS)
-                            HStack {
-                                VStack {
-                                    Text("Slider")
-                                    Slider(value: $sliderValue, in: 0...10)
-                                        .frame(maxWidth: 200)
-                                        .focusable(isSliderFocusable ? .unmodified : .disabled)
-                                        .focused($focused, equals: 5)
-                                    Text("Value: \(String(format: "%.02f", sliderValue))")
-                                }
-                                Toggle("focusable", isOn: $isSliderFocusable)
-                                    .focusable(.disabled)
+                            Toggle("focusable", isOn: $isCheckboxFocusable)
+                                .focusable(.disabled)
+                        }
+                        
+#if !os(tvOS)
+                        HStack {
+                            VStack {
+                                Text("Slider")
+                                Slider(value: $sliderValue, in: 0...10)
+                                    .frame(maxWidth: 200)
+                                    .focusable(isSliderFocusable ? .unmodified : .disabled)
+                                    .focused($focused, equals: 6)
+                                Text("Value: \(String(format: "%.02f", sliderValue))")
                             }
-                        #endif
+                            Toggle("focusable", isOn: $isSliderFocusable)
+                                .focusable(.disabled)
+                        }
+#endif
+                        
                         HStack {
                             VStack {
                                 Text("Text field")
                                 TextField("Text field", text: $text)
                                     .focusable(isTextFieldFocusable ? .unmodified : .disabled)
-                                    .focused($focused, equals: 6)
+                                    .focused($focused, equals: 7)
                                 Text("Value: \(text)")
                             }
                             Toggle("focusable", isOn: $isTextFieldFocusable)
                                 .focusable(.disabled)
                         }
-
+                        
                         HStack {
                             VStack {
-                                Text("Drop down")
-                                HStack {
-                                    Text("Flavor: ")
-                                    Picker(
-                                        of: ["Vanilla", "Chocolate", "Strawberry"],
-                                        selection: $flavor
+                                Text("Secure text field")
+                                SecureField("Secure text field", text: $secureText)
+                                    .focusable(
+                                        isSecureTextFieldFocusable ? .unmodified : .disabled
                                     )
-                                    .focusable(isPickerFocusable ? .unmodified : .disabled)
-                                    .focused($focused, equals: 7)
-                                }
-                                Text("You chose: \(flavor ?? "Nothing yet!")")
+                                    .focused($focused, equals: 8)
+                                Text("Value: \(secureText)")
                             }
-                            Toggle("focusable", isOn: $isPickerFocusable)
+                            Toggle("focusable", isOn: $isSecureTextFieldFocusable)
                                 .focusable(.disabled)
                         }
-                    }
-                    .padding()
-                    .disabled(!enabled)
-
+                        
+#if !os(tvOS)
+                        HStack {
+                            VStack {
+                                Toggle(
+                                    "Enable ProgressView resizability",
+                                    isOn: $isProgressViewResizable)
+                                Slider(value: $progressViewSize, in: 10...100)
+                                    .focusable(
+                                        isProgressSliderFocusable ? .unmodified : .disabled
+                                    )
+                                    .focused($focused, equals: 9)
+                                ProgressView()
+                                    .resizable(isProgressViewResizable)
+                                    .frame(
+                                        width: progressViewSize, height: progressViewSize)
+                            }
+                            Toggle("focusable", isOn: $isProgressSliderFocusable)
+                                .focusable(.disabled)
+                        }
+#endif
+                        
+#if !canImport(Gtk3Backend)
+                        VStack {
+                            Text("Picker")
+                            
+                            HStack {
+                                Text("Picker Style:")
+                                Picker(
+                                    of: BuiltInPickerStyle.allCases.filter {
+                                        isPickerStyleSupported($0.asPickerStyle)
+                                    },
+                                    selection: $pickerStyle
+                                )
+                                .focusable(isPickerStyleFocusable ? .unmodified : .disabled)
+                                .focused($focused, equals: 10)
+                                Toggle("focusable", isOn: $isPickerStyleFocusable)
+                                    .focusable(.disabled)
+                            }
+                            
+                            HStack {
+                                Text("Flavor: ")
+                                Picker(
+                                    of: ["Vanilla", "Chocolate", "Strawberry"],
+                                    selection: $flavor
+                                )
+                                .pickerStyle(
+                                    pickerStyle?.asPickerStyle ?? DefaultPickerStyle()
+                                )
+                                .focusable(isFlavorPickerFocusable ? .unmodified : .disabled)
+                                .focused($focused, equals: 11)
+                                Toggle("focusable", isOn: $isFlavorPickerFocusable)
+                                    .focusable(.disabled)
+                            }
+                            Text("You chose: \(flavor ?? "Nothing yet!")")
+                        }
+                        
+#if !os(tvOS)
+                        VStack {
+                            Text("Selected date: \(date)")
+                            
+                            HStack {
+                                Text("Date picker style: ")
+                                Picker(
+                                    of: supportedDatePickerStyles,
+                                    selection: $datePickerStyle
+                                )
+                                .focusable(
+                                    isDatePickerStyleFocusable ? .unmodified : .disabled
+                                )
+                                .focused($focused, equals: 12)
+                                Toggle("focusable", isOn: $isDatePickerStyleFocusable)
+                                    .focusable(.disabled)
+                            }
+                            
+                            HStack {
+                                DatePicker(selection: $date) {}
+                                    .datePickerStyle(datePickerStyle ?? .automatic)
+                                    .focusable(
+                                        isDatePickerFocusable ? .unmodified : .disabled
+                                    )
+                                    .focused($focused, equals: 13)
+                                Toggle("focusable", isOn: $isDatePickerFocusable)
+                                    .focusable(.disabled)
+                            }
+                            
+                            Button("Reset date to now") {
+                                date = Date()
+                            }
+                        }
+#endif
+#endif
+                    }.padding().disabled(!enabled)
+                    
                     Toggle(enabled ? "Disable all" : "Enable all", isOn: $enabled)
                         .padding()
                         .focusable(.disabled)
                 }
-                .environment(\.colorScheme, .dark)
-                .frame(minHeight: 600)
             }
-
         }.defaultSize(width: 400, height: 600)
     }
+}
+
+extension AppStorageValues {
+    @Entry var count: Int = 0
 }

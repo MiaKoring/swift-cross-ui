@@ -28,17 +28,25 @@ public final class AppKitBackend: AppBackend {
     public let supportsMultipleWindows = true
     public let deviceClass = DeviceClass.desktop
     public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical, .compact]
+    public let supportedPickerStyles: [BackendPickerStyle] = [
+        .menu, .segmented, .radioGroup,
+    ]
+    public let canOverrideWindowColorScheme = true
 
     public var scrollBarWidth: Int {
         // We assume that all scrollers have their controlSize set to `.regular` by default.
         // The internet seems to indicate that this is true regardless of any system wide
         // preferences etc.
-        return Int(
-            NSScroller.scrollerWidth(
-                for: .regular,
-                scrollerStyle: NSScroller.preferredScrollerStyle
-            ).rounded(.awayFromZero)
-        )
+        if NSScroller.preferredScrollerStyle == .overlay {
+            0
+        } else {
+            Int(
+                NSScroller.scrollerWidth(
+                    for: .regular,
+                    scrollerStyle: NSScroller.preferredScrollerStyle
+                ).rounded(.awayFromZero)
+            )
+        }
     }
 
     private let appDelegate = NSCustomApplicationDelegate()
@@ -50,14 +58,20 @@ public final class AppKitBackend: AppBackend {
     }
 
     public func runMainLoop(_ callback: @escaping @MainActor () -> Void) {
+        // Immediately set up the default menus so that the Window menu can populate
+        // correctly.
+        MenuBar.setUpMenuBar(extraMenus: [])
+
         callback()
         NSApplication.shared.activate(ignoringOtherApps: true)
         NSApplication.shared.run()
     }
 
     public func createWindow(withDefaultSize defaultSize: SIMD2<Int>?) -> Window {
-        let nsApp = NSApplication.shared
-        nsApp.setActivationPolicy(.regular)
+        // For bundled apps, the default activation policy is `regular`, but for unbundled
+        // apps without an Info.plist the default is `prohibited` -- i.e. the app can't
+        // create windows. We override that here.
+        NSApplication.shared.setActivationPolicy(.regular)
 
         let window = NSCustomWindow(
             contentRect: NSRect(
@@ -84,6 +98,10 @@ public final class AppKitBackend: AppBackend {
         )
 
         return window
+    }
+
+    public func updateWindow(_ window: Window, environment: EnvironmentValues) {
+        window.appearance = environment.colorScheme.nsAppearance
     }
 
     public func size(ofWindow window: Window) -> SIMD2<Int> {
@@ -164,6 +182,15 @@ public final class AppKitBackend: AppBackend {
         window.makeKeyAndOrderFront(nil)
     }
 
+    public func setApplicationMenu(
+        _ submenus: [ResolvedMenu.Submenu],
+        environment: EnvironmentValues
+    ) {
+        MenuBar.setUpMenuBar(extraMenus: submenus.map {
+            Self.renderSubmenu($0, environment: environment)
+        })
+    }
+
     public func close(window: Window) {
         window.close()
     }
@@ -183,210 +210,72 @@ public final class AppKitBackend: AppBackend {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
-    private static func renderMenuItems(_ items: [ResolvedMenu.Item]) -> [NSMenuItem] {
-        items.map { item in
-            switch item {
-                case .button(let label, let action):
-                    // Custom subclass is used to keep strong reference to action
-                    // wrapper.
-                    let renderedItem = NSCustomMenuItem(
-                        title: label,
-                        action: nil,
-                        keyEquivalent: ""
-                    )
-                    if let action {
-                        let wrappedAction = Action(action)
-                        renderedItem.actionWrapper = wrappedAction
-                        renderedItem.action = #selector(wrappedAction.run)
-                        renderedItem.target = wrappedAction
-                    }
-                    return renderedItem
-                case .toggle(let label, let value, let onChange):
-                    // Custom subclass is used to keep strong reference to action
-                    // wrapper.
-                    let renderedItem = NSCustomMenuItem(
-                        title: label,
-                        action: nil,
-                        keyEquivalent: ""
-                    )
-                    renderedItem.isOn = value
+    private static func renderMenuItem(
+        _ item: ResolvedMenu.Item,
+        environment: EnvironmentValues
+    ) -> NSMenuItem {
+        switch item {
+            case .button(let label, let action):
+                // Custom subclass is used to keep strong reference to action
+                // wrapper.
+                let renderedItem = NSCustomMenuItem(
+                    title: label,
+                    action: nil,
+                    keyEquivalent: ""
+                )
+                if let action, environment.isEnabled {
+                    let wrappedAction = Action(action)
+                    renderedItem.actionWrapper = wrappedAction
+                    renderedItem.action = #selector(wrappedAction.run)
+                    renderedItem.target = wrappedAction
+                }
+                return renderedItem
+            case .toggle(let label, let value, let onChange):
+                // Custom subclass is used to keep strong reference to action
+                // wrapper.
+                let renderedItem = NSCustomMenuItem(
+                    title: label,
+                    action: nil,
+                    keyEquivalent: ""
+                )
+                renderedItem.isOn = value
 
+                if environment.isEnabled {
                     let wrappedAction = Action {
                         onChange(!renderedItem.isOn)
                     }
                     renderedItem.actionWrapper = wrappedAction
                     renderedItem.action = #selector(wrappedAction.run)
                     renderedItem.target = wrappedAction
+                }
 
-                    return renderedItem
-                case .separator:
-                    return NSCustomMenuItem.separator()
-                case .submenu(let submenu):
-                    return renderSubmenu(submenu)
-            }
+                return renderedItem
+            case .separator:
+                return NSCustomMenuItem.separator()
+            case .submenu(let submenu):
+                return renderSubmenu(submenu, environment: environment)
+
+            case .modifiedEnvironment(let item, let modification):
+                return renderMenuItem(
+                    item,
+                    environment: modification(environment)
+                )
         }
     }
 
-    private static func renderSubmenu(_ submenu: ResolvedMenu.Submenu) -> NSMenuItem {
+    static func renderSubmenu(
+        _ submenu: ResolvedMenu.Submenu,
+        environment: EnvironmentValues
+    ) -> NSMenuItem {
         let renderedMenu = NSMenu()
-        for item in renderMenuItems(submenu.content.items) {
-            renderedMenu.addItem(item)
+        renderedMenu.items = submenu.content.items.map {
+            Self.renderMenuItem($0, environment: environment)
         }
 
         let menuItem = NSMenuItem()
         menuItem.title = submenu.label
         menuItem.submenu = renderedMenu
         return menuItem
-    }
-
-    /// The submenu pointed to by `helpMenu` still appears in `menuBar`. It's
-    /// whichever submenu has the name 'Help'.
-    private static func renderMenuBar(
-        _ submenus: [ResolvedMenu.Submenu]
-    ) -> (menuBar: NSMenu, helpMenu: NSMenu?) {
-        let menuBar = NSMenu()
-
-        // The first menu item is special and always takes on the name of the app.
-        let about = NSMenuItem()
-        about.submenu = createDefaultAboutMenu()
-        menuBar.addItem(about)
-        let edit = NSMenuItem()
-        edit.submenu = createDefaultEditMenu()
-        menuBar.addItem(edit)
-
-        var helpMenu: NSMenu?
-        for submenu in submenus {
-            let renderedSubmenu = renderSubmenu(submenu)
-            menuBar.addItem(renderedSubmenu)
-
-            if submenu.label == "Help" {
-                helpMenu = renderedSubmenu.submenu
-            }
-        }
-
-        return (menuBar, helpMenu)
-    }
-
-    public static func createDefaultAboutMenu() -> NSMenu {
-        let appName = ProcessInfo.processInfo.processName
-        let appMenu = NSMenu(title: appName)
-        appMenu.addItem(
-            withTitle: "About \(appName)",
-            action: #selector(NSApp.orderFrontStandardAboutPanel(_:)),
-            keyEquivalent: ""
-        )
-        appMenu.addItem(NSMenuItem.separator())
-
-        let hideMenu = appMenu.addItem(
-            withTitle: "Hide \(appName)",
-            action: #selector(NSApp.hide(_:)),
-            keyEquivalent: "h"
-        )
-        hideMenu.keyEquivalentModifierMask = .command
-
-        let hideOthers = appMenu.addItem(
-            withTitle: "Hide Others",
-            action: #selector(NSApp.hideOtherApplications(_:)),
-            keyEquivalent: "h"
-        )
-        hideOthers.keyEquivalentModifierMask = [.option, .command]
-
-        appMenu.addItem(
-            withTitle: "Show All",
-            action: #selector(NSApp.unhideAllApplications(_:)),
-            keyEquivalent: ""
-        )
-
-        let quitMenu = appMenu.addItem(
-            withTitle: "Quit \(appName)",
-            action: #selector(NSApp.terminate(_:)),
-            keyEquivalent: "q"
-        )
-        quitMenu.keyEquivalentModifierMask = .command
-
-        return appMenu
-    }
-
-    /// A vessel for empty methods that we use to construct selectors. We only
-    /// do it this way, because Swift complains if we provide method selectors
-    /// such as `undo:` and `redo:` as strings (even though they don't come
-    /// from any particular class as far as I can tell).
-    ///
-    /// I've failed to find which class (if any) these methods are supposed to
-    /// come from, and the following Apple documentation article makes it sound
-    /// like undo and redo are just stringly-typed objc messages:
-    /// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/UndoArchitecture/Articles/AppKitUndo.html
-    class FirstResponder {
-        /// I'm not sure exactly what type this first argument is meant to have,
-        /// but I believe that it actually doesn't matter, because the number
-        /// of parameters (and their corresponding labels) are what actually matter.
-        @objc func undo(_ sender: NSObject) {}
-        @objc func redo(_ sender: NSObject) {}
-    }
-
-    public static func createDefaultEditMenu() -> NSMenu {
-        // You may notice that multiple different base types are used in the
-        // action selectors of the various menu items. This is because the
-        // selectors get sent to the app's first responder at the time of
-        // the command getting sent. If the first responder doesn't have a
-        // method matching the selector, then AppKit automatically disables
-        // the corresponding menu item.
-
-        let editMenu = NSMenu(title: "Edit")
-        let undoItem = editMenu.addItem(
-            withTitle: "Undo",
-            action: #selector(FirstResponder.undo(_:)),
-            keyEquivalent: "z"
-        )
-        undoItem.keyEquivalentModifierMask = .command
-
-        let redoItem = editMenu.addItem(
-            withTitle: "Redo",
-            action: #selector(FirstResponder.redo(_:)),
-            keyEquivalent: "z"
-        )
-        redoItem.keyEquivalentModifierMask = [.command, .shift]
-
-        editMenu.addItem(NSMenuItem.separator())
-
-        let cutItem = editMenu.addItem(
-            withTitle: "Cut",
-            action: #selector(NSTextView.cut),
-            keyEquivalent: "x"
-        )
-        cutItem.keyEquivalentModifierMask = .command
-
-        let copyItem = editMenu.addItem(
-            withTitle: "Copy",
-            action: #selector(NSTextView.copy),
-            keyEquivalent: "c"
-        )
-        copyItem.keyEquivalentModifierMask = .command
-
-        let pasteItem = editMenu.addItem(
-            withTitle: "Paste",
-            action: #selector(NSTextView.paste),
-            keyEquivalent: "v"
-        )
-        pasteItem.keyEquivalentModifierMask = .command
-
-        let selectAllItem = editMenu.addItem(
-            withTitle: "Select all",
-            action: #selector(NSTextView.selectAll),
-            keyEquivalent: "a"
-        )
-        selectAllItem.keyEquivalentModifierMask = .command
-
-        return editMenu
-    }
-
-    public func setApplicationMenu(_ submenus: [ResolvedMenu.Submenu]) {
-        let (menuBar, helpMenu) = Self.renderMenuBar(submenus)
-        NSApplication.shared.mainMenu = menuBar
-
-        // We point the app's `helpMenu` at whichever submenu is named 'Help'
-        // (if any) so that AppKit can install its help menu search function.
-        NSApplication.shared.helpMenu = helpMenu
     }
 
     public func runInMainThread(action: @escaping @MainActor () -> Void) {
@@ -400,15 +289,18 @@ public final class AppKitBackend: AppBackend {
         return
             defaultEnvironment
             .with(\.colorScheme, isDark ? .dark : .light)
+            .with(\.appPhase, NSApplication.shared.isActive ? .active : .inactive)
     }
 
-    public func setRootEnvironmentChangeHandler(to action: @escaping () -> Void) {
+    public func setRootEnvironmentChangeHandler(to action: @escaping @Sendable @MainActor () -> Void) {
         DistributedNotificationCenter.default.addObserver(
             forName: .AppleInterfaceThemeChangedNotification,
             object: nil,
             queue: OperationQueue.main
-        ) { notification in
-            action()
+        ) { _ in
+            Task { @MainActor in
+                action()
+            }
         }
 
         // This doesn't strictly affect the root environment, but it does require us
@@ -418,9 +310,11 @@ public final class AppKitBackend: AppBackend {
             forName: NSScroller.preferredScrollerStyleDidChangeNotification,
             object: nil,
             queue: OperationQueue.main
-        ) { notification in
+        ) { _ in
             // Self.scrollBarWidth has changed
-            action()
+            Task { @MainActor in
+                action()
+            }
         }
 
         NotificationCenter.default.addObserver(
@@ -428,7 +322,29 @@ public final class AppKitBackend: AppBackend {
             object: nil,
             queue: .main
         ) { _ in
-            action()
+            Task { @MainActor in
+                action()
+            }
+        }
+
+        // For updating views that rely on `appPhase`
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                action()
+            }
+        }
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                action()
+            }
         }
     }
 
@@ -438,12 +354,14 @@ public final class AppKitBackend: AppBackend {
     ) -> EnvironmentValues {
         window.lastBackingScaleFactor = window.backingScaleFactor
 
-        return rootEnvironment.with(\.windowScaleFactor, window.backingScaleFactor)
+        return rootEnvironment
+            .with(\.windowScaleFactor, window.backingScaleFactor)
+            .with(\.scenePhase, window.isKeyWindow ? .active : .inactive)
     }
 
     public func setWindowEnvironmentChangeHandler(
         of window: Window,
-        to action: @escaping () -> Void
+        to action: @escaping @Sendable @MainActor () -> Void
     ) {
         // For updating window scale factor
         NotificationCenter.default.addObserver(
@@ -451,10 +369,32 @@ public final class AppKitBackend: AppBackend {
             object: window,
             queue: .main
         ) { notification in
-            let backingScaleFactorChanged =
-                window.lastBackingScaleFactor != window.backingScaleFactor
+            Task { @MainActor in
+                let backingScaleFactorChanged =
+                    window.lastBackingScaleFactor != window.backingScaleFactor
 
-            if backingScaleFactorChanged {
+                if backingScaleFactorChanged {
+                    action()
+                }
+            }
+        }
+
+        // For updating views that rely on `scenePhase`
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                action()
+            }
+        }
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
                 action()
             }
         }
@@ -649,6 +589,14 @@ public final class AppKitBackend: AppBackend {
             widget.heightAnchor.constraint(equalToConstant: proposedHeight).isActive = true
         }
     }
+    
+    public func createTooltipContainer(wrapping child: NSView) -> NSView {
+        child
+    }
+    
+    public func updateTooltipContainer(_ widget: NSView, tooltip: String) {
+        widget.toolTip = tooltip
+    }
 
     public func size(
         of text: String,
@@ -666,9 +614,21 @@ public final class AppKitBackend: AppBackend {
             options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine],
             attributes: Self.attributes(forTextIn: environment)
         )
+
+        var height = rect.size.height
+
+        if let lineLimitSettings = environment.lineLimitSettings {
+            let limitedHeight =
+                Double(max(lineLimitSettings.limit, 1)) * environment.resolvedFont.lineHeight
+
+            if limitedHeight < height || lineLimitSettings.reservesSpace {
+                height = limitedHeight
+            }
+        }
+
         return SIMD2(
             Int(rect.size.width.rounded(.awayFromZero)),
-            Int(rect.size.height.rounded(.awayFromZero))
+            Int(height.rounded(.awayFromZero))
         )
     }
 
@@ -820,8 +780,19 @@ public final class AppKitBackend: AppBackend {
         slider.doubleValue = value
     }
 
-    public func createPicker() -> Widget {
-        return NSPopUpButton()
+    public func createPicker(style: BackendPickerStyle) -> Widget {
+        switch style {
+            case .menu:
+                return NSPopUpButton()
+            case .segmented:
+                return NSSegmentedControl()
+            case .radioGroup:
+                return RadioGroup()
+            default:
+                let message = "unsupported picker style \(style)"
+                logger.critical("\(message)")
+                fatalError(message)
+        }
     }
 
     public func updatePicker(
@@ -830,136 +801,48 @@ public final class AppKitBackend: AppBackend {
         environment: EnvironmentValues,
         onChange: @escaping (Int?) -> Void
     ) {
-        let picker = picker as! NSPopUpButton
-        picker.isEnabled = environment.isEnabled
-        picker.menu?.removeAllItems()
-        for option in options {
-            let item = NSMenuItem()
-            item.attributedTitle = Self.attributedString(for: option, in: environment)
-            picker.menu?.addItem(item)
+        if let picker = picker as? NSPopUpButton {
+            picker.isEnabled = environment.isEnabled
+            picker.menu?.removeAllItems()
+            for option in options {
+                let item = NSMenuItem()
+                item.attributedTitle = Self.attributedString(for: option, in: environment)
+                picker.menu?.addItem(item)
+            }
+            picker.onAction = { picker in
+                let picker = picker as! NSPopUpButton
+                onChange(picker.indexOfSelectedItem)
+            }
+            picker.bezelStyle = .regularSquare
+        } else if let picker = picker as? NSSegmentedControl {
+            picker.isEnabled = environment.isEnabled
+            picker.segmentCount = options.count
+            for (i, option) in options.enumerated() {
+                picker.setLabel(option, forSegment: i)
+            }
+            picker.onAction = { picker in
+                let picker = picker as! NSSegmentedControl
+                let selectedIndex = picker.selectedSegment
+                onChange(selectedIndex == -1 ? nil : selectedIndex)
+            }
+        } else if let picker = picker as? RadioGroup {
+            picker.update(options: options, environment: environment)
+            picker.onChange = onChange
         }
-        picker.onAction = { picker in
-            let picker = picker as! NSPopUpButton
-            onChange(picker.indexOfSelectedItem)
-        }
-        picker.bezelStyle = .regularSquare
     }
 
     public func setSelectedOption(ofPicker picker: Widget, to selectedOption: Int?) {
-        let picker = picker as! NSPopUpButton
-        if let index = selectedOption {
-            picker.selectItem(at: index)
-        } else {
-            picker.select(nil)
+        if let picker = picker as? NSPopUpButton {
+            if let index = selectedOption {
+                picker.selectItem(at: index)
+            } else {
+                picker.select(nil)
+            }
+        } else if let picker = picker as? NSSegmentedControl {
+            picker.selectedSegment = selectedOption ?? -1
+        } else if let picker = picker as? RadioGroup {
+            picker.setSelectedIndex(to: selectedOption)
         }
-    }
-
-    public func createTextField() -> Widget {
-        // Using the `(string:)` initializer ensures that the TextField scrolls
-        // smoothly on horizontal overflow instead of jumping a full width at a
-        // time.
-        let field = NSObservableTextField(string: "")
-        return field
-    }
-
-    public func updateTextField(
-        _ textField: Widget,
-        placeholder: String,
-        environment: EnvironmentValues,
-        onChange: @escaping (String) -> Void,
-        onSubmit: @escaping () -> Void
-    ) {
-        let textField = textField as! NSObservableTextField
-        textField.isEnabled = environment.isEnabled
-        textField.placeholderString = placeholder
-        textField.appearance = environment.colorScheme.nsAppearance
-        let resolvedFont = environment.resolvedFont
-        if textField.font != Self.font(for: resolvedFont) {
-            textField.font = Self.font(for: resolvedFont)
-        }
-        textField.onEdit = { textField in
-            onChange(textField.stringValue)
-        }
-        textField.onSubmit = onSubmit
-
-        if #available(macOS 14, *) {
-            textField.contentType =
-                switch environment.textContentType {
-                    case .url:
-                        .URL
-                    case .phoneNumber:
-                        .telephoneNumber
-                    case .name:
-                        .name
-                    case .emailAddress:
-                        .emailAddress
-                    case .text, .digits(_), .decimal(_):
-                        nil
-                }
-        }
-    }
-
-    public func getContent(ofTextField textField: Widget) -> String {
-        let textField = textField as! NSTextField
-        return textField.stringValue
-    }
-
-    public func setContent(ofTextField textField: Widget, to content: String) {
-        let textField = textField as! NSTextField
-        textField.stringValue = content
-    }
-
-    public func createTextEditor() -> Widget {
-        let textEditor = NSObservableTextView()
-        textEditor.drawsBackground = false
-        textEditor.delegate = textEditor
-        textEditor.allowsUndo = true
-        textEditor.textContainerInset = .zero
-        textEditor.textContainer?.lineFragmentPadding = 0
-        return textEditor
-    }
-
-    public func updateTextEditor(
-        _ textEditor: Widget,
-        environment: EnvironmentValues,
-        onChange: @escaping (String) -> Void
-    ) {
-        let textEditor = textEditor as! NSObservableTextView
-        textEditor.onEdit = { textView in
-            onChange(self.getContent(ofTextEditor: textView))
-        }
-        let resolvedFont = environment.resolvedFont
-        if textEditor.font != Self.font(for: resolvedFont) {
-            textEditor.font = Self.font(for: resolvedFont)
-        }
-        textEditor.appearance = environment.colorScheme.nsAppearance
-        textEditor.isEditable = environment.isEnabled
-
-        if #available(macOS 14, *) {
-            textEditor.contentType =
-                switch environment.textContentType {
-                    case .url:
-                        .URL
-                    case .phoneNumber:
-                        .telephoneNumber
-                    case .name:
-                        .name
-                    case .emailAddress:
-                        .emailAddress
-                    case .text, .digits(_), .decimal(_):
-                        nil
-                }
-        }
-    }
-
-    public func setContent(ofTextEditor textEditor: Widget, to content: String) {
-        let textEditor = textEditor as! NSObservableTextView
-        textEditor.string = content
-    }
-
-    public func getContent(ofTextEditor textEditor: Widget) -> String {
-        let textEditor = textEditor as! NSObservableTextView
-        return textEditor.string
     }
 
     public func createScrollContainer(for child: Widget) -> Widget {
@@ -968,7 +851,7 @@ public final class AppKitBackend: AppBackend {
         let clipView = scrollView.contentView
         let documentView = NSStackView()
         documentView.orientation = .vertical
-        documentView.alignment = .centerX
+        documentView.alignment = .leading
         documentView.translatesAutoresizingMaskIntoConstraints = false
         documentView.addView(child, in: .top)
         scrollView.documentView = documentView
@@ -985,16 +868,19 @@ public final class AppKitBackend: AppBackend {
         return scrollView
     }
 
-    public func updateScrollContainer(_ scrollView: Widget, environment: EnvironmentValues) {}
-
-    public func setScrollBarPresence(
-        ofScrollContainer scrollView: Widget,
-        hasVerticalScrollBar: Bool,
-        hasHorizontalScrollBar: Bool
+    public func updateScrollContainer(
+        _ scrollView: Widget,
+        environment: EnvironmentValues,
+        bounceHorizontally: Bool,
+        bounceVertically: Bool,
+        hasHorizontalScrollBar: Bool,
+        hasVerticalScrollBar: Bool
     ) {
         let scrollView = scrollView as! NSScrollView
         scrollView.hasVerticalScroller = hasVerticalScrollBar
         scrollView.hasHorizontalScroller = hasHorizontalScrollBar
+        scrollView.verticalScrollElasticity = bounceVertically ? .allowed : .none
+        scrollView.horizontalScrollElasticity = bounceHorizontally ? .allowed : .none
     }
 
     public func createSelectableListView() -> Widget {
@@ -1022,6 +908,15 @@ public final class AppKitBackend: AppBackend {
         scrollView.documentView = listView
         listView.enclosingScrollView?.drawsBackground = false
         return scrollView
+    }
+
+    public func updateSelectableListView(
+        _ selectableListView: Widget,
+        environment: EnvironmentValues
+    ) {
+        let scrollView = selectableListView as! NSDisabledScrollView
+        let listView = scrollView.documentView! as! NSCustomTableView
+        listView.isEnabled = environment.isEnabled
     }
 
     public func baseItemPadding(
@@ -1214,7 +1109,7 @@ public final class AppKitBackend: AppBackend {
         table.reloadData()
     }
 
-    private static func attributedString(
+    internal static func attributedString(
         for text: String,
         in environment: EnvironmentValues
     ) -> NSAttributedString {
@@ -1252,7 +1147,7 @@ public final class AppKitBackend: AppBackend {
         ]
     }
 
-    private static func font(for font: Font.Resolved) -> NSFont {
+    static func font(for font: Font.Resolved) -> NSFont {
         let size = CGFloat(font.pointSize)
         let weight = weight(for: font.weight)
 
@@ -1365,7 +1260,9 @@ public final class AppKitBackend: AppBackend {
         environment: EnvironmentValues
     ) {
         menu.appearance = environment.colorScheme.nsAppearance
-        menu.items = Self.renderMenuItems(content.items)
+        menu.items = content.items.map {
+            Self.renderMenuItem($0, environment: environment)
+        }
     }
 
     public func showPopoverMenu(
@@ -2252,6 +2149,7 @@ enum AssociationPolicy {
 }
 
 // Source: https://gist.github.com/sindresorhus/3580ce9426fff8fafb1677341fca4815
+@MainActor
 final class ObjectAssociation<T: Any> {
     private let policy: AssociationPolicy
 
@@ -2272,38 +2170,12 @@ final class ObjectAssociation<T: Any> {
     }
 }
 
-class NSObservableTextField: NSTextField {
-    override func textDidChange(_ notification: Notification) {
-        onEdit?(self)
-    }
-
-    var onEdit: ((NSTextField) -> Void)?
-    var _onSubmitAction = Action({})
-    var onSubmit: () -> Void {
-        get {
-            _onSubmitAction.action
-        }
-        set {
-            _onSubmitAction.action = newValue
-            action = #selector(_onSubmitAction.run)
-            target = _onSubmitAction
-        }
-    }
-}
-
-class NSObservableTextView: NSTextView, NSTextViewDelegate {
-    func textDidChange(_ notification: Notification) {
-        onEdit?(self)
-    }
-
-    var onEdit: ((NSTextView) -> Void)?
-}
-
 // Source: https://gist.github.com/sindresorhus/3580ce9426fff8fafb1677341fca4815
 extension NSControl {
     typealias ActionClosure = ((NSControl) -> Void)
     typealias EditClosure = ((NSTextField) -> Void)
 
+    @MainActor
     struct AssociatedKeys {
         static let onActionClosure = ObjectAssociation<ActionClosure>()
         static let onEditClosure = ObjectAssociation<EditClosure>()
@@ -2464,5 +2336,72 @@ final class CustomDatePickerDelegate: NSObject, NSDatePickerCellDelegate {
         timeInterval _: UnsafeMutablePointer<TimeInterval>?
     ) {
         onChange?(proposedDateValue.pointee as Date)
+    }
+}
+
+final class RadioGroup: NSStackView {
+    private var buttons: [NSButton]
+    var onChange: ((Int?) -> Void)?
+
+    override var intrinsicContentSize: NSSize {
+        buttons.reduce(
+            into: NSSize(width: 0.0, height: max(0.0, spacing * Double(buttons.count - 1)))
+        ) { partialResult, button in
+            let buttonIntrinsicSize = button.intrinsicContentSize
+            partialResult.width = max(partialResult.width, buttonIntrinsicSize.width)
+            partialResult.height += buttonIntrinsicSize.height
+        }
+    }
+
+    init() {
+        self.buttons = []
+        super.init(frame: .zero)
+        self.orientation = .vertical
+        self.alignment = .leading
+        self.setAccessibilityRole(.radioGroup)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("not used")
+    }
+
+    func update(options: [String], environment: EnvironmentValues) {
+        for i in 0..<min(buttons.count, options.count) {
+            buttons[i].attributedTitle = AppKitBackend.attributedString(
+                for: options[i], in: environment)
+            buttons[i].isEnabled = environment.isEnabled
+        }
+
+        if options.count > buttons.count {
+            for i in buttons.count..<options.count {
+                let button = NSButton()
+                button.attributedTitle = AppKitBackend.attributedString(
+                    for: options[i], in: environment)
+                button.isEnabled = environment.isEnabled
+                button.target = self
+                button.action = #selector(buttonClicked(sender:))
+                button.tag = i
+                button.setButtonType(.radio)
+                addArrangedSubview(button)
+                buttons.append(button)
+            }
+        } else {
+            for i in (options.count..<buttons.count).reversed() {
+                removeView(buttons[i])
+                buttons.remove(at: i)
+            }
+        }
+    }
+
+    func setSelectedIndex(to index: Int?) {
+        if let index {
+            buttons[index].state = .on
+        } else {
+            buttons.forEach { $0.state = .off }
+        }
+    }
+
+    @objc func buttonClicked(sender: NSButton) {
+        onChange?(sender.tag)
     }
 }

@@ -13,6 +13,17 @@ public struct ForEach<Items: Collection, ID: Hashable, Child> {
 extension ForEach: TypeSafeView, View where Child: View {
     typealias Children = ForEachViewChildren<Items, ID, Child>
 
+    /// Creates a view that creates child views on demand based on a collection
+    /// of data.
+    ///
+    /// One instance of `child` will be rendered for every element in
+    /// `elements`.
+    ///
+    /// - Parameters:
+    ///   - elements: The collection to build an array of views from.
+    ///   - keyPath: A key path to the element type's ID.
+    ///   - child: A view builder that returns an appropriate view for
+    ///     each element of `elements`.
     public init(
         _ elements: Items,
         id keyPath: KeyPath<Items.Element, ID>,
@@ -97,6 +108,7 @@ extension ForEach: TypeSafeView, View where Child: View {
             var oldIdentifierMap = children.identifierMap
             var oldNodes = children.nodes
             var seenIdentifiers = Set<ID>()
+            var oldNodesReused = 0
             children.nodes = []
             children.identifierMap = [:]
             children.identifiers = []
@@ -128,6 +140,7 @@ extension ForEach: TypeSafeView, View where Child: View {
                 if let oldIndex = oldIdentifierMap.removeValue(forKey: identifier) {
                     // If the identifier already has a corresponding node, reuse it.
                     node = oldNodes[oldIndex]
+                    oldNodesReused += 1
 
                     // If the node's corresponding widget isn't already at the correct
                     // position (accounting for insertions), then swap it with the widget
@@ -169,7 +182,7 @@ extension ForEach: TypeSafeView, View where Child: View {
             // TODO: We should be able to reuse unused widgets in newly created nodes.
             // Remove unused widgets, starting from the end of the container for
             // cheaper removals.
-            let removalCount = oldIdentifierMap.count + duplicateCount
+            let removalCount = oldNodes.count - oldNodesReused
             if removalCount > 0 {
                 for i in (0..<removalCount).reversed() {
                     removeChild(atIndex: children.nodes.count + i)
@@ -365,7 +378,7 @@ class ForEachViewChildren<
         nodes.map(ErasedViewGraphNode.init(wrapping:))
     }
 
-    var stackLayoutCache = StackLayoutCache()
+    var stackLayoutCache = StackLayoutCache.initial
 
     init<Backend: AppBackend>(
         from view: ForEach<Items, ID, Child>,

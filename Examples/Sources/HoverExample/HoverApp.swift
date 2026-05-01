@@ -13,9 +13,9 @@ struct HoverExample: App {
         WindowGroup("Hover Example") {
             #hotReloadable {
                 VStack(spacing: 0) {
-                    ForEach(1...18) { _ in
+                    ForEach(1...18, id: \.self) { _ in
                         HStack(spacing: 0) {
-                            ForEach(1...30) { _ in
+                            ForEach(1...30, id: \.self) { _ in
                                 CellView()
                             }
                         }

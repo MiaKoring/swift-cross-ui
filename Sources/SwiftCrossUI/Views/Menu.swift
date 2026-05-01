@@ -1,13 +1,20 @@
 /// A button that shows a popover menu when clicked.
 ///
-/// Due to technical limitations, the minimum supported OS's for menu buttons in UIKitBackend
-/// are iOS 14 and tvOS 17.
-public struct Menu: Sendable {
+/// Due to technical limitations, the minimum supported OS's for menu buttons in
+/// UIKitBackend are iOS 14 and tvOS 17.
+public struct Menu {
+    /// The menu's label.
     public var label: String
+    /// The menu's items.
     public var items: [MenuItem]
 
     var buttonWidth: Int?
 
+    /// Creates a menu.
+    ///
+    /// - Parameters:
+    ///   - label: The menu's label.
+    ///   - items: The menu's items.
     public init(_ label: String, @MenuItemsBuilder items: () -> [MenuItem]) {
         self.label = label
         self.items = items()
@@ -18,33 +25,36 @@ public struct Menu: Sendable {
     func resolve() -> ResolvedMenu.Submenu {
         ResolvedMenu.Submenu(
             label: label,
-            content: Self.resolveItems(items)
+            content: Self.resolve(items: items)
         )
+    }
+
+    @MainActor
+    static func resolve(item: MenuItem) -> ResolvedMenu.Item {
+        switch item {
+            case .button(let button):
+                .button(button.label, button.action)
+            case .text(let text):
+                .button(text.string, nil)
+            case .toggle(let toggle):
+                .toggle(
+                    toggle.label,
+                    toggle.active.wrappedValue,
+                    onChange: { toggle.active.wrappedValue = $0 }
+                )
+            case .separator:
+                .separator
+            case .submenu(let submenu):
+                .submenu(submenu.resolve())
+            case .modifiedEnvironment(let item, let modification):
+                .modifiedEnvironment(resolve(item: item()), modification())
+        }
     }
 
     /// Resolves the menu's items to a representation used by backends.
     @MainActor
-    static func resolveItems(_ items: [MenuItem]) -> ResolvedMenu {
-        ResolvedMenu(
-            items: items.map { item in
-                switch item {
-                    case .button(let button):
-                        .button(button.label, button.action)
-                    case .text(let text):
-                        .button(text.string, nil)
-                    case .toggle(let toggle):
-                        .toggle(
-                            toggle.label,
-                            toggle.active.wrappedValue,
-                            onChange: { toggle.active.wrappedValue = $0 }
-                        )
-                    case .separator:
-                        .separator
-                    case .submenu(let submenu):
-                        .submenu(submenu.resolve())
-                }
-            }
-        )
+    static func resolve(items: [MenuItem]) -> ResolvedMenu {
+        ResolvedMenu(items: items.map(resolve(item:)))
     }
 }
 

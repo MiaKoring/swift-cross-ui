@@ -1,4 +1,6 @@
 /// A button style control that is either on or off.
+///
+/// This corresponds to the ``ToggleStyle/button`` toggle style.
 struct ToggleButton: ElementaryView, View {
     /// The label to show on the toggle button.
     private var label: String
@@ -6,6 +8,10 @@ struct ToggleButton: ElementaryView, View {
     private var active: Binding<Bool>
 
     /// Creates a toggle button that displays a custom label.
+    ///
+    /// - Parameters:
+    ///   - label: The label to show on the toggle button.
+    ///   - active: Whether the button is active or not.
     public init(_ label: String, isOn active: Binding<Bool>) {
         self.label = label
         self.active = active
@@ -24,7 +30,9 @@ struct ToggleButton: ElementaryView, View {
         // TODO: Implement toggle button sizing within SwiftCrossUI so that we
         //   can delay updating the underlying widget until `commit`.
         backend.updateToggle(widget, label: label, environment: environment) { newActiveState in
-            active.wrappedValue = newActiveState
+            if active.wrappedValue != newActiveState {
+                active.wrappedValue = newActiveState
+            }
         }
         return
             ViewLayoutResult

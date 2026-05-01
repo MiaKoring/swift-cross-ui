@@ -48,6 +48,8 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
     /// that get cached responses don't update this size, as this size should stay in sync
     /// with currentLayout.
     private(set) var lastProposedSize: ProposedViewSize
+    /// Whether the widget has had its first update yet.
+    private var hasHadFirstUpdate = false
 
     /// A cancellable handle to the view's state property observations.
     private var cancellables: [Cancellable]
@@ -162,10 +164,19 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
         }
     }
 
-    /// Recomputes the view's body and computes the layout of it and all its children
-    /// if necessary. If `newView` is provided (in the case that the parent's body got
-    /// updated) then it simply replaces the old view while inheriting the old view's
-    /// state.
+    /// Recomputes the view's body and computes its layout and the layout of
+    /// its children.
+    ///
+    /// The view may or may not propagate the update to its children depending
+    /// on the nature of the update. If `newView` is provided (in the case that
+    /// the parent's body got updated) then it simply replaces the old view
+    /// while inheriting the old view's state.
+    ///
+    /// - Parameters:
+    ///   - newView: The recomputed view.
+    ///   - proposedSize: The view's proposed size.
+    ///   - environment: The current environment.
+    /// - Returns: The result of laying out the view.
     public func computeLayout(
         with newView: NodeView? = nil,
         proposedSize: ProposedViewSize,
@@ -180,6 +191,13 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
             environment.window != nil,
             "View graph updated without parent window present in environment"
         )
+
+        if !hasHadFirstUpdate {
+            // We show the widget here instead of in init, because in init the widget
+            // hasn't been added to its parent widget yet.
+            backend.show(widget: widget)
+            hasHadFirstUpdate = true
+        }
 
         if proposedSize == lastProposedSize && !resultCache.isEmpty
             && (!parentEnvironment.allowLayoutCaching || environment.allowLayoutCaching),
@@ -234,16 +252,16 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
 
     /// Commits the view's most recently computed layout and any view state changes
     /// that have occurred since the last update (e.g. text content changes or font
-    /// size changes). Returns the most recently computed layout for convenience,
-    /// although it's guaranteed to match the result of the last call to computeLayout.
+    /// size changes).
+    ///
+    /// - Returns: The most recently computed layout. Guaranteed to match the
+    ///   result of the last call to ``computeLayout(with:proposedSize:environment:)``.
     public func commit() -> ViewLayoutResult {
         if currentLayout?.shouldSetFocusData == true {
             backend.registerFocusObservers(parentEnvironment.focusObservers, on: widget)
             backend.setFocusEffectDisabled(
                 on: widget, disabled: parentEnvironment.focusEffectDisabled)
         }
-
-        backend.show(widget: widget)
 
         guard let currentLayout else {
             logger.warning("layout committed before being computed, ignoring")
@@ -275,6 +293,8 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
             backend: backend
         )
         resultCache = [:]
+
+        backend.showUpdate(of: widget)
 
         return currentLayout
     }

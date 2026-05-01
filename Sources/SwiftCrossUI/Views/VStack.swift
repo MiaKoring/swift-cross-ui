@@ -9,7 +9,13 @@ public struct VStack<Content: View>: View {
     /// The alignment of the stack's children in the horizontal direction.
     private var alignment: HorizontalAlignment
 
-    /// Creates a horizontal stack with the given spacing.
+    /// Creates a vertical stack with the given spacing and alignment.
+    ///
+    /// - Parameters:
+    ///   - alignment: The alignment of the stack's children in the horizontal
+    ///     direction.
+    ///   - spacing: The amount of spacing to apply between children.
+    ///   - content: The content of the stack.
     public init(
         alignment: HorizontalAlignment = .center,
         spacing: Int? = nil,
@@ -18,6 +24,13 @@ public struct VStack<Content: View>: View {
         self.init(alignment: alignment, spacing: spacing, content: content())
     }
 
+    /// Creates a vertical stack with the given spacing and alignment.
+    ///
+    /// - Parameters:
+    ///   - alignment: The alignment of the stack's children in the horizontal
+    ///     direction.
+    ///   - spacing: The amount of spacing to apply between children.
+    ///   - content: The content of the stack.
     init(
         alignment: HorizontalAlignment = .center,
         spacing: Int? = nil,
@@ -58,7 +71,7 @@ public struct VStack<Content: View>: View {
                 ]
             )
         }
-        var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache()
+        var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache.initial
         let result = LayoutSystem.computeStackLayout(
             container: widget,
             children: layoutableChildren(backend: backend, children: children),
@@ -82,7 +95,7 @@ public struct VStack<Content: View>: View {
         environment: EnvironmentValues,
         backend: Backend
     ) {
-        var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache()
+        var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache.initial
         LayoutSystem.commitStackLayout(
             container: widget,
             children: layoutableChildren(backend: backend, children: children),

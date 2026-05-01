@@ -127,7 +127,7 @@ extension Spacer: ToolbarItem {
 @available(visionOS, unavailable)
 struct FixedWidthToolbarItem<Base: ToolbarItem>: ToolbarItem {
     var base: Base
-    var width: Int?
+    var width: Double?
 
     func createBarButtonItem(in environment: EnvironmentValues) -> Base.ItemType {
         let item = base.createBarButtonItem(in: environment)
@@ -150,7 +150,7 @@ struct FixedWidthToolbarItem<Base: ToolbarItem>: ToolbarItem {
 @available(tvOS, unavailable, introduced: 14)
 @available(visionOS, unavailable)
 struct FixedWidthSpacerItem: ToolbarItem {
-    var width: Int?
+    var width: Double?
 
     func createBarButtonItem(in environment: EnvironmentValues) -> UIBarButtonItem {
         if let width {
@@ -190,7 +190,7 @@ extension ToolbarItem {
     ///
     /// If `width` is positive, the item will have that exact width. If `width` is zero or
     /// nil, the item will have its natural size.
-    public func frame(width: Int?) -> any ToolbarItem {
+    public func frame(width: Double?) -> any ToolbarItem {
         if #available(iOS 14, macCatalyst 14, *),
             self is Spacer || self is FixedWidthSpacerItem
         {
@@ -300,17 +300,8 @@ final class KeyboardToolbar: UIToolbar {
 
 @available(tvOS, unavailable)
 @available(visionOS, unavailable)
-enum ToolbarKey: EnvironmentKey {
-    static let defaultValue: ((KeyboardToolbar, EnvironmentValues) -> Void)? = nil
-}
-
-@available(tvOS, unavailable)
-@available(visionOS, unavailable)
 extension EnvironmentValues {
-    var updateToolbar: ((KeyboardToolbar, EnvironmentValues) -> Void)? {
-        get { self[ToolbarKey.self] }
-        set { self[ToolbarKey.self] = newValue }
-    }
+    @Entry var updateToolbar: (@Sendable @MainActor (KeyboardToolbar, EnvironmentValues) -> Void)?
 }
 
 extension View {
@@ -323,7 +314,7 @@ extension View {
     @available(visionOS, unavailable)
     public func keyboardToolbar(
         animateChanges: Bool = true,
-        @ToolbarBuilder body: @escaping () -> ToolbarBuilder.FinalResult
+        @ToolbarBuilder body: @escaping @Sendable @MainActor () -> ToolbarBuilder.FinalResult
     ) -> some View {
         EnvironmentModifier(self) { environment in
             environment.with(\.updateToolbar) { toolbar, environment in

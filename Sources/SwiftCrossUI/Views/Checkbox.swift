@@ -1,9 +1,13 @@
 /// A checkbox control that is either on or off.
+///
+/// This corresponds to the ``ToggleStyle/checkbox`` toggle style.
 struct Checkbox: ElementaryView, View {
     /// Whether the checkbox is active or not.
     private var active: Binding<Bool>
 
     /// Creates a checkbox.
+    ///
+    /// - Parameter active: Whether the checkbox is active or not.
     public init(isOn active: Binding<Bool>) {
         self.active = active
     }
@@ -33,7 +37,9 @@ struct Checkbox: ElementaryView, View {
         backend: Backend
     ) {
         backend.updateCheckbox(widget, environment: environment) { newActiveState in
-            active.wrappedValue = newActiveState
+            if active.wrappedValue != newActiveState {
+                active.wrappedValue = newActiveState
+            }
         }
         backend.setState(ofCheckbox: widget, to: active.wrappedValue)
     }

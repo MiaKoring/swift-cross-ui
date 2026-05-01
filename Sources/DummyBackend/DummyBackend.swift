@@ -15,6 +15,8 @@ public final class DummyBackend: AppBackend {
         public var content: Widget?
         public var resizeHandler: ((SIMD2<Int>) -> Void)?
         public var closeHandler: (() -> Void)?
+        public var phase = ScenePhase.inactive
+        public var colorScheme = ColorScheme.light
 
         public init(defaultSize: SIMD2<Int>?) {
             size = defaultSize ?? Self.defaultSize
@@ -124,11 +126,16 @@ public final class DummyBackend: AppBackend {
     }
 
     public class TextField: Control {
+        public var isSecure: Bool
         public var value = ""
         public var placeholder = ""
         public var font: Font.Resolved?
         public var changeHandler: ((String) -> Void)?
         public var submitHandler: (() -> Void)?
+
+        init(isSecure: Bool) {
+            self.isSecure = isSecure
+        }
     }
 
     public class TextView: Control {
@@ -166,6 +173,8 @@ public final class DummyBackend: AppBackend {
         public var child: Widget
         public var hasVerticalScrollBar = false
         public var hasHorizontalScrollBar = false
+        public var bouncesVertically = false
+        public var bouncesHorizontally = false
 
         public init(child: Widget) {
             self.child = child
@@ -319,11 +328,14 @@ public final class DummyBackend: AppBackend {
     public var canRevealFiles = false
     public var supportsMultipleWindows = true
     public var supportedDatePickerStyles: [DatePickerStyle] = []
+    public var supportedPickerStyles: [BackendPickerStyle] = []
+    public let canOverrideWindowColorScheme = true
 
     public var focusedWidget: Control?
     private var focusStateManager: FocusStateManager!
 
     public var incomingURLHandler: ((URL) -> Void)?
+    public var appPhase = AppPhase.active
 
     public init() {
         focusStateManager = FocusStateManager(backend: self)
@@ -335,6 +347,10 @@ public final class DummyBackend: AppBackend {
 
     public func createWindow(withDefaultSize defaultSize: SIMD2<Int>?) -> Window {
         Window(defaultSize: defaultSize)
+    }
+
+    public func updateWindow(_ window: Window, environment: EnvironmentValues) {
+        window.colorScheme = environment.colorScheme
     }
 
     public func setTitle(ofWindow window: Window, to title: String) {
@@ -382,10 +398,14 @@ public final class DummyBackend: AppBackend {
         window.resizeHandler = action
     }
 
-    public func show(window: Window) {}
+    public func show(window: Window) {
+        window.phase = .active
+    }
 
-    public func activate(window: Window) {}
-
+    public func activate(window: Window) {
+        window.phase = .active
+    }
+    
     public func close(window: Window) {
         window.closeHandler?()
     }
@@ -402,18 +422,20 @@ public final class DummyBackend: AppBackend {
 
     public func computeRootEnvironment(defaultEnvironment: EnvironmentValues) -> EnvironmentValues {
         defaultEnvironment
+            .with(\.appPhase, appPhase)
     }
 
-    public func setRootEnvironmentChangeHandler(to action: @escaping () -> Void) {}
+    public func setRootEnvironmentChangeHandler(to action: @escaping @Sendable @MainActor () -> Void) {}
 
     public func computeWindowEnvironment(window: Window, rootEnvironment: EnvironmentValues)
         -> EnvironmentValues
     {
         rootEnvironment
+            .with(\.scenePhase, window.phase)
     }
 
     public func setWindowEnvironmentChangeHandler(
-        of window: Window, to action: @escaping () -> Void
+        of window: Window, to action: @escaping @Sendable @MainActor () -> Void
     ) {}
 
     public func setIncomingURLHandler(to action: @escaping (URL) -> Void) {
@@ -475,20 +497,29 @@ public final class DummyBackend: AppBackend {
         ScrollContainer(child: child)
     }
 
-    public func updateScrollContainer(_ scrollView: Widget, environment: EnvironmentValues) {}
-
-    public func setScrollBarPresence(
-        ofScrollContainer scrollView: Widget, hasVerticalScrollBar: Bool,
-        hasHorizontalScrollBar: Bool
+    public func updateScrollContainer(
+        _ scrollView: Widget,
+        environment: EnvironmentValues,
+        bounceHorizontally: Bool,
+        bounceVertically: Bool,
+        hasHorizontalScrollBar: Bool,
+        hasVerticalScrollBar: Bool
     ) {
         let scrollContainer = scrollView as! ScrollContainer
         scrollContainer.hasVerticalScrollBar = hasVerticalScrollBar
         scrollContainer.hasHorizontalScrollBar = hasHorizontalScrollBar
+        scrollContainer.bouncesHorizontally = bounceHorizontally
+        scrollContainer.bouncesVertically = bounceVertically
     }
 
     public func createSelectableListView() -> Widget {
         SelectableListView()
     }
+
+    public func updateSelectableListView(
+        _ selectableListView: Widget,
+        environment: EnvironmentValues
+    ) {}
 
     public func baseItemPadding(ofSelectableListView listView: Widget) -> EdgeInsets {
         EdgeInsets(top: 0, bottom: 0, leading: 0, trailing: 0)
@@ -574,8 +605,11 @@ public final class DummyBackend: AppBackend {
         TextView()
     }
 
-    public func updateTextView(_ textView: Widget, content: String, environment: EnvironmentValues)
-    {
+    public func updateTextView(
+        _ textView: Widget,
+        content: String,
+        environment: EnvironmentValues
+    ) {
         let textView = textView as! TextView
         textView.content = content
         textView.color = environment.suggestedForegroundColor.resolve(in: environment)
@@ -587,8 +621,14 @@ public final class DummyBackend: AppBackend {
     }
 
     public func updateImageView(
-        _ imageView: Widget, rgbaData: [UInt8], width: Int, height: Int, targetWidth: Int,
-        targetHeight: Int, dataHasChanged: Bool, environment: EnvironmentValues
+        _ imageView: Widget,
+        rgbaData: [UInt8],
+        width: Int,
+        height: Int,
+        targetWidth: Int,
+        targetHeight: Int,
+        dataHasChanged: Bool,
+        environment: EnvironmentValues
     ) {
         let imageView = imageView as! ImageView
         imageView.rgbaData = rgbaData
@@ -605,13 +645,17 @@ public final class DummyBackend: AppBackend {
     }
 
     public func setColumnLabels(
-        ofTable table: Widget, to labels: [String], environment: EnvironmentValues
+        ofTable table: Widget,
+        to labels: [String],
+        environment: EnvironmentValues
     ) {
         (table as! Table).columnLabels = labels
     }
 
     public func setCells(
-        ofTable table: Widget, to cells: [Widget], withRowHeights rowHeights: [Int]
+        ofTable table: Widget,
+        to cells: [Widget],
+        withRowHeights rowHeights: [Int]
     ) {
         let table = table as! Table
         table.cells = cells
@@ -623,7 +667,9 @@ public final class DummyBackend: AppBackend {
     }
 
     public func updateButton(
-        _ button: Widget, label: String, environment: EnvironmentValues,
+        _ button: Widget,
+        label: String,
+        environment: EnvironmentValues,
         action: @escaping () -> Void
     ) {
         let button = button as! Button
@@ -632,7 +678,10 @@ public final class DummyBackend: AppBackend {
     }
 
     public func updateButton(
-        _ button: Widget, label: String, menu: Menu, environment: EnvironmentValues
+        _ button: Widget,
+        label: String,
+        menu: Menu,
+        environment: EnvironmentValues
     ) {
         let button = button as! Button
         button.label = label
@@ -645,7 +694,9 @@ public final class DummyBackend: AppBackend {
     }
 
     public func updateToggle(
-        _ toggle: Widget, label: String, environment: EnvironmentValues,
+        _ toggle: Widget,
+        label: String,
+        environment: EnvironmentValues,
         onChange: @escaping (Bool) -> Void
     ) {
         let toggle = toggle as! ToggleButton
@@ -663,7 +714,8 @@ public final class DummyBackend: AppBackend {
     }
 
     public func updateSwitch(
-        _ switchWidget: Widget, environment: SwiftCrossUI.EnvironmentValues,
+        _ switchWidget: Widget,
+        environment: SwiftCrossUI.EnvironmentValues,
         onChange: @escaping (Bool) -> Void
     ) {
         (switchWidget as! ToggleSwitch).toggleHandler = onChange
@@ -693,8 +745,12 @@ public final class DummyBackend: AppBackend {
     }
 
     public func updateSlider(
-        _ slider: Widget, minimum: Double, maximum: Double, decimalPlaces: Int,
-        environment: SwiftCrossUI.EnvironmentValues, onChange: @escaping (Double) -> Void
+        _ slider: Widget,
+        minimum: Double,
+        maximum: Double,
+        decimalPlaces: Int,
+        environment: SwiftCrossUI.EnvironmentValues,
+        onChange: @escaping (Double) -> Void
     ) {
         let slider = slider as! Slider
         slider.minimumValue = minimum
@@ -708,12 +764,15 @@ public final class DummyBackend: AppBackend {
     }
 
     public func createTextField() -> Widget {
-        TextField()
+        TextField(isSecure: false)
     }
 
     public func updateTextField(
-        _ textField: Widget, placeholder: String, environment: SwiftCrossUI.EnvironmentValues,
-        onChange: @escaping (String) -> Void, onSubmit: @escaping () -> Void
+        _ textField: Widget,
+        placeholder: String,
+        environment: SwiftCrossUI.EnvironmentValues,
+        onChange: @escaping (String) -> Void,
+        onSubmit: @escaping () -> Void
     ) {
         let textField = textField as! TextField
         textField.placeholder = placeholder
@@ -728,6 +787,34 @@ public final class DummyBackend: AppBackend {
 
     public func getContent(ofTextField textField: Widget) -> String {
         (textField as! TextField).value
+    }
+
+    public func createSecureField() -> Widget {
+        TextField(isSecure: true)
+    }
+
+    public func updateSecureField(
+        _ secureField: Widget,
+        placeholder: String,
+        environment: SwiftCrossUI.EnvironmentValues,
+        onChange: @escaping (String) -> Void,
+        onSubmit: @escaping () -> Void
+    ) {
+        updateTextField(
+            secureField,
+            placeholder: placeholder,
+            environment: environment,
+            onChange: onChange,
+            onSubmit: onSubmit
+        )
+    }
+
+    public func setContent(ofSecureField secureField: Widget, to content: String) {
+        setContent(ofTextField: secureField, to: content)
+    }
+
+    public func getContent(ofSecureField secureField: Widget) -> String {
+        getContent(ofTextField: secureField)
     }
 
     public func createFocusContainer() -> Widget {

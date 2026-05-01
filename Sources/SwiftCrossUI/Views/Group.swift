@@ -3,7 +3,9 @@
 public struct Group<Content: View>: View {
     public var body: Content
 
-    /// Creates a horizontal stack with the given spacing.
+    /// Creates a group.
+    ///
+    /// - Parameter content: The content of the group.
     public init(@ViewBuilder content: () -> Content) {
         self.init(content: content())
     }
@@ -36,7 +38,7 @@ public struct Group<Content: View>: View {
                 metadata: ["childrenType": "\(type(of: children))"]
             )
         }
-        var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache()
+        var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache.initial
         let result = LayoutSystem.computeStackLayout(
             container: widget,
             children: layoutableChildren(backend: backend, children: children),
@@ -57,7 +59,7 @@ public struct Group<Content: View>: View {
         environment: EnvironmentValues,
         backend: Backend
     ) {
-        var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache()
+        var cache = (children as? TupleViewChildren)?.stackLayoutCache ?? StackLayoutCache.initial
         LayoutSystem.commitStackLayout(
             container: widget,
             children: layoutableChildren(backend: backend, children: children),
