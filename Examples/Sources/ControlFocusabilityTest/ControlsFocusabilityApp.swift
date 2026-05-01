@@ -196,6 +196,7 @@ struct ControlsApp: App {
                                 Toggle(
                                     "Enable ProgressView resizability",
                                     isOn: $isProgressViewResizable)
+                                    .focusable(.disabled)
                                 Slider(value: $progressViewSize, in: 10...100)
                                     .focusable(
                                         isProgressSliderFocusable ? .unmodified : .disabled
