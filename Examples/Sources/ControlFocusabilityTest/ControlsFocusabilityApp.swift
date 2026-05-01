@@ -248,7 +248,7 @@ struct ControlsApp: App {
                         }
                         
 #if !os(tvOS)
-                        VStack {
+                       VStack {
                             Text("Selected date: \(date)")
                             
                             HStack {
@@ -279,6 +279,7 @@ struct ControlsApp: App {
                             Button("Reset date to now") {
                                 date = Date()
                             }
+                           .focusable(.disabled)
                         }
 #endif
 #endif

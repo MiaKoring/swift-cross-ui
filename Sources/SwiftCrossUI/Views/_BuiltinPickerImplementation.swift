@@ -71,7 +71,6 @@ public struct _BuiltinPickerImplementation: TypeSafeView {
         }
         return ViewLayoutResult
             .leafView(size: size)
-            .with(\.shouldSetFocusData, true)
     }
 
     func commit<Backend: AppBackend>(
@@ -81,6 +80,15 @@ public struct _BuiltinPickerImplementation: TypeSafeView {
         environment: EnvironmentValues,
         backend: Backend
     ) {
+        backend.registerFocusObservers(
+            environment.focusObservers,
+            on: children.picker!.widget as! Backend.Widget
+        )
+        backend.setFocusEffectDisabled(
+            on: children.picker!.widget as! Backend.Widget,
+            disabled: environment.focusEffectDisabled
+        )
+        
         backend.setSize(of: widget, to: layout.size.vector)
         backend.setSize(
             of: children.picker!.widget as! Backend.Widget,

@@ -258,9 +258,14 @@ public class ViewGraphNode<NodeView: View, Backend: AppBackend>: Sendable {
     ///   result of the last call to ``computeLayout(with:proposedSize:environment:)``.
     public func commit() -> ViewLayoutResult {
         if currentLayout?.shouldSetFocusData == true {
-            backend.registerFocusObservers(parentEnvironment.focusObservers, on: widget)
+            backend.registerFocusObservers(
+                parentEnvironment.focusObservers,
+                on: widget
+            )
             backend.setFocusEffectDisabled(
-                on: widget, disabled: parentEnvironment.focusEffectDisabled)
+                on: widget,
+                disabled: parentEnvironment.focusEffectDisabled
+            )
         }
 
         guard let currentLayout else {
