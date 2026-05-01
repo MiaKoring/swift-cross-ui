@@ -114,7 +114,7 @@ class FocusStateManager: NSObject {
         if let responder = window.firstResponder,
             !(responder is NSCustomWindow)
         {
-            if responder is NSObservableTextField {
+            if responder is NSObservableTextField || responder is NSObservableSecureTextField {
                 shouldSkip = true
                 self.lastFocused = responder
             } else if !shouldSkip {

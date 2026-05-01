@@ -192,7 +192,7 @@ class NSObservableTextField: NSTextField {
     }
 }
 
-private class NSObservableSecureTextField: NSSecureTextField {
+class NSObservableSecureTextField: NSSecureTextField {
     override func textDidChange(_ notification: Notification) {
         onEdit?(self)
     }
