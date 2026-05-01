@@ -417,15 +417,10 @@ public final class AppKitBackend: AppBackend {
 
         func removeSubview(at index: Int) {
             let view = super.subviews.remove(at: index)
-
-            if let window = self.window as? NSCustomWindow {
-                window.removeFromBypassCache(view)
-            }
         }
 
         func removeAllSubviews() {
             let window = self.window as? NSCustomWindow
-            window?.removeFromBypassCache(subviews)
 
             subviews.removeAll()
         }

@@ -70,39 +70,6 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
         }
     }
 
-    // MARK: - FocusChain Storage -
-
-    private var forwardFocusChainBypassCache = NSMapTable<NSResponder, NSView>(
-        keyOptions: .weakMemory, valueOptions: .weakMemory
-    )
-
-    private var reverseFocusChainBypassCache = NSMapTable<NSResponder, NSView>(
-        keyOptions: .weakMemory, valueOptions: .weakMemory
-    )
-
-    @inline(__always)
-    func removeFromBypassCache(_ view: NSResponder) {
-        if let result = forwardFocusChainBypassCache.object(forKey: view) {
-            reverseFocusChainBypassCache.removeObject(forKey: result)
-        }
-        forwardFocusChainBypassCache.removeObject(forKey: view)
-    }
-
-    func removeFromBypassCache(_ views: [NSResponder]) {
-        for view in views {
-            removeFromBypassCache(view)
-        }
-    }
-
-    func invalidateCache() {
-        forwardFocusChainBypassCache = NSMapTable<NSResponder, NSView>(
-            keyOptions: .weakMemory, valueOptions: .weakMemory
-        )
-        reverseFocusChainBypassCache = NSMapTable<NSResponder, NSView>(
-            keyOptions: .weakMemory, valueOptions: .weakMemory
-        )
-    }
-
     // MARK: - AppKit FocusChain handling -
 
     override public var initialFirstResponder: NSView? {
@@ -129,19 +96,10 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
     }
 
     override public func recalculateKeyViewLoop() {
-        invalidateCache()
         super.recalculateKeyViewLoop()
     }
 
     // MARK: - FocusChainManager implementation -
-
-    public func cachedStop(following key: Widget) -> Widget? {
-        forwardFocusChainBypassCache.object(forKey: key)
-    }
-
-    public func cachedStop(preceding key: Widget) -> Widget? {
-        reverseFocusChainBypassCache.object(forKey: key)
-    }
 
     public func closestValidStop(following view: Widget) -> Widget? {
         view.nextValidKeyView
@@ -149,11 +107,6 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
 
     public func closestValidStop(preceding view: Widget) -> Widget? {
         view.previousValidKeyView
-    }
-
-    public func setRelationship(_ widget: Widget, following previous: Widget) {
-        forwardFocusChainBypassCache.setObject(widget, forKey: previous)
-        reverseFocusChainBypassCache.setObject(previous, forKey: widget)
     }
 
     public func makeKey(_ widget: Widget) {

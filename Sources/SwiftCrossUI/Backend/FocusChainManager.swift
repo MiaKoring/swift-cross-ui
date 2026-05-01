@@ -11,16 +11,6 @@
 public protocol FocusChainManager {
     associatedtype Widget: FocusChainParticipant
 
-    /// Returns the widget following a given widget from the cache, if available.
-    ///
-    /// Optional. Can be used to optimize traversal.
-    func cachedStop(following key: Widget) -> Widget?
-
-    /// Returns the widget preceding a given widget from the cache, if available.
-    ///
-    /// Optional. Can be used to optimize traversal.
-    func cachedStop(preceding key: Widget) -> Widget?
-
     /// Returns the  widget following a given widget in the focus chain, suggested by the UI framework.
     /// This widget will be validated for visibility and focusability by the caller.
     /// Used by the provided functions for easier ``View/focusable`` compatibility.
@@ -31,10 +21,6 @@ public protocol FocusChainManager {
     /// Used by the provided functions for easier ``View/focusable`` compatibility.
     func closestValidStop(preceding view: Widget) -> Widget?
 
-    /// Called by ``FocusChainManager/selectTabStop(following:)`` or ``FocusChainManager/selectTabStop(preceding:)``
-    /// Save relationship to cache if implemented, otherwise does nothing.
-    func setRelationship(_ widget: Widget, following previous: Widget)
-
     /// Makes a widget the "key view" or "first responder"
     func makeKey(_ widget: Widget)
 
@@ -42,12 +28,6 @@ public protocol FocusChainManager {
     @inlinable
     @inline(__always)
     func getParent(of widget: Widget) -> Widget?
-}
-
-extension FocusChainManager {
-    public func cachedStop(following key: Widget) -> Widget? { nil }
-    public func cachedStop(preceding key: Widget) -> Widget? { nil }
-    public func setRelationship(_ widget: Widget, following previous: Widget) {}
 }
 
 /// A protocol to mark a widget as a focusability flag.
@@ -82,16 +62,8 @@ extension FocusChainManager {
             }
 
             if forward {
-                if let cached = cachedStop(following: next) {
-                    return cached
-                }
-
                 currentOption = closestValidStop(following: next)
             } else {
-                if let cached = cachedStop(preceding: next) {
-                    return cached
-                }
-
                 currentOption = closestValidStop(preceding: next)
             }
 
@@ -124,31 +96,17 @@ extension FocusChainManager {
     /// Moves focus to the closest focusable widget following the currently focused widget.
     /// The widget must be attached to a window.
     public func selectTabStop(following widget: Widget) {
-        if let cached = cachedStop(following: widget),
-            cached.canBeTabStop
-        {
-            makeKey(cached)
-            return
-        }
-
         guard
             let next = closestValidStop(following: widget),
             let result = findNextAllowedFocusTarget(suggestion: next)
         else { return }
 
         makeKey(result)
-        setRelationship(result, following: widget)
     }
 
     /// Moves focus to the closest focusable widget preceding the currently focused widget.
     /// The widget must be attached to a window.
     public func selectTabStop(preceding widget: Widget) {
-        if let cached = cachedStop(preceding: widget),
-            cached.canBeTabStop
-        {
-            makeKey(cached)
-            return
-        }
         guard
             let previous = closestValidStop(preceding: widget),
             let result = findNextAllowedFocusTarget(
@@ -158,6 +116,5 @@ extension FocusChainManager {
         else { return }
 
         makeKey(result)
-        setRelationship(widget, following: result)
     }
 }

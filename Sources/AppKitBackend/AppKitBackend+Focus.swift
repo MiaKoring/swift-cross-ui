@@ -15,8 +15,6 @@ final class FocusabilityContainer: NSView, SwiftCrossUI.FocusabilityContainer {
             let window = window as? NSCustomWindow
         else { return false }
 
-        window.invalidateCache()
-
         return true
     }
 
