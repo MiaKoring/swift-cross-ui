@@ -12,11 +12,11 @@ struct ToggleSwitch: ElementaryView, View {
         self.active = active
     }
 
-    func asWidget<Backend: AppBackend>(backend: Backend) -> Backend.Widget {
+    func asWidget<Backend: BaseAppBackend>(backend: Backend) -> Backend.Widget {
         return backend.createSwitch()
     }
 
-    func computeLayout<Backend: AppBackend>(
+    func computeLayout<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
         proposedSize: ProposedViewSize,
         environment: EnvironmentValues,
@@ -29,7 +29,7 @@ struct ToggleSwitch: ElementaryView, View {
             .with(\.shouldSetFocusData, true)
     }
 
-    func commit<Backend: AppBackend>(
+    func commit<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
         layout: ViewLayoutResult,
         environment: EnvironmentValues,

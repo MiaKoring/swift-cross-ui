@@ -28,11 +28,11 @@ public struct Button: Sendable {
 extension Button: View {}
 
 extension Button: ElementaryView {
-    public func asWidget<Backend: AppBackend>(backend: Backend) -> Backend.Widget {
+    public func asWidget<Backend: BaseAppBackend>(backend: Backend) -> Backend.Widget {
         return backend.createButton()
     }
 
-    public func computeLayout<Backend: AppBackend>(
+    public func computeLayout<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
         proposedSize: ProposedViewSize,
         environment: EnvironmentValues,
@@ -66,7 +66,7 @@ extension Button: ElementaryView {
             .with(\.shouldSetFocusData, true)
     }
 
-    public func commit<Backend: AppBackend>(
+    public func commit<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
         layout: ViewLayoutResult,
         environment: EnvironmentValues,

@@ -124,11 +124,13 @@ internal struct DatePickerImplementation: ElementaryView {
 
     let body = EmptyView()
 
-    func asWidget<Backend: AppBackend>(backend: Backend) -> Backend.Widget {
+    @CastBackend<BackendFeatures.DatePickers>(returnsWidget: true)
+    func asWidget<Backend: BaseAppBackend>(backend: Backend) -> Backend.Widget {
         backend.createDatePicker()
     }
 
-    func computeLayout<Backend: AppBackend>(
+    @CastBackend<BackendFeatures.DatePickers>
+    func computeLayout<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
         proposedSize: ProposedViewSize,
         environment: EnvironmentValues,
@@ -151,7 +153,7 @@ internal struct DatePickerImplementation: ElementaryView {
             .with(\.shouldSetFocusData, true)
     }
 
-    func commit<Backend: AppBackend>(
+    func commit<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
         layout: ViewLayoutResult,
         environment: EnvironmentValues,

@@ -1,7 +1,14 @@
 import Foundation
 import SwiftCrossUI
 
-public final class DummyBackend: AppBackend {
+public final class DummyBackend:
+    BaseAppBackend,
+    BackendFeatures.IncomingURLs,
+    BackendFeatures.CornerRadius,
+    BackendFeatures.Tables,
+    BackendFeatures.Colors,
+    BackendFeatures.Windowing
+{
     public class Window {
         static let defaultSize = SIMD2<Int>(400, 200)
 
@@ -85,7 +92,6 @@ public final class DummyBackend: AppBackend {
         public var label = ""
         public var font: Font.Resolved?
         public var action: (() -> Void)?
-        public var menu: Menu?
     }
 
     public class ToggleButton: Control {
@@ -323,11 +329,8 @@ public final class DummyBackend: AppBackend {
     public var scrollBarWidth = 8
     public var requiresToggleSwitchSpacer = false
     public var requiresImageUpdateOnScaleFactorChange = false
-    public var menuImplementationStyle = MenuImplementationStyle.dynamicPopover
     public var deviceClass = DeviceClass.desktop
-    public var canRevealFiles = false
     public var supportsMultipleWindows = true
-    public var supportedDatePickerStyles: [DatePickerStyle] = []
     public var supportedPickerStyles: [BackendPickerStyle] = []
     public let canOverrideWindowColorScheme = true
 
@@ -677,18 +680,6 @@ public final class DummyBackend: AppBackend {
         button.action = action
     }
 
-    public func updateButton(
-        _ button: Widget,
-        label: String,
-        menu: Menu,
-        environment: EnvironmentValues
-    ) {
-        let button = button as! Button
-        button.label = label
-        button.menu = menu
-        button.font = environment.resolvedFont
-    }
-
     public func createToggle() -> Widget {
         ToggleButton()
     }
@@ -815,6 +806,65 @@ public final class DummyBackend: AppBackend {
 
     public func getContent(ofSecureField secureField: Widget) -> String {
         getContent(ofTextField: secureField)
+    }
+
+    // MARK: - Unimplemented Features
+    // FIXME: Implement them so we can test them
+
+    public func createPicker(style: SwiftCrossUI.BackendPickerStyle) -> Widget {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func updatePicker(
+        _ picker: Widget,
+        options: [String],
+        environment: SwiftCrossUI.EnvironmentValues,
+        onChange: @escaping (Int?) -> Void
+    ) {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func setSelectedOption(
+        ofPicker picker: Widget,
+        to selectedOption: Int?
+    ) {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func createProgressBar() -> Widget {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func updateProgressBar(
+        _ widget: Widget,
+        progressFraction: Double?,
+        environment: SwiftCrossUI.EnvironmentValues
+    ) {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func createProgressSpinner() -> Widget {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func createTextEditor() -> Widget {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func updateTextEditor(
+        _ textEditor: Widget,
+        environment: SwiftCrossUI.EnvironmentValues,
+        onChange: @escaping (String) -> Void
+    ) {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func setContent(ofTextEditor textEditor: Widget, to content: String) {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func getContent(ofTextEditor textEditor: Widget) -> String {
+        fatalError("\(Self.self): \(#function) not implemented")
     }
 
     public func createFocusContainer() -> Widget {
