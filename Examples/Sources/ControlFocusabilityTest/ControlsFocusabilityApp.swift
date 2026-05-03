@@ -77,6 +77,7 @@ struct ControlsApp: App {
                                 }
                                 .focusable(isButtonFocusable ? .unmodified : .disabled)
                                 .focused($focused, equals: 1)
+                                .focusEffectDisabled()
                                 
                                 Text("Count: \(count)")
                             }

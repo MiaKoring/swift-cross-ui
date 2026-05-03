@@ -82,7 +82,7 @@ struct FocusModifier<Content: View>: TypeSafeView {
     var body: TupleView1<Content>
     var focusability: Focusability
 
-    func children<Backend: AppBackend>(
+    func children<Backend: BaseAppBackend>(
         backend: Backend,
         snapshots: [ViewGraphSnapshotter.NodeSnapshot]?,
         environment: EnvironmentValues
@@ -93,8 +93,9 @@ struct FocusModifier<Content: View>: TypeSafeView {
             environment: environment
         )
     }
-
-    func asWidget<Backend: AppBackend>(
+    
+    @CastBackend<BackendFeatures.FocusDisabling>(backendGenericName: "NewBackend")
+    func asWidget<Backend: BaseAppBackend>(
         _ children: Children,
         backend: Backend
     ) -> Backend.Widget {
@@ -102,13 +103,16 @@ struct FocusModifier<Content: View>: TypeSafeView {
 
         backend.insert(children.child0.widget.into(), into: container, at: 0)
 
-        return container
+        return container as! Backend.Widget
     }
 
-    func computeLayout<Backend>(
-        _ widget: Backend.Widget, children: TupleView1<Content>.Children,
-        proposedSize: ProposedViewSize, environment: EnvironmentValues, backend: Backend
-    ) -> ViewLayoutResult where Backend: AppBackend {
+    func computeLayout<Backend: BaseAppBackend>(
+        _ widget: Backend.Widget,
+        children: Children,
+        proposedSize: ProposedViewSize,
+        environment: EnvironmentValues,
+        backend: Backend
+    ) -> ViewLayoutResult {
         children.child0.computeLayout(
             with: body.view0,
             proposedSize: proposedSize,
@@ -117,13 +121,14 @@ struct FocusModifier<Content: View>: TypeSafeView {
         .with(\.shouldSetFocusData, true)
     }
 
-    func commit<Backend>(
+    @CastBackend<BackendFeatures.FocusDisabling>(backendGenericName: "NewBackend")
+    func commit<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
-        children: TupleView1<Content>.Children,
+        children: Children,
         layout: ViewLayoutResult,
         environment: EnvironmentValues,
         backend: Backend
-    ) where Backend: AppBackend {
+    ) {
         let size = children.child0.commit().size.vector
         backend.setSize(of: widget, to: size)
 
