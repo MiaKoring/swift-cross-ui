@@ -7,7 +7,9 @@ public final class DummyBackend:
     BackendFeatures.CornerRadius,
     BackendFeatures.Tables,
     BackendFeatures.Colors,
-    BackendFeatures.Windowing
+    BackendFeatures.Windowing,
+    BackendFeatures.Focus,
+    BackendFeatures.FocusDisabling
 {
     public class Window {
         static let defaultSize = SIMD2<Int>(400, 200)
