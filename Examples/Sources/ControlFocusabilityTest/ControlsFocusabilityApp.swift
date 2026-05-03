@@ -75,14 +75,14 @@ struct ControlsApp: App {
                                 Button("Click me!") {
                                     count += 1
                                 }
-                                .focusable(isButtonFocusable ? .unmodified : .disabled)
+                                .focusableIfSupported(isButtonFocusable)
                                 .focused($focused, equals: 1)
                                 .focusEffectDisabled()
                                 
                                 Text("Count: \(count)")
                             }
                             Toggle("focusable", isOn: $isButtonFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
                         .padding(.bottom, 20)
                         
@@ -99,11 +99,11 @@ struct ControlsApp: App {
                                         Text("Text item 2")
                                     }
                                 }
-                                .focusable(isMenuFocusable ? .unmodified : .disabled)
+                                .focusableIfSupported(isMenuFocusable)
                                 .focused($focused, equals: 2)
                             }
                             Toggle("focusable", isOn: $isMenuFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
                         
 #if !canImport(UIKitBackend)
@@ -112,14 +112,12 @@ struct ControlsApp: App {
                                 Text("Toggle button")
                                 Toggle("Toggle me!", isOn: $exampleButtonState)
                                     .toggleStyle(.button)
-                                    .focusable(
-                                        isToggleButtonFocusable ? .unmodified : .disabled
-                                    )
+                                    .focusableIfSupported(isToggleButtonFocusable)
                                     .focused($focused, equals: 3)
                                 Text("Currently enabled: \(exampleButtonState)")
                             }
                             Toggle("focusable", isOn: $isToggleButtonFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
                         .padding(.bottom, 20)
 #endif
@@ -129,12 +127,12 @@ struct ControlsApp: App {
                                 Text("Toggle switch")
                                 Toggle("Toggle me:", isOn: $exampleSwitchState)
                                     .toggleStyle(.switch)
-                                    .focusable(isToggleSwitchFocusable ? .unmodified : .disabled)
+                                    .focusableIfSupported(isToggleSwitchFocusable)
                                     .focused($focused, equals: 4)
                                 Text("Currently enabled: \(exampleSwitchState)")
                             }
                             Toggle("focusable", isOn: $isToggleSwitchFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
                         
                         HStack {
@@ -142,12 +140,12 @@ struct ControlsApp: App {
                                 Text("Checkbox")
                                 Toggle("Toggle me:", isOn: $exampleCheckboxState)
                                     .toggleStyle(.checkbox)
-                                    .focusable(isCheckboxFocusable ? .unmodified : .disabled)
+                                    .focusableIfSupported(isCheckboxFocusable)
                                     .focused($focused, equals: 5)
                                 Text("Currently enabled: \(exampleCheckboxState)")
                             }
                             Toggle("focusable", isOn: $isCheckboxFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
                         
 #if !os(tvOS)
@@ -156,12 +154,12 @@ struct ControlsApp: App {
                                 Text("Slider")
                                 Slider(value: $sliderValue, in: 0...10)
                                     .frame(maxWidth: 200)
-                                    .focusable(isSliderFocusable ? .unmodified : .disabled)
+                                    .focusableIfSupported(isSliderFocusable)
                                     .focused($focused, equals: 6)
                                 Text("Value: \(String(format: "%.02f", sliderValue))")
                             }
                             Toggle("focusable", isOn: $isSliderFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
 #endif
                         
@@ -169,26 +167,24 @@ struct ControlsApp: App {
                             VStack {
                                 Text("Text field")
                                 TextField("Text field", text: $text)
-                                    .focusable(isTextFieldFocusable ? .unmodified : .disabled)
+                                    .focusableIfSupported(isTextFieldFocusable)
                                     .focused($focused, equals: 7)
                                 Text("Value: \(text)")
                             }
                             Toggle("focusable", isOn: $isTextFieldFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
                         
                         HStack {
                             VStack {
                                 Text("Secure text field")
                                 SecureField("Secure text field", text: $secureText)
-                                    .focusable(
-                                        isSecureTextFieldFocusable ? .unmodified : .disabled
-                                    )
+                                    .focusableIfSupported(isSecureTextFieldFocusable)
                                     .focused($focused, equals: 8)
                                 Text("Value: \(secureText)")
                             }
                             Toggle("focusable", isOn: $isSecureTextFieldFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
                         
 #if !os(tvOS)
@@ -197,11 +193,9 @@ struct ControlsApp: App {
                                 Toggle(
                                     "Enable ProgressView resizability",
                                     isOn: $isProgressViewResizable)
-                                    .focusable(.disabled)
+                                    .focusableIfSupported(false)
                                 Slider(value: $progressViewSize, in: 10...100)
-                                    .focusable(
-                                        isProgressSliderFocusable ? .unmodified : .disabled
-                                    )
+                                    .focusableIfSupported(isProgressSliderFocusable)
                                     .focused($focused, equals: 9)
                                 ProgressView()
                                     .resizable(isProgressViewResizable)
@@ -209,7 +203,7 @@ struct ControlsApp: App {
                                         width: progressViewSize, height: progressViewSize)
                             }
                             Toggle("focusable", isOn: $isProgressSliderFocusable)
-                                .focusable(.disabled)
+                                .focusableIfSupported(false)
                         }
 #endif
                         
@@ -225,10 +219,10 @@ struct ControlsApp: App {
                                     },
                                     selection: $pickerStyle
                                 )
-                                .focusable(isPickerStyleFocusable ? .unmodified : .disabled)
+                                .focusableIfSupported(isPickerStyleFocusable)
                                 .focused($focused, equals: 10)
                                 Toggle("focusable", isOn: $isPickerStyleFocusable)
-                                    .focusable(.disabled)
+                                    .focusableIfSupported(false)
                             }
                             
                             HStack {
@@ -240,10 +234,10 @@ struct ControlsApp: App {
                                 .pickerStyle(
                                     pickerStyle?.asPickerStyle ?? DefaultPickerStyle()
                                 )
-                                .focusable(isFlavorPickerFocusable ? .unmodified : .disabled)
+                                .focusableIfSupported(isFlavorPickerFocusable)
                                 .focused($focused, equals: 11)
                                 Toggle("focusable", isOn: $isFlavorPickerFocusable)
-                                    .focusable(.disabled)
+                                    .focusableIfSupported(false)
                             }
                             Text("You chose: \(flavor ?? "Nothing yet!")")
                         }
@@ -258,29 +252,25 @@ struct ControlsApp: App {
                                     of: supportedDatePickerStyles,
                                     selection: $datePickerStyle
                                 )
-                                .focusable(
-                                    isDatePickerStyleFocusable ? .unmodified : .disabled
-                                )
+                                .focusableIfSupported(isDatePickerStyleFocusable)
                                 .focused($focused, equals: 12)
                                 Toggle("focusable", isOn: $isDatePickerStyleFocusable)
-                                    .focusable(.disabled)
+                                    .focusableIfSupported(false)
                             }
                             
                             HStack {
                                 DatePicker(selection: $date) {}
                                     .datePickerStyle(datePickerStyle ?? .automatic)
-                                    .focusable(
-                                        isDatePickerFocusable ? .unmodified : .disabled
-                                    )
+                                    .focusableIfSupported(isDatePickerFocusable)
                                     .focused($focused, equals: 13)
                                 Toggle("focusable", isOn: $isDatePickerFocusable)
-                                    .focusable(.disabled)
+                                    .focusableIfSupported(false)
                             }
                             
                             Button("Reset date to now") {
                                 date = Date()
                             }
-                           .focusable(.disabled)
+                            .focusableIfSupported(false)
                         }
 #endif
 #endif
@@ -288,7 +278,7 @@ struct ControlsApp: App {
                     
                     Toggle(enabled ? "Disable all" : "Enable all", isOn: $enabled)
                         .padding()
-                        .focusable(.disabled)
+                        .focusableIfSupported(false)
                 }
             }
         }.defaultSize(width: 400, height: 600)
@@ -297,4 +287,15 @@ struct ControlsApp: App {
 
 extension AppStorageValues {
     @Entry var count: Int = 0
+}
+
+extension View {
+    func focusableIfSupported(_ disabled: Bool) -> some View {
+        #if canImport(AppKitBackend) || canImport(GtkBackend)
+        self
+        .focusable(disabled ? .unmodified : .disabled)
+        #else
+        self
+        #endif
+    }
 }
