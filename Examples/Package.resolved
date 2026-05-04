@@ -1,5 +1,5 @@
 {
-  "originHash" : "c44cc93a851b845608b79b4a1e6c203cf225e06ce6c225078eba7026ca59d68a",
+  "originHash" : "1d994f09f56f7050d6069af02e1f81af464d43a0f97a1ffd1f5d9f6c16979990",
   "pins" : [
     {
       "identity" : "aexml",
@@ -132,8 +132,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-android-sdk/swift-android-native.git",
       "state" : {
-        "revision" : "86554f67e706892f202cf02a6ce7def19acb42a1",
-        "version" : "2.0.0"
+        "revision" : "6ff6e6274fccafac7fdabb4cf7c958d747f44831",
+        "version" : "2.0.1"
       }
     },
     {
