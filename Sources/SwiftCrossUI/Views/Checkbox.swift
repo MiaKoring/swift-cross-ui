@@ -42,5 +42,6 @@ struct Checkbox: ElementaryView, View {
             }
         }
         backend.setState(ofCheckbox: widget, to: active.wrappedValue)
+        backend.setSize(of: widget, to: layout.size.vector)
     }
 }
