@@ -65,16 +65,16 @@ struct GradientsApp: App {
         case .linear:
             LinearGradientView()
         case .radial:
-            #if !canImport(AndroidBackend)
             RadialGradientView()
-            #endif
         case .angular:
             #if !canImport(WinUIBackend) && !canImport(GtkBackend) && !canImport(AndroidBackend)
-            ScrollView(.horizontal) {
+                ScrollView(.horizontal) {
+                    AngularGradientView()
+                }
+            #elseif canImport(AndroidBackend)
                 AngularGradientView()
-            }
             #else
-            Text("Angular Gradients are not supported on \(App.Backend)")
+                Text("Angular Gradients are not supported on \(App.Backend)")
             #endif
         case .none:
             Text("Please select a gradient type.")
