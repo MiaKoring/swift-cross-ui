@@ -14,7 +14,7 @@ import android.view.View
 
 class GradientWidget(activity: Activity): View(activity) {
     private var path = Path()
-    private var matrix = Matrix()
+    private var matrix: Matrix? = null
     private var fillPaint = Paint().apply {
         style = Paint.Style.FILL
         color = Color.RED
@@ -25,8 +25,8 @@ class GradientWidget(activity: Activity): View(activity) {
         this.fillPaint.shader = shader
         
         // Reset path and draw rectangle for current bounds
-        this.path.reset()
         this.path.apply {
+            reset()
             addRect(0f, 0f, width, height, Path.Direction.CW)
         }
     }
@@ -39,10 +39,13 @@ class GradientWidget(activity: Activity): View(activity) {
         scaleX: Float,
         scaleY: Float
     ) {
-        this.matrix.reset()
-        this.matrix.postRotate(rotationAngle, centerX, centerY)
-        this.matrix.postScale(scaleX, scaleY, centerX, centerY)
-        this.fillPaint.shader?.setLocalMatrix(this.matrix)
+        // If matrix exists use it, else initialize, store and use new reference
+        val localMatrix = matrix ?: Matrix().also { matrix = it }
+        
+        localMatrix.reset()
+        localMatrix.postRotate(rotationAngle, centerX, centerY)
+        localMatrix.postScale(scaleX, scaleY, centerX, centerY)
+        this.fillPaint.shader?.setLocalMatrix(localMatrix)
     }
     
     override fun onDraw(canvas: Canvas) {
