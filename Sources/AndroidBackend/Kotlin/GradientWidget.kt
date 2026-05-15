@@ -9,17 +9,21 @@ import android.graphics.Shader
 import android.graphics.LinearGradient
 import android.graphics.RadialGradient
 import android.graphics.SweepGradient
+import android.graphics.Matrix
 import android.view.View
 
 class GradientWidget(activity: Activity): View(activity) {
-    private var path: Path = Path()
-    private var fillPaint: Paint = Paint().apply {
+    private var path = Path()
+    private var matrix = Matrix()
+    private var fillPaint = Paint().apply {
         style = Paint.Style.FILL
         color = Color.RED
         isAntiAlias = true
     }
     
-    fun set(width: Float, height: Float) {
+    fun set(shader: Shader, width: Float, height: Float) {
+        this.fillPaint.shader = shader
+        
         // Reset path and draw rectangle for current bounds
         this.path.reset()
         this.path.apply {
@@ -27,16 +31,18 @@ class GradientWidget(activity: Activity): View(activity) {
         }
     }
     
-    fun setLinearGradient(gradient: LinearGradient) {
-        this.fillPaint.shader = gradient
-    }
-    
-    fun setRadialGradient(gradient: RadialGradient) {
-        this.fillPaint.shader = gradient
-    }
-    
-    fun setSweepGradient(gradient: SweepGradient) {
-        this.fillPaint.shader = gradient
+    // Only call this method AFTER set, to ensure the shader is set.
+    fun setMatrix(
+        centerX: Float,
+        centerY: Float,
+        rotationAngle: Float,
+        scaleX: Float,
+        scaleY: Float
+    ) {
+        this.matrix.reset()
+        this.matrix.postRotate(rotationAngle, centerX, centerY)
+        this.matrix.postScale(scaleX, scaleY, centerX, centerY)
+        this.fillPaint.shader?.setLocalMatrix(this.matrix)
     }
     
     override fun onDraw(canvas: Canvas) {

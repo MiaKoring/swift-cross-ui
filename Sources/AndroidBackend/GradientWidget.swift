@@ -15,22 +15,19 @@ class GradientWidget: JavaObject {
     
     @JavaMethod
     func set(
+        shader: AndroidGraphics.Shader?,
         width: Float,
         height: Float
     )
     
+    /// Applies a transformation matrix to the currently used Shader.
+    /// Only call this method AFTER set, to ensure the shader is set.
     @JavaMethod
-    func setLinearGradient(
-        gradient: AndroidGraphics.LinearGradient?
-    )
-    
-    @JavaMethod
-    func setRadialGradient(
-        gradient: AndroidGraphics.RadialGradient?
-    )
-    
-    @JavaMethod
-    func setSweepGradient(
-        gradient: AndroidGraphics.SweepGradient?
+    func setMatrix(
+        centerX: Float,
+        centerY: Float,
+        rotationAngle: Float,
+        scaleX: Float,
+        scaleY: Float
     )
 }

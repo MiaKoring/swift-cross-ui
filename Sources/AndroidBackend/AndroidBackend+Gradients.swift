@@ -47,11 +47,8 @@ extension AndroidBackend: BackendFeatures.Gradients {
             environment: Self.env
         )
         
-        let gradientWidget = widget.as(GradientWidget.self)!
-        
-        gradientWidget.setLinearGradient(gradient: gradient)
-
-        gradientWidget.set(
+        widget.as(GradientWidget.self)!.set(
+            shader: gradient,
             width: pxWidth,
             height: pxHeight
         )
@@ -102,11 +99,8 @@ extension AndroidBackend: BackendFeatures.Gradients {
             environment: Self.env
         )
 
-        let gradientWidget = widget.as(GradientWidget.self)!
-        
-        gradientWidget.setRadialGradient(gradient: gradient)
-        
-        gradientWidget.set(
+        widget.as(GradientWidget.self)!.set(
+            shader: gradient,
             width: pxWidth,
             height: pxHeight
         )
@@ -157,33 +151,23 @@ extension AndroidBackend: BackendFeatures.Gradients {
             environment: Self.env
         )
 
-        let gradientMatrix = AndroidGraphics.Matrix()
-
         let scaleX: Float = 1.0
         let scaleY: Float = Float(size.y) / Float(size.x)
 
-        gradientMatrix.postRotate(
-            startAngleDegrees,
-            centerX,
-            centerY
-        )
-
-        gradientMatrix.postScale(
-            scaleX,
-            scaleY,
-            centerX,
-            centerY
-        )
-
-        gradient.setLocalMatrix(gradientMatrix)
-
         let gradientWidget = widget.as(GradientWidget.self)!
         
-        gradientWidget.setSweepGradient(gradient: gradient)
-        
         gradientWidget.set(
+            shader: gradient,
             width: pxWidth,
             height: pxHeight
+        )
+        
+        gradientWidget.setMatrix(
+            centerX: centerX,
+            centerY: centerY,
+            rotationAngle: startAngleDegrees,
+            scaleX: scaleX,
+            scaleY: scaleY
         )
     }
 }
