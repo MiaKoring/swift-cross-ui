@@ -20,7 +20,7 @@ extension AndroidBackend: BackendFeatures.Gradients {
         let tileClass = try! JavaClass<AndroidGraphics.Shader.TileMode>()
         let colorClass = try! JavaClass<AndroidGraphics.Color>()
 
-        let density = widget.getResources().getDisplayMetrics().density
+        let density = Float(environment.windowScaleFactor)
 
         let count = gradient.gradient.stops.count
         var stops = [Float]()
@@ -57,8 +57,6 @@ extension AndroidBackend: BackendFeatures.Gradients {
             environment: environment
         )
 
-        setSize(of: widget, to: size)
-
         widget.as(PathView.self)!.set(
             path: path.path,
             fillPaint: path.fillPaint,
@@ -82,7 +80,7 @@ extension AndroidBackend: BackendFeatures.Gradients {
         let tileClass = try! JavaClass<AndroidGraphics.Shader.TileMode>()
         let colorClass = try! JavaClass<AndroidGraphics.Color>()
 
-        let density = widget.getResources().getDisplayMetrics().density
+        let density = Float(environment.windowScaleFactor)
 
         let count = gradient.gradient.stops.count
         var stops = [Float]()
@@ -121,8 +119,6 @@ extension AndroidBackend: BackendFeatures.Gradients {
             environment: environment
         )
 
-        setSize(of: widget, to: size)
-
         widget.as(PathView.self)!.set(
             path: path.path,
             fillPaint: path.fillPaint,
@@ -146,7 +142,7 @@ extension AndroidBackend: BackendFeatures.Gradients {
         let tileClass = try! JavaClass<AndroidGraphics.Shader.TileMode>()
         let colorClass = try! JavaClass<AndroidGraphics.Color>()
 
-        let density = widget.getResources().getDisplayMetrics().density
+        let density = Float(environment.windowScaleFactor)
 
         let count = gradient.gradient.stops.count
         var stops = [Float]()
@@ -180,8 +176,6 @@ extension AndroidBackend: BackendFeatures.Gradients {
         let scaleX: Float = 1.0
         let scaleY: Float = Float(size.y) / Float(size.x)
 
-        gradientMatrix.reset()
-
         gradientMatrix.postRotate(
             startAngleDegrees,
             centerX,
@@ -206,8 +200,6 @@ extension AndroidBackend: BackendFeatures.Gradients {
             pointsChanged: true,
             environment: environment
         )
-
-        setSize(of: widget, to: size)
 
         widget.as(PathView.self)!.set(
             path: path.path,

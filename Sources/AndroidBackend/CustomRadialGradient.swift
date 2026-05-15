@@ -1,6 +1,10 @@
 import SwiftJava
 import AndroidKit
 
+// This class exists to circumvent the weird issue of the AndroidGraphics bindings
+// we use not finding the class android.graphics.RadialGradient.
+// On the Kotlin side of things CustomRadialGradient is just a subclass of
+// RadialGradient, without any additional logic.
 @JavaClass(
     "dev.swiftcrossui.androidbackend.CustomRadialGradient",
     extends: AndroidKit.RadialGradient.self
