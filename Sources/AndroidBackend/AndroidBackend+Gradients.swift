@@ -5,7 +5,8 @@ import AndroidGraphics
 // swiftlint:disable force_try
 extension AndroidBackend: BackendFeatures.Gradients {
     public func createLinearGradientWidget() -> Widget {
-        return createPathWidget()
+        GradientWidget(Self.activity, environment: Self.env)
+            .as(AndroidKit.View.self)!
     }
 
     public func updateLinearGradientWidget(
@@ -14,13 +15,8 @@ extension AndroidBackend: BackendFeatures.Gradients {
         withSize size: SIMD2<Int>,
         in environment: EnvironmentValues
     ) {
-        let scuiPath = SwiftCrossUI.Rectangle().path(in: .init(origin: .zero, size: .init(Double(size.x), Double(size.y))))
-        let path = createPath()
-
         let tileClass = try! JavaClass<AndroidGraphics.Shader.TileMode>()
         let colorClass = try! JavaClass<AndroidGraphics.Color>()
-
-        let density = Float(environment.windowScaleFactor)
 
         let count = gradient.gradient.stops.count
         var stops = [Float]()
@@ -32,9 +28,13 @@ extension AndroidBackend: BackendFeatures.Gradients {
             stops.append(Float(stop.location))
             colors.append(stop.color.resolve(in: environment).asColorInt())
         }
+        
+        let density = Float(environment.windowScaleFactor)
 
-        let pxWidth = Float(size.x) * density
-        let pxHeight = Float(size.y) * density
+        let width = Float(size.x)
+        let height = Float(size.y)
+        let pxWidth = width * density
+        let pxHeight = height * density
 
         let gradient = AndroidGraphics.LinearGradient(
             Float(gradient.startPoint.x) * pxWidth,
@@ -46,26 +46,20 @@ extension AndroidBackend: BackendFeatures.Gradients {
             tileClass.CLAMP,
             environment: Self.env
         )
+        
+        let gradientWidget = widget.as(GradientWidget.self)!
+        
+        gradientWidget.setLinearGradient(gradient: gradient)
 
-        _ = path.fillPaint.setShader(gradient)
-
-        updatePath(
-            path,
-            scuiPath,
-            bounds: .init(origin: .zero, size: .init(x: Double(size.x), y: Double(size.y))),
-            pointsChanged: true,
-            environment: environment
-        )
-
-        widget.as(PathView.self)!.set(
-            path: path.path,
-            fillPaint: path.fillPaint,
-            strokePaint: path.strokePaint
+        gradientWidget.set(
+            width: pxWidth,
+            height: pxHeight
         )
     }
 
     public func createRadialGradientWidget() -> Widget {
-        return createPathWidget()
+        GradientWidget(Self.activity, environment: Self.env)
+            .as(AndroidKit.View.self)!
     }
 
     public func updateRadialGradientWidget(
@@ -74,13 +68,8 @@ extension AndroidBackend: BackendFeatures.Gradients {
         withSize size: SIMD2<Int>,
         in environment: EnvironmentValues
     ) {
-        let scuiPath = SwiftCrossUI.Rectangle().path(in: .init(origin: .zero, size: .init(Double(size.x), Double(size.y))))
-        let path = createPath()
-
         let tileClass = try! JavaClass<AndroidGraphics.Shader.TileMode>()
         let colorClass = try! JavaClass<AndroidGraphics.Color>()
-
-        let density = Float(environment.windowScaleFactor)
 
         let count = gradient.gradient.stops.count
         var stops = [Float]()
@@ -92,9 +81,13 @@ extension AndroidBackend: BackendFeatures.Gradients {
             stops.append(Float(stop.location))
             colors.append(stop.color.resolve(in: environment).asColorInt())
         }
+        
+        let density = Float(environment.windowScaleFactor)
 
-        let pxWidth = Float(size.x) * density
-        let pxHeight = Float(size.y) * density
+        let width = Float(size.x)
+        let height = Float(size.y)
+        let pxWidth = width * density
+        let pxHeight = height * density
 
         let centerX = Float(gradient.center.x) * pxWidth
         let centerY = Float(gradient.center.y) * pxHeight
@@ -109,25 +102,19 @@ extension AndroidBackend: BackendFeatures.Gradients {
             environment: Self.env
         )
 
-        path.fillPaint.setShader(gradient)
-
-        updatePath(
-            path,
-            scuiPath,
-            bounds: .init(origin: .zero, size: .init(x: Double(size.x), y: Double(size.y))),
-            pointsChanged: true,
-            environment: environment
-        )
-
-        widget.as(PathView.self)!.set(
-            path: path.path,
-            fillPaint: path.fillPaint,
-            strokePaint: path.strokePaint
+        let gradientWidget = widget.as(GradientWidget.self)!
+        
+        gradientWidget.setRadialGradient(gradient: gradient)
+        
+        gradientWidget.set(
+            width: pxWidth,
+            height: pxHeight
         )
     }
 
     public func createAngularGradientWidget() -> Widget {
-        return createPathWidget()
+        GradientWidget(Self.activity, environment: Self.env)
+            .as(AndroidKit.View.self)!
     }
 
     public func updateAngularGradientWidget(
@@ -136,13 +123,8 @@ extension AndroidBackend: BackendFeatures.Gradients {
         withSize size: SIMD2<Int>,
         in environment: EnvironmentValues
     ) {
-        let scuiPath = SwiftCrossUI.Rectangle().path(in: .init(origin: .zero, size: .init(Double(size.x), Double(size.y))))
-        let path = createPath()
-
         let tileClass = try! JavaClass<AndroidGraphics.Shader.TileMode>()
         let colorClass = try! JavaClass<AndroidGraphics.Color>()
-
-        let density = Float(environment.windowScaleFactor)
 
         let count = gradient.gradient.stops.count
         var stops = [Float]()
@@ -154,9 +136,13 @@ extension AndroidBackend: BackendFeatures.Gradients {
             stops.append(Float(stop.location))
             colors.append(stop.color.resolve(in: environment).asColorInt())
         }
+        
+        let density = Float(environment.windowScaleFactor)
 
-        let pxWidth = Float(size.x) * density
-        let pxHeight = Float(size.y) * density
+        let width = Float(size.x)
+        let height = Float(size.y)
+        let pxWidth = width * density
+        let pxHeight = height * density
 
         let centerX = Float(gradient.center.x) * pxWidth
         let centerY = Float(gradient.center.y) * pxHeight
@@ -191,20 +177,13 @@ extension AndroidBackend: BackendFeatures.Gradients {
 
         gradient.setLocalMatrix(gradientMatrix)
 
-        _ = path.fillPaint.setShader(gradient)
-
-        updatePath(
-            path,
-            scuiPath,
-            bounds: .init(origin: .zero, size: .init(x: Double(size.x), y: Double(size.y))),
-            pointsChanged: true,
-            environment: environment
-        )
-
-        widget.as(PathView.self)!.set(
-            path: path.path,
-            fillPaint: path.fillPaint,
-            strokePaint: path.strokePaint
+        let gradientWidget = widget.as(GradientWidget.self)!
+        
+        gradientWidget.setSweepGradient(gradient: gradient)
+        
+        gradientWidget.set(
+            width: pxWidth,
+            height: pxHeight
         )
     }
 }
