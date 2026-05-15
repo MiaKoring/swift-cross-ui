@@ -101,10 +101,10 @@ extension AndroidBackend: BackendFeatures.Gradients {
         let centerX = Float(gradient.center.x) * pxWidth
         let centerY = Float(gradient.center.y) * pxHeight
 
-        let gradient = AndroidGraphics.RadialGradient(
+        let gradient = CustomRadialGradient(
             centerX,
             centerY,
-            Float(gradient.endRadius) * density,
+            Float(max(gradient.endRadius, gradient.startRadius, 1)) * density,
             colors,
             stops,
             tileClass.CLAMP,
