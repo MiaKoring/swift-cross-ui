@@ -13,6 +13,11 @@ class ViewOnHoverListener(
             return true
         }
         
+        if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
+            enterAction.call()
+            return true
+        }
+        
         if (event.getAction() == MotionEvent.ACTION_HOVER_EXIT) {
             leaveAction.call()
             return true
