@@ -1,7 +1,10 @@
 import AndroidKit
 import SwiftCrossUI
 
-extension AndroidBackend: BackendFeatures.TapGestures {
+extension AndroidBackend:
+    BackendFeatures.TapGestures,
+    BackendFeatures.HoverGestures
+{
     public func createTapGestureTarget(wrapping child: Widget, gesture: TapGesture) -> Widget {
         child
     }
@@ -41,5 +44,24 @@ extension AndroidBackend: BackendFeatures.TapGestures {
                     tapGestureTarget.setOnLongClickListener(nil)
                 }
         }
+    }
+    
+    public func createHoverTarget(wrapping child: Widget) -> Widget {
+        child
+    }
+    
+    public func updateHoverTarget(
+        _ hoverTarget: Widget,
+        environment: EnvironmentValues,
+        action: @escaping (Bool) -> Void
+    ) {
+        hoverTarget.setOnHoverListener(
+            ViewOnHoverListener(
+                enterAction: { action(true) },
+                leaveAction: { action(false) },
+                environment: Self.env
+            )
+            .as(AndroidKit.View.OnHoverListener.self)!
+        )
     }
 }
