@@ -17,7 +17,6 @@ class GradientWidget(activity: Activity): View(activity) {
     private var matrix: Matrix? = null
     private var fillPaint = Paint().apply {
         style = Paint.Style.FILL
-        color = Color.RED
         isAntiAlias = true
     }
     
@@ -26,7 +25,7 @@ class GradientWidget(activity: Activity): View(activity) {
         
         // Reset path and draw rectangle for current bounds
         this.path.apply {
-            reset()
+            rewind()
             addRect(0f, 0f, width, height, Path.Direction.CW)
         }
     }
