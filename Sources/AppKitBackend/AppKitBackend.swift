@@ -407,31 +407,14 @@ public final class AppKitBackend: FullAppBackend {
 
     public func show(widget: Widget) {}
 
-    class NSContainerView: NSView {
-        override func addSubview(_ view: Widget) {
-            super.addSubview(view)
-        }
-
-        func removeSubview(at index: Int) {
-            let view = super.subviews.remove(at: index)
-        }
-
-        func removeAllSubviews() {
-            let window = self.window as? NSCustomWindow
-
-            subviews.removeAll()
-        }
-    }
-
     public func createContainer() -> Widget {
-        let container = NSContainerView()
+        let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
         return container
     }
 
     public func removeAllChildren(of container: Widget) {
-        let container = container as! NSContainerView
-        container.removeAllSubviews()
+        container.subviews = []
     }
 
     public func insert(_ child: Widget, into container: Widget, at index: Int) {
@@ -504,8 +487,7 @@ public final class AppKitBackend: FullAppBackend {
     }
 
     public func remove(childAt index: Int, from container: Widget) {
-        let container = container as! NSContainerView
-        container.removeSubview(at: index)
+        container.subviews.remove(at: index)
     }
 
     public func createColorableRectangle() -> Widget {
