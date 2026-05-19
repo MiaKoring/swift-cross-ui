@@ -9,7 +9,7 @@ public struct ViewLayoutResult {
     /// The preference values produced by the view and its children.
     public var preferences: PreferenceValues
     /// If a view can ever get focused by itself, this needs to be set to true,
-    /// to be compatible with @FocusData
+    /// to be compatible with `@FocusState`.
     public var shouldSetFocusData = false
 
     public init(

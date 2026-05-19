@@ -1,6 +1,7 @@
 import Foundation
 
-/// A property wrapper type that can read and write a value that SwiftUI updates as the placement of focus within the scene changes.
+/// A property wrapper type that can read and write a value that SwiftCrossUI updates
+/// as the placement of focus within the scene changes.
 @propertyWrapper
 public struct FocusState<Value: Hashable>: ObservableProperty {
     private final class Storage: StateStorageProtocol {

@@ -21,12 +21,10 @@ public protocol FocusChainManager {
     /// Used by the provided functions for easier ``View/focusable`` compatibility.
     func closestValidStop(preceding view: Widget) -> Widget?
 
-    /// Makes a widget the "key view" or "first responder"
+    /// Makes a widget the "key view" or "first responder".
     func makeKey(_ widget: Widget)
 
-    /// Returns the immediate parent
-    @inlinable
-    @inline(__always)
+    /// Returns the immediate parent.
     func getParent(of widget: Widget) -> Widget?
 }
 
@@ -38,8 +36,8 @@ public protocol FocusabilityContainer {
 }
 
 /// Required by ``FocusChainManager``.
-/// Implement this protocol on widgets you want controlled by ``FocusChainManager``
-/// Implementing it on the base Widget type of the Backend is recommended. e.g. `NSView`
+/// Implement this protocol on widgets you want controlled by ``FocusChainManager``.
+/// Implementing it on the base Widget type of the Backend is recommended. e.g. `NSView`.
 public protocol FocusChainParticipant: Equatable {
     /// Whether a widget participates in the focus chain, i.e. if it can gain focus on pressing `tab`.
     var canBeTabStop: Bool { get }
@@ -75,7 +73,8 @@ extension FocusChainManager {
         return nil
     }
 
-    /// Traverses the view graph upwards until it finds a ``FocusabilityContainer`` with ``FocusabilityContainer/focusability`` ``Focusability/disabled`` or reaches the root.
+    /// Traverses the view graph upwards until it finds a ``FocusabilityContainer`` with
+    /// ``FocusabilityContainer/focusability`` ``Focusability/disabled`` or reaches the root.
     /// Returns `true` if the widget is contained by a disabled ``FocusabilityContainer``
     @inline(__always)
     private func isDescendantOfDisabledParent(_ widget: Widget) -> Bool {

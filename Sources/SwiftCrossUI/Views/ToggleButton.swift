@@ -36,9 +36,7 @@ struct ToggleButton: ElementaryView, View {
         }
         return
             ViewLayoutResult
-            .leafView(
-                size: ViewSize(backend.naturalSize(of: widget))
-            )
+            .leafView(size: ViewSize(backend.naturalSize(of: widget)))
             .with(\.shouldSetFocusData, true)
     }
 

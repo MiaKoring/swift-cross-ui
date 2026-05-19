@@ -2,8 +2,6 @@ import Foundation
 import Gtk
 import SwiftCrossUI
 
-// MARK: - FocusState
-
 class FocusStateManager {
     private var focusData = [ObjectIdentifier: Set<FocusData>]()
     private var lastFocused: ObjectIdentifier? = nil
@@ -50,8 +48,8 @@ extension GtkBackend {
         _ data: [FocusData],
         on widget: Gtk.Widget
     ) {
-        // Some widget's focus is managed by descendants
-        // Therefore widget.isFocusable would be false on them
+        // Some widget's focus is managed by descendants.
+        // Therefore widget.isFocusable would be false on them.
         //
         // In the case of Calendar there are multiple points inside it that can
         // be focused in addition to itself, so enter and leave is the best
@@ -78,11 +76,11 @@ extension GtkBackend {
             widget.addEventController(focusController)
             return
         }
-        guard
-            widget.isFocusable
-        else { return }
+        
+        guard widget.isFocusable else { return }
 
         focusManager.register(data, for: widget)
+        
         if !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) {
             let focusController = EventControllerFocus()
             focusController.notifyIsFocus = { _, _ in

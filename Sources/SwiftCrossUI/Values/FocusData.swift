@@ -1,10 +1,17 @@
+/// The information passed by ``View/focused(_:)`` to a backend.
 public struct FocusData {
+    /// The type of the Value indicating focus location.
     let type: any Hashable.Type
+    /// The value the ``FocusState`` should have, when the view is focused.
     private let match: any Hashable
+    /// A function to set the ``FocusState`` to ``match``.
     public let set: () -> Void
+    /// A function to set the ``FocusState`` to unfocused.
     public let reset: () -> Void
-
+    
+    /// Whether the backend should remove focus from the view.
     public let shouldUnfocus: Bool
+    /// Wheter the the ``FocusState``'s value matches ``match``.
     public let matches: Bool
 
     public init(

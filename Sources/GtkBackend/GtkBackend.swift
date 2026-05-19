@@ -815,19 +815,19 @@ public final class GtkBackend:
             ellipsize = widget.ellipsize
         } else if let widget = widget as? TextView {
             // We don't ellipsize multi-line text editors
-            ellipsize = .none
+            ellipsize = nil
         } else {
             logger.warning(
                 "\(#function) called with unexpected widget type \(type(of: widget))"
             )
-            ellipsize = .none
+            ellipsize = nil
         }
 
         let pango = Pango(for: widget)
 
         let (width, height) = pango.getTextSize(
             text,
-            ellipsize: proposedHeight == nil ? .none : ellipsize,
+            ellipsize: proposedHeight == nil ? nil : ellipsize,
             proposedWidth: proposedWidth.map(Double.init),
             proposedHeight: proposedHeight.map(Double.init)
         )

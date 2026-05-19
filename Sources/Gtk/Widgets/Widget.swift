@@ -138,10 +138,10 @@ open class Widget: GObject {
         controller.registerSignals()
     }
 
-    /// Whether the widget is currently visible
+    /// Whether the widget is currently visible.
     public var isVisible: Bool { gtk_widget_is_visible(widgetPointer).toBool() }
 
-    /// Whether the widget participates in the focus-chain
+    /// Whether the widget participates in the focus-chain.
     public var isFocusable: Bool {
         get {
             gtk_widget_get_focusable(widgetPointer).toBool()
@@ -172,8 +172,8 @@ open class Widget: GObject {
         return CustomRootWidget(ptr)
     }
 
-    /// Makes the widget the key view in the window it belongs to
-    /// Equivalent to 'NSWindow/makeFirstResponder(_)'
+    /// Makes the widget the key view in the window it belongs to.
+    /// Equivalent to `NSWindow/makeFirstResponder(_)`.
     public func makeKey() {
         g_idle_add(
             { (data) -> Int32 in
