@@ -19,9 +19,9 @@ public class CustomWindow: WinUI.Window {
     var grid: WinUI.Grid
     var cachedAppWindow: WinAppSDK.AppWindow!
     var isActive = false
-    
+
     private(set) var menuBarIsVisible = false
-    
+
     /// The amount of height to subtract off the window height to obtain the
     /// window's available content height.
     var contentHeightAdjustment: Int {
@@ -57,9 +57,9 @@ public class CustomWindow: WinUI.Window {
 
     public override init() {
         grid = WinUI.Grid()
-        
+
         super.init()
-        
+
         let menuBarRowDefinition = WinUI.RowDefinition()
         let contentRowDefinition = WinUI.RowDefinition()
         grid.rowDefinitions.append(menuBarRowDefinition)
@@ -67,24 +67,24 @@ public class CustomWindow: WinUI.Window {
         grid.children.append(menuBar)
         WinUI.Grid.setRow(menuBar, 0)
         self.content = grid
-        
+
         // NB: This event fires when the window is activated _or_ deactivated.
         self.activated.addHandler { [weak self] _, args in
             switch args?.windowActivationState {
                 case .codeActivated, .pointerActivated: self?.isActive = true
                 case .deactivated: self?.isActive = false
                     
-                    // NB: The compiler apparently thinks we didn't exhaustively switch
-                    // over this enum without this `default` (even after adding a `case nil`).
-                    // Might be because it doesn't treat the underlying C enum as a Swift enum?
+                // NB: The compiler apparently thinks we didn't exhaustively switch
+                // over this enum without this `default` (even after adding a `case nil`).
+                // Might be because it doesn't treat the underlying C enum as a Swift enum?
                 default: break
             }
         }
-        
+
         // Caching appWindow is apparently a good idea in terms of performance:
         // https://github.com/thebrowsercompany/swift-winrt/issues/199#issuecomment-2611006020
         cachedAppWindow = appWindow
-        
+
         // Default to not showing the menu bar; we only want to show it when it's non-empty
         setMenuBarVisible(menuBarIsVisible)
     }
@@ -99,7 +99,7 @@ public class CustomWindow: WinUI.Window {
         )
         menuBarIsVisible = visible
     }
-    
+
     public func setChild(_ child: WinUIBackend.Widget) {
         self.child = child
         grid.children.append(child)
