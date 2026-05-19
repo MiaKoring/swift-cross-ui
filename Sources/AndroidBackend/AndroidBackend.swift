@@ -2,6 +2,7 @@ import Android
 import Foundation
 import SwiftCrossUI
 import AndroidKit
+import AndroidGraphics
 import AndroidBackendShim
 
 // Many force tries are required for the Android backend but we don't really want them
@@ -84,8 +85,15 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
     static let stdoutPipe = Pipe()
     static let stderrPipe = Pipe()
 
-    // TODO(stackotter): Dynamically determine the device class
-    public let deviceClass = DeviceClass.phone
+    public lazy var deviceClass: DeviceClass =
+        switch helpers.getDeviceClass(Self.activity) {
+            case 0: .desktop
+            case 1: .phone
+            case 2: .tablet
+            case 3: .tv
+            case 4: .watch
+            case let x: fatalError("helpers.getDeviceClass returned unexpected value \(x)")
+        }
 
     public let defaultPaddingAmount = 10
     public let scrollBarWidth = 0
@@ -113,7 +121,7 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         let tickler = MainRunLoopTickler(environment: Self.env)
         tickler.start()
         self.tickler = tickler
-        
+
         // We just fall through to return control to Java when we're done
         // setting up the initial view hierarchy.
         callback()
@@ -163,14 +171,21 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
 
         let leftInset = Int(helpers.getSafeAreaLeftInset(Self.activity))
         let topInset = Int(helpers.getSafeAreaTopInset(Self.activity))
-        let windowSize = size(ofWindow: window)
+        let fullWindowSize = SIMD2(
+            Int(helpers.getFullWindowWidth(Self.activity)),
+            Int(helpers.getFullWindowHeight(Self.activity))
+        )
+        setSize(of: container, to: fullWindowSize)
         setPosition(ofChildAt: 0, in: container, to: SIMD2(leftInset, topInset))
-        setSize(of: container, to: windowSize)
+
+        let safeWindowSize = size(ofWindow: window)
+        let child = container.as(CustomContainer.self)!.getChildAt(0)!
+        setSize(of: child, to: safeWindowSize)
     }
 
     public func size(ofWindow window: Window) -> SIMD2<Int> {
-        let width = Int(helpers.getWindowWidth(Self.activity))
-        let height = Int(helpers.getWindowHeight(Self.activity))
+        let width = Int(helpers.getSafeWindowWidth(Self.activity))
+        let height = Int(helpers.getSafeWindowHeight(Self.activity))
         return SIMD2(Int(width), Int(height))
     }
 
@@ -182,7 +197,11 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         log("warning: Attempted to set size of Android window")
     }
 
-    public func setSizeLimits(ofWindow window: Void, minimum minimumSize: SIMD2<Int>, maximum maximumSize: SIMD2<Int>?) {}
+    public func setSizeLimits(
+        ofWindow window: Void,
+        minimum minimumSize: SIMD2<Int>,
+        maximum maximumSize: SIMD2<Int>?
+    ) {}
 
     //    public func setBehaviors(ofWindow window: Void, closable: Bool, minimizable: Bool, resizable: Bool) {}
 
@@ -219,23 +238,40 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
     }
 
     public func computeRootEnvironment(defaultEnvironment: EnvironmentValues) -> EnvironmentValues {
-        // TODO(stackotter): React to system theme
-        defaultEnvironment
+        var environment = defaultEnvironment
+
+        if helpers.isNightMode(Self.activity) {
+            environment.colorScheme = .dark
+        } else {
+            environment.colorScheme = .light
+        }
+
+        environment.isCircularScreen = Self.activity
+            .getResources()
+            .getConfiguration()
+            .isScreenRound()
+
+        // TODO(bbrk24): Properly detect time zone and calendar, since
+        // `.current` is broken on Android.
+
+        return environment
     }
 
-    public func setRootEnvironmentChangeHandler(to action: @escaping @Sendable @MainActor () -> Void) {
+    public func setRootEnvironmentChangeHandler(
+        to action: @escaping @Sendable @MainActor () -> Void
+    ) {
         // TODO(stackotter): Listen for system theme changes
+        // and call helpers.clearTextSizeCache()
     }
 
     public func computeWindowEnvironment(
         window: Window,
         rootEnvironment: EnvironmentValues
     ) -> EnvironmentValues {
-        // TODO(stackotter): Figure out if we'll ever need window-specific environment
-        //   changes. Probably don't unless Android apps can support
-        //   multi-windowing when external displays are connected, in which
-        //   case we may need to handle per-window pixel density.
-        rootEnvironment
+        var environment = rootEnvironment
+        environment
+            .windowScaleFactor = Double(window.content!.getResources().getDisplayMetrics().density)
+        return environment
     }
 
     public func setWindowEnvironmentChangeHandler(
@@ -268,13 +304,15 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         in container: Widget,
         to position: SIMD2<Int>
     ) {
+        let density = container.getResources().getDisplayMetrics().density
+
         let container = container.as(CustomContainer.self)!
         let child = container.getChildAt(Int32(index))!
-        
+
         let layoutParams = child.getLayoutParams().as(CustomContainer.LayoutParams.self)!
-        layoutParams.setX(Int32(position.x))
-        layoutParams.setY(Int32(position.y))
-        
+        layoutParams.setX(Int32(Float(position.x) * density))
+        layoutParams.setY(Int32(Float(position.y) * density))
+
         child.setLayoutParams(layoutParams.as(ViewGroup.LayoutParams.self))
     }
 
@@ -296,6 +334,8 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
     }
 
     public func naturalSize(of widget: Widget) -> SIMD2<Int> {
+        let density = widget.getResources().getDisplayMetrics().density
+
         let measureSpecClass = try! JavaClass<AndroidKit.View.MeasureSpec>(
             environment: Self.env
         )
@@ -303,18 +343,17 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
             measureSpecClass.UNSPECIFIED,
             measureSpecClass.UNSPECIFIED
         )
-        let width = widget.getMeasuredWidth()
-        let height = widget.getMeasuredHeight()
-        return SIMD2(Int(width), Int(height))
+        let width = Float(widget.getMeasuredWidth()) / density
+        let height = Float(widget.getMeasuredHeight()) / density
+        return SIMD2(Int(width.rounded(.up)), Int(height.rounded(.up)))
     }
 
     public func setSize(of widget: Widget, to size: SIMD2<Int>) {
+        let density = widget.getResources().getDisplayMetrics().density
         let layoutParams = widget.getLayoutParams()!
-        layoutParams.width = Int32(size.x)
-        layoutParams.height = Int32(size.y)
+        layoutParams.width = Int32(Float(size.x) * density)
+        layoutParams.height = Int32(Float(size.y) * density)
         widget.setLayoutParams(layoutParams)
-        
-        // TODO(stackotter): Use density-adaptive units everywhere
     }
 
     public func createButton() -> Widget {
@@ -323,7 +362,7 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
     }
 
     /// Converts a Swift String to a Java CharSequence.
-    private func charSequence(from string: String) -> CharSequence {
+    func charSequence(from string: String) -> CharSequence {
         let jstring = JavaString(string, environment: Self.env)
         return jstring.as(CharSequence.self)!
     }
@@ -339,6 +378,8 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         button.setText(charSequence(from: label))
         let listener = ViewOnClickListener(action: action, environment: Self.env)
         button.setOnClickListener(listener.as(AndroidView.View.OnClickListener.self))
+
+        getTextStyle(from: environment).apply(to: button)
     }
 
     public func createTextField() -> Widget {
@@ -393,7 +434,7 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         let textView = textView.as(AndroidKit.TextView.self)!
         let content = JavaString(content, environment: Self.env)
         textView.setText(content.as(CharSequence.self))
-        // TODO: Handle environment
+        getTextStyle(from: environment).apply(to: textView)
     }
 
     public func size(
@@ -405,317 +446,26 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
     ) -> SIMD2<Int> {
         let widget = createTextView()
         updateTextView(widget, content: text, environment: environment)
-        widget.measure(
-            proposedWidth.map(Int32.init) ?? Int32.max,
-            proposedHeight.map(Int32.init) ?? Int32.max
-        )
-        let width = widget.getMeasuredWidth()
-        let height = widget.getMeasuredHeight()
-        return SIMD2(Int(width), Int(height))
-    }
-}
 
-extension AndroidBackend: BackendFeatures.WebViews {
-    public func createWebView() -> Widget {
-        CustomWebView(Self.activity, environment: Self.env).as(AndroidKit.View.self)!
-    }
-    
-    public func updateWebView(
-        _ webView: Widget,
-        environment: EnvironmentValues,
-        onNavigate: @escaping (URL) -> Void
-    ) {
-        let webView = webView.as(CustomWebView.self)!
-        webView.setOnNavigate(SwiftAction(environment: Self.env) {
-            if let javaString = webView.getLoadingUrl(),
-               let url = URL(string: javaString.toString()) {
-                onNavigate(url)
-            }
-        })
-    }
-    
-    public func navigateWebView(_ webView: Widget, to url: URL) {
-        let webView = webView.as(CustomWebView.self)!
-        webView.loadUrl(url.absoluteString)
-    }
-}
-
-extension AndroidBackend: BackendFeatures.Pickers {
-    public var supportedPickerStyles: [BackendPickerStyle] {
-        [.menu, .radioGroup, .wheel]
-    }
-
-    public func createPicker(style: BackendPickerStyle) -> Widget {
-        switch style {
-            case .radioGroup:
-                return CustomRadioGroup(
-                    Self.activity,
-                    environment: Self.env
-                ).as(AndroidKit.View.self)!
-            case .menu:
-                return CustomSpinner(
-                    Self.activity,
-                    environment: Self.env
-                ).as(AndroidKit.View.self)!
-            case .wheel:
-                return CustomNumberPicker(
-                    Self.activity,
-                    environment: Self.env
-                ).as(AndroidKit.View.self)!
-            default:
-                // TODO(bbrk24): Implement .segmented using MaterialButtonToggleGroup
-                fatalError("Unsupported picker style \(style)")
-        }
-    }
-    
-    public func updatePicker(
-        _ picker: Widget,
-        options: [String],
-        environment: EnvironmentValues,
-        onChange: @escaping (Int?) -> Void
-    ) {
-        if let picker = picker.as(CustomRadioGroup.self) {
-            let action = SwiftAction(environment: Self.env) {
-                let selectedOption = picker.getSelectedOption()
-                onChange(selectedOption < 0 ? nil : Int(selectedOption))
-            }
-            picker.update(action, options, environment.isEnabled)
-        } else if let picker = picker.as(CustomSpinner.self) {
-            let action = SwiftAction(environment: Self.env) {
-                let selectedOption = picker.getSelectedItemPosition()
-                let invalidPosition: Int32 = try! JavaClass<AndroidKit.AdapterView>().INVALID_POSITION
-                
-                onChange(selectedOption == invalidPosition ? nil : Int(selectedOption))
-            }
-            picker.update(action, options, environment.isEnabled)
-        } else if let picker = picker.as(CustomNumberPicker.self) {
-            let action = SwiftAction(environment: Self.env) {
-                let selectedOption = picker.getValue()
-                onChange(selectedOption == 0 ? nil : Int(selectedOption - 1))
-            }
-            picker.update(action, options, environment.isEnabled)
-        } else {
-            fatalError("Unexpected picker class")
-        }
-    }
-    
-    public func setSelectedOption(ofPicker picker: Widget, to selectedOption: Int?) {
-        if let picker = picker.as(CustomRadioGroup.self) {
-            picker.selectOption(Int32(selectedOption ?? -1))
-        } else if let picker = picker.as(CustomSpinner.self) {
-            if let selectedOption {
-                picker.selectOption(Int32(selectedOption))
+        // 0x80000000 = View.MeasureSpec.AT_MOST
+        // 0x3FFFFFFF = View.MeasureSpec.makeMeasureSpec(Int32.max, View.MeasureSpec.UNSPECIFIED)
+        let widthSpec =
+            if let proposedWidth {
+                Int32(bitPattern: 0x80000000 |
+                    UInt32(Double(proposedWidth) * environment.windowScaleFactor) & ~0x40000000)
             } else {
-                let invalidPosition: Int32 = try! JavaClass<AndroidKit.AdapterView>().INVALID_POSITION
-                
-                picker.selectOption(invalidPosition)
+                0x3FFFFFFF as Int32
             }
-        } else if let picker = picker.as(AndroidKit.NumberPicker.self) {
-            if let selectedOption {
-                picker.setValue(Int32(selectedOption + 1))
+        let heightSpec =
+            if let proposedHeight {
+                Int32(Double(proposedHeight) * environment.windowScaleFactor)
             } else {
-                picker.setValue(0)
+                0x3FFFFFFF as Int32
             }
-        } else {
-            fatalError("Unexpected picker class")
-        }
-    }
-}
 
-extension AndroidBackend: BackendFeatures.Alerts {
-    public typealias Alert = AlertFragment
-    
-    public func createAlert() -> AlertFragment {
-        AlertFragment(environment: Self.env)
-    }
-    
-    public func updateAlert(
-        _ alert: AlertFragment,
-        title: String,
-        actionLabels: [String],
-        environment: EnvironmentValues
-    ) {
-        alert.update(title, actionLabels)
-    }
-    
-    public func showAlert(
-        _ alert: AlertFragment,
-        window: Window?,
-        responseHandler handleResponse: @escaping (Int) -> Void
-    ) {
-        let action = SwiftAction(environment: Self.env) {
-            let index = alert.getButtonIndex()
-            handleResponse(Int(index))
-        }
-        
-        alert.setAction(action)
-        alert.show(Self.activity)
-    }
-    
-    public func dismissAlert(_ alert: AlertFragment, window: Window?) {
-        alert.dismiss()
-    }
-}
-      
-extension AndroidBackend: BackendFeatures.ToggleButtons, BackendFeatures.Checkboxes, BackendFeatures.Switches {
-    public var requiresToggleSwitchSpacer: Bool { false }
-
-    public func createToggle() -> Widget {
-        AndroidKit.ToggleButton(
-            Self.activity,
-            environment: Self.env
-        )
-    }
-
-    public func createCheckbox() -> Widget {
-        AndroidKit.CheckBox(
-            Self.activity,
-            environment: Self.env
-        )
-    }
-
-    public func createSwitch() -> Widget {
-        AndroidKit.Switch(
-            Self.activity,
-            environment: Self.env
-        )
-    }
-
-    private func updateCompoundButton(
-        _ button: AndroidKit.CompoundButton,
-        environment: EnvironmentValues,
-        onChange: @escaping (Bool) -> Void
-    ) {
-        button.setEnabled(environment.isEnabled)
-
-        let action = SwiftAction(environment: Self.env) {
-            let checked = button.isChecked()
-            onChange(checked)
-        }
-        let listener = CustomOnCheckedChangeListener(action, environment: Self.env)
-
-        button.setOnCheckedChangeListener(
-            listener.as(AndroidKit.CompoundButton.OnCheckedChangeListener.self)!
-        )
-    }
-
-    public func updateToggle(
-        _ toggle: Widget,
-        label: String,
-        environment: EnvironmentValues,
-        onChange: @escaping (Bool) -> Void
-    ) {
-        let toggle = toggle.as(AndroidKit.ToggleButton.self)!
-        updateCompoundButton(toggle, environment: environment, onChange: onChange)
-
-        let charSequence = charSequence(from: label)
-        toggle.setTextOn(charSequence)
-        toggle.setTextOff(charSequence)
-    }
-
-    public func updateCheckbox(
-        _ checkboxWidget: Widget,
-        environment: EnvironmentValues,
-        onChange: @escaping (Bool) -> Void
-    ) {
-        let checkboxWidget = checkboxWidget.as(AndroidKit.CompoundButton.self)!
-        updateCompoundButton(checkboxWidget, environment: environment, onChange: onChange)
-    }
-
-    public func updateSwitch(
-        _ switchWidget: Widget,
-        environment: EnvironmentValues,
-        onChange: @escaping (Bool) -> Void
-    ) {
-        let switchWidget = switchWidget.as(AndroidKit.CompoundButton.self)!
-        updateCompoundButton(switchWidget, environment: environment, onChange: onChange)
-    }
-
-    public func setState(ofToggle toggle: Widget, to state: Bool) {
-        let toggle = toggle.as(AndroidKit.CompoundButton.self)!
-        toggle.setChecked(state)
-    }
-
-    public func setState(ofCheckbox checkboxWidget: Widget, to state: Bool) {
-        let checkboxWidget = checkboxWidget.as(AndroidKit.CompoundButton.self)!
-        checkboxWidget.setChecked(state)
-    }
-
-    public func setState(ofSwitch switchWidget: Widget, to state: Bool) {
-        let switchWidget = switchWidget.as(AndroidKit.CompoundButton.self)!
-        switchWidget.setChecked(state)
-    }
-}
-
-extension SwiftCrossUI.Color.Resolved {
-    func asColorInt() -> Int32 {
-        let alpha = UInt32(opacity * 255.0 + 0.5)
-        let red = UInt32(red * 255.0 + 0.5)
-        let green = UInt32(green * 255.0 + 0.5)
-        let blue = UInt32(blue * 255.0 + 0.5)
-
-        let combined = (alpha << 24) | (red << 16) | (green << 8) | blue
-
-        return Int32(bitPattern: combined)
-    }
-    
-    init(fromColorInt int: Int32) {
-        let uint = UInt32(bitPattern: int)
-
-        let alpha = Float(uint >> 24) / 255.0
-        let red = Float((uint & 0x00FF0000) >> 16) / 255.0
-        let green = Float((uint & 0x0000FF00) >> 8) / 255.0
-        let blue = Float(uint & 0x000000FF) / 255.0
-
-        self.init(
-            red: red,
-            green: green,
-            blue: blue,
-            opacity: alpha
-        )
-    }
-}
-
-extension AndroidBackend: BackendFeatures.Colors {
-    public func createColorableRectangle() -> Widget {
-        AndroidKit.View(Self.activity, environment: Self.env)
-    }
-    
-    public func setColor(
-        ofColorableRectangle widget: Widget,
-        to color: SwiftCrossUI.Color.Resolved
-    ) {
-        widget.setBackgroundColor(color.asColorInt())
-    }
-    
-    public func resolveAdaptiveColor(
-        _ adaptiveColor: SwiftCrossUI.Color.SystemAdaptive,
-        in environment: EnvironmentValues
-    ) -> SwiftCrossUI.Color.Resolved {
-        let Rcolor = try! JavaClass<AndroidKit.R.color>()
-
-        let resId: Int32? =
-            switch (adaptiveColor, environment.colorScheme) {
-                case (.blue, .light): Rcolor.holo_blue_dark
-                case (.blue, .dark): Rcolor.holo_blue_light
-                case (.gray, _): Rcolor.darker_gray
-                case (.green, .light): Rcolor.holo_green_dark
-                case (.green, .dark): Rcolor.holo_green_light
-                case (.orange, .light): Rcolor.holo_orange_dark
-                case (.orange, .dark): Rcolor.holo_orange_light
-                case (.red, .light): Rcolor.holo_red_dark
-                case (.red, .dark): Rcolor.holo_red_light
-                case (.purple, _): Rcolor.holo_purple
-                default: // brown, yellow
-                    nil
-            }
-        
-        guard let resId else {
-            return SwiftCrossUI.Color.defaultResolveAdaptiveColor(adaptiveColor, in: environment)
-        }
-        
-        let colorInt = Self.activity.getColor(resId)
-        
-        return SwiftCrossUI.Color.Resolved(fromColorInt: colorInt)
+        widget.measure(widthSpec, heightSpec)
+        let width = Double(widget.getMeasuredWidth()) / environment.windowScaleFactor
+        let height = Double(widget.getMeasuredHeight()) / environment.windowScaleFactor
+        return SIMD2(Int(width.rounded(.up)), Int(height.rounded(.up)))
     }
 }

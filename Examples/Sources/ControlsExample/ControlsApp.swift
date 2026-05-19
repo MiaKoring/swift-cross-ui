@@ -7,7 +7,12 @@ import SwiftCrossUI
 #endif
 
 enum BuiltInPickerStyle: CaseIterable, Equatable {
-    case automatic, inline, menu, radioGroup, segmented, wheel
+    case automatic
+    case inline
+    case menu
+    case radioGroup
+    case segmented
+    case wheel
 
     var asPickerStyle: any PickerStyle {
         switch self {
@@ -121,18 +126,21 @@ struct ControlsApp: App {
                                 SecureField("Secure text field", text: $secureText)
                                 Text("Value: \(secureText)")
                             }
+                        #endif
 
-                            #if !os(tvOS)
-                                VStack {
-                                    Toggle(
-                                        "Enable ProgressView resizability",
-                                        isOn: $isProgressViewResizable)
+                        #if !os(tvOS)
+                            VStack {
+                                Toggle(
+                                    "Enable ProgressView resizability",
+                                    isOn: $isProgressViewResizable
+                                )
+                                #if !canImport(AndroidBackend)
                                     Slider(value: $progressViewSize, in: 10...100)
-                                    ProgressView()
-                                        .resizable(isProgressViewResizable)
-                                        .frame(width: progressViewSize, height: progressViewSize)
-                                }
-                            #endif
+                                #endif
+                                ProgressView()
+                                    .resizable(isProgressViewResizable)
+                                    .frame(width: progressViewSize, height: progressViewSize)
+                            }
                         #endif
 
                         #if !canImport(Gtk3Backend)

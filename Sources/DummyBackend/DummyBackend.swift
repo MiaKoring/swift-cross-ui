@@ -410,7 +410,7 @@ public final class DummyBackend:
     public func activate(window: Window) {
         window.phase = .active
     }
-    
+
     public func close(window: Window) {
         window.closeHandler?()
     }
@@ -430,7 +430,9 @@ public final class DummyBackend:
             .with(\.appPhase, appPhase)
     }
 
-    public func setRootEnvironmentChangeHandler(to action: @escaping @Sendable @MainActor () -> Void) {}
+    public func setRootEnvironmentChangeHandler(
+        to action: @escaping @Sendable @MainActor () -> Void
+    ) {}
 
     public func computeWindowEnvironment(window: Window, rootEnvironment: EnvironmentValues)
         -> EnvironmentValues
@@ -440,7 +442,8 @@ public final class DummyBackend:
     }
 
     public func setWindowEnvironmentChangeHandler(
-        of window: Window, to action: @escaping @Sendable @MainActor () -> Void
+        of window: Window,
+        to action: @escaping @Sendable @MainActor () -> Void
     ) {}
 
     public func setIncomingURLHandler(to action: @escaping (URL) -> Void) {
@@ -535,7 +538,9 @@ public final class DummyBackend:
     }
 
     public func setItems(
-        ofSelectableListView listView: Widget, to items: [Widget], withRowHeights rowHeights: [Int]
+        ofSelectableListView listView: Widget,
+        to items: [Widget],
+        withRowHeights rowHeights: [Int]
     ) {
         let selectableListView = listView as! SelectableListView
         selectableListView.items = items
@@ -543,7 +548,8 @@ public final class DummyBackend:
     }
 
     public func setSelectionHandler(
-        forSelectableListView listView: Widget, to action: @escaping (Int) -> Void
+        forSelectableListView listView: Widget,
+        to action: @escaping (Int) -> Void
     ) {
         (listView as! SelectableListView).selectionHandler = action
     }
@@ -568,7 +574,9 @@ public final class DummyBackend:
     }
 
     public func setSidebarWidthBounds(
-        ofSplitView splitView: Widget, minimum minimumWidth: Int, maximum maximumWidth: Int
+        ofSplitView splitView: Widget,
+        minimum minimumWidth: Int,
+        maximum maximumWidth: Int
     ) {
         let splitView = splitView as! SplitView
         splitView.minimumSidebarWidth = minimumWidth
@@ -723,7 +731,8 @@ public final class DummyBackend:
     }
 
     public func updateCheckbox(
-        _ checkboxWidget: Widget, environment: SwiftCrossUI.EnvironmentValues,
+        _ checkboxWidget: Widget,
+        environment: SwiftCrossUI.EnvironmentValues,
         onChange: @escaping (Bool) -> Void
     ) {
         (checkboxWidget as! Checkbox).toggleHandler = onChange

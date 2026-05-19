@@ -51,8 +51,11 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
 
             let contentSize = sender.contentRect(
                 forFrameRect: NSRect(
-                    x: sender.frame.origin.x, y: sender.frame.origin.y, width: frameSize.width,
-                    height: frameSize.height)
+                    x: sender.frame.origin.x,
+                    y: sender.frame.origin.y,
+                    width: frameSize.width,
+                    height: frameSize.height
+                )
             )
 
             resizeHandler(
@@ -93,10 +96,6 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
 
     override public func selectKeyView(preceding view: NSView) {
         selectTabStop(preceding: view)
-    }
-
-    override public func recalculateKeyViewLoop() {
-        super.recalculateKeyViewLoop()
     }
 
     // MARK: - FocusChainManager implementation -

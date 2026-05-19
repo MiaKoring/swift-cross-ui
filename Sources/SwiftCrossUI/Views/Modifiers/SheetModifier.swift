@@ -109,8 +109,8 @@ struct SheetModifier<Content: View, SheetContent: View>: TypeSafeView {
 
             let sheetEnvironment =
                 environment
-                .with(\.dismiss, dismissAction)
-                .with(\.sheet, sheet)
+                    .with(\.dismiss, dismissAction)
+                    .with(\.sheet, sheet)
 
             _ = children.sheetContentNode!.computeLayout(
                 with: sheetContent(),
@@ -132,8 +132,8 @@ struct SheetModifier<Content: View, SheetContent: View>: TypeSafeView {
                 onDismiss: { handleDismiss(children: children) },
                 cornerRadius: preferences.presentationCornerRadius,
                 detents: preferences.presentationDetents ?? [],
-                dragIndicatorVisibility:
-                    preferences.presentationDragIndicatorVisibility ?? .automatic,
+                dragIndicatorVisibility: preferences.presentationDragIndicatorVisibility
+                    ?? .automatic,
                 backgroundColor: preferences.presentationBackground?.resolve(in: environment),
                 interactiveDismissDisabled: preferences.interactiveDismissDisabled ?? false
             )

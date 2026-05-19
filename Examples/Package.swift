@@ -112,10 +112,22 @@ let package = Package(
             dependencies: exampleDependencies
         ),
         .executableTarget(
+            name: "GradientsExample",
+            dependencies: exampleDependencies
+        ),
+        .executableTarget(
             name: "MusicPlayerExample",
             dependencies: [
                 .product(name: "MiniAudio", package: "swift-miniaudio")
             ] + exampleDependencies
+        ),
+        .executableTarget(
+            name: "FontsExample",
+            dependencies: exampleDependencies
+        ),
+        .executableTarget(
+            name: "TapGesturesExample",
+            dependencies: exampleDependencies
         )
     ]
 )

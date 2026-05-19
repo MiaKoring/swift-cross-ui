@@ -1,6 +1,8 @@
 // This file was generated using gyb. Do not edit it directly. Edit
 // TupleView.swift.gyb instead.
 
+// swiftformat:options --allow-partial-wrapping true
+
 @MainActor
 private func layoutableChild<V: View>(
     node: AnyViewGraphNode<V>,
@@ -76,13 +78,17 @@ extension TupleView {
 /// production ready variadic generics.
 ///
 /// Has the same behaviour as ``Group`` when rendered directly.
-public struct TupleView1<View0: View> {
+public struct TupleView1<
+    View0: View
+> {
     public var view0: View0
 
     public var body = EmptyView()
 
     /// Wraps 1 child views in a single container view.
-    public init(_ view0: View0) {
+    public init(
+        _ view0: View0
+    ) {
         self.view0 = view0
     }
 }
@@ -110,7 +116,7 @@ extension TupleView1: TupleView {
         children: Children
     ) -> [LayoutSystem.LayoutableChild] {
         [
-            layoutableChild(node: children.child0, view: view0)
+            layoutableChild(node: children.child0, view: view0),
         ]
     }
 }
@@ -119,14 +125,18 @@ extension TupleView1: TupleView {
 /// production ready variadic generics.
 ///
 /// Has the same behaviour as ``Group`` when rendered directly.
-public struct TupleView2<View0: View, View1: View> {
+public struct TupleView2<
+    View0: View, View1: View
+> {
     public var view0: View0
     public var view1: View1
 
     public var body = EmptyView()
 
     /// Wraps 2 child views in a single container view.
-    public init(_ view0: View0, _ view1: View1) {
+    public init(
+        _ view0: View0, _ view1: View1
+    ) {
         self.view0 = view0
         self.view1 = view1
     }
@@ -165,7 +175,9 @@ extension TupleView2: TupleView {
 /// production ready variadic generics.
 ///
 /// Has the same behaviour as ``Group`` when rendered directly.
-public struct TupleView3<View0: View, View1: View, View2: View> {
+public struct TupleView3<
+    View0: View, View1: View, View2: View
+> {
     public var view0: View0
     public var view1: View1
     public var view2: View2
@@ -173,7 +185,9 @@ public struct TupleView3<View0: View, View1: View, View2: View> {
     public var body = EmptyView()
 
     /// Wraps 3 child views in a single container view.
-    public init(_ view0: View0, _ view1: View1, _ view2: View2) {
+    public init(
+        _ view0: View0, _ view1: View1, _ view2: View2
+    ) {
         self.view0 = view0
         self.view1 = view1
         self.view2 = view2
@@ -214,7 +228,9 @@ extension TupleView3: TupleView {
 /// production ready variadic generics.
 ///
 /// Has the same behaviour as ``Group`` when rendered directly.
-public struct TupleView4<View0: View, View1: View, View2: View, View3: View> {
+public struct TupleView4<
+    View0: View, View1: View, View2: View, View3: View
+> {
     public var view0: View0
     public var view1: View1
     public var view2: View2
@@ -223,7 +239,9 @@ public struct TupleView4<View0: View, View1: View, View2: View, View3: View> {
     public var body = EmptyView()
 
     /// Wraps 4 child views in a single container view.
-    public init(_ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3) {
+    public init(
+        _ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3
+    ) {
         self.view0 = view0
         self.view1 = view1
         self.view2 = view2
@@ -266,7 +284,9 @@ extension TupleView4: TupleView {
 /// production ready variadic generics.
 ///
 /// Has the same behaviour as ``Group`` when rendered directly.
-public struct TupleView5<View0: View, View1: View, View2: View, View3: View, View4: View> {
+public struct TupleView5<
+    View0: View, View1: View, View2: View, View3: View, View4: View
+> {
     public var view0: View0
     public var view1: View1
     public var view2: View2
@@ -276,7 +296,9 @@ public struct TupleView5<View0: View, View1: View, View2: View, View3: View, Vie
     public var body = EmptyView()
 
     /// Wraps 5 child views in a single container view.
-    public init(_ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3, _ view4: View4) {
+    public init(
+        _ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3, _ view4: View4
+    ) {
         self.view0 = view0
         self.view1 = view1
         self.view2 = view2
@@ -559,7 +581,15 @@ extension TupleView9: View {
 
 extension TupleView9: TupleView {
     typealias Children = TupleViewChildren9<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8
     >
 
     func children<Backend: BaseAppBackend>(
@@ -636,7 +666,16 @@ extension TupleView10: View {
 
 extension TupleView10: TupleView {
     typealias Children = TupleViewChildren10<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9
     >
 
     func children<Backend: BaseAppBackend>(
@@ -717,7 +756,17 @@ extension TupleView11: View {
 
 extension TupleView11: TupleView {
     typealias Children = TupleViewChildren11<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10
     >
 
     func children<Backend: BaseAppBackend>(
@@ -801,7 +850,18 @@ extension TupleView12: View {
 
 extension TupleView12: TupleView {
     typealias Children = TupleViewChildren12<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11
     >
 
     func children<Backend: BaseAppBackend>(
@@ -888,7 +948,19 @@ extension TupleView13: View {
 
 extension TupleView13: TupleView {
     typealias Children = TupleViewChildren13<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11, View12
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11,
+        View12
     >
 
     func children<Backend: BaseAppBackend>(
@@ -931,7 +1003,8 @@ extension TupleView13: TupleView {
 /// Has the same behaviour as ``Group`` when rendered directly.
 public struct TupleView14<
     View0: View, View1: View, View2: View, View3: View, View4: View, View5: View, View6: View,
-    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View, View13: View
+    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View,
+    View13: View
 > {
     public var view0: View0
     public var view1: View1
@@ -979,8 +1052,20 @@ extension TupleView14: View {
 
 extension TupleView14: TupleView {
     typealias Children = TupleViewChildren14<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11,
-        View12, View13
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11,
+        View12,
+        View13
     >
 
     func children<Backend: BaseAppBackend>(
@@ -1024,8 +1109,8 @@ extension TupleView14: TupleView {
 /// Has the same behaviour as ``Group`` when rendered directly.
 public struct TupleView15<
     View0: View, View1: View, View2: View, View3: View, View4: View, View5: View, View6: View,
-    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View, View13: View,
-    View14: View
+    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View,
+    View13: View, View14: View
 > {
     public var view0: View0
     public var view1: View1
@@ -1075,8 +1160,21 @@ extension TupleView15: View {
 
 extension TupleView15: TupleView {
     typealias Children = TupleViewChildren15<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11,
-        View12, View13, View14
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11,
+        View12,
+        View13,
+        View14
     >
 
     func children<Backend: BaseAppBackend>(
@@ -1121,8 +1219,8 @@ extension TupleView15: TupleView {
 /// Has the same behaviour as ``Group`` when rendered directly.
 public struct TupleView16<
     View0: View, View1: View, View2: View, View3: View, View4: View, View5: View, View6: View,
-    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View, View13: View,
-    View14: View, View15: View
+    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View,
+    View13: View, View14: View, View15: View
 > {
     public var view0: View0
     public var view1: View1
@@ -1147,7 +1245,8 @@ public struct TupleView16<
     public init(
         _ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3, _ view4: View4,
         _ view5: View5, _ view6: View6, _ view7: View7, _ view8: View8, _ view9: View9,
-        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13, _ view14: View14,
+        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13,
+        _ view14: View14,
         _ view15: View15
     ) {
         self.view0 = view0
@@ -1175,8 +1274,22 @@ extension TupleView16: View {
 
 extension TupleView16: TupleView {
     typealias Children = TupleViewChildren16<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11,
-        View12, View13, View14, View15
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11,
+        View12,
+        View13,
+        View14,
+        View15
     >
 
     func children<Backend: BaseAppBackend>(
@@ -1222,8 +1335,8 @@ extension TupleView16: TupleView {
 /// Has the same behaviour as ``Group`` when rendered directly.
 public struct TupleView17<
     View0: View, View1: View, View2: View, View3: View, View4: View, View5: View, View6: View,
-    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View, View13: View,
-    View14: View, View15: View, View16: View
+    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View,
+    View13: View, View14: View, View15: View, View16: View
 > {
     public var view0: View0
     public var view1: View1
@@ -1249,7 +1362,8 @@ public struct TupleView17<
     public init(
         _ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3, _ view4: View4,
         _ view5: View5, _ view6: View6, _ view7: View7, _ view8: View8, _ view9: View9,
-        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13, _ view14: View14,
+        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13,
+        _ view14: View14,
         _ view15: View15, _ view16: View16
     ) {
         self.view0 = view0
@@ -1278,8 +1392,23 @@ extension TupleView17: View {
 
 extension TupleView17: TupleView {
     typealias Children = TupleViewChildren17<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11,
-        View12, View13, View14, View15, View16
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11,
+        View12,
+        View13,
+        View14,
+        View15,
+        View16
     >
 
     func children<Backend: BaseAppBackend>(
@@ -1326,8 +1455,8 @@ extension TupleView17: TupleView {
 /// Has the same behaviour as ``Group`` when rendered directly.
 public struct TupleView18<
     View0: View, View1: View, View2: View, View3: View, View4: View, View5: View, View6: View,
-    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View, View13: View,
-    View14: View, View15: View, View16: View, View17: View
+    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View,
+    View13: View, View14: View, View15: View, View16: View, View17: View
 > {
     public var view0: View0
     public var view1: View1
@@ -1354,7 +1483,8 @@ public struct TupleView18<
     public init(
         _ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3, _ view4: View4,
         _ view5: View5, _ view6: View6, _ view7: View7, _ view8: View8, _ view9: View9,
-        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13, _ view14: View14,
+        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13,
+        _ view14: View14,
         _ view15: View15, _ view16: View16, _ view17: View17
     ) {
         self.view0 = view0
@@ -1384,8 +1514,24 @@ extension TupleView18: View {
 
 extension TupleView18: TupleView {
     typealias Children = TupleViewChildren18<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11,
-        View12, View13, View14, View15, View16, View17
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11,
+        View12,
+        View13,
+        View14,
+        View15,
+        View16,
+        View17
     >
 
     func children<Backend: BaseAppBackend>(
@@ -1433,8 +1579,8 @@ extension TupleView18: TupleView {
 /// Has the same behaviour as ``Group`` when rendered directly.
 public struct TupleView19<
     View0: View, View1: View, View2: View, View3: View, View4: View, View5: View, View6: View,
-    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View, View13: View,
-    View14: View, View15: View, View16: View, View17: View, View18: View
+    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View,
+    View13: View, View14: View, View15: View, View16: View, View17: View, View18: View
 > {
     public var view0: View0
     public var view1: View1
@@ -1462,7 +1608,8 @@ public struct TupleView19<
     public init(
         _ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3, _ view4: View4,
         _ view5: View5, _ view6: View6, _ view7: View7, _ view8: View8, _ view9: View9,
-        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13, _ view14: View14,
+        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13,
+        _ view14: View14,
         _ view15: View15, _ view16: View16, _ view17: View17, _ view18: View18
     ) {
         self.view0 = view0
@@ -1493,8 +1640,25 @@ extension TupleView19: View {
 
 extension TupleView19: TupleView {
     typealias Children = TupleViewChildren19<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11,
-        View12, View13, View14, View15, View16, View17, View18
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11,
+        View12,
+        View13,
+        View14,
+        View15,
+        View16,
+        View17,
+        View18
     >
 
     func children<Backend: BaseAppBackend>(
@@ -1543,8 +1707,9 @@ extension TupleView19: TupleView {
 /// Has the same behaviour as ``Group`` when rendered directly.
 public struct TupleView20<
     View0: View, View1: View, View2: View, View3: View, View4: View, View5: View, View6: View,
-    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View, View13: View,
-    View14: View, View15: View, View16: View, View17: View, View18: View, View19: View
+    View7: View, View8: View, View9: View, View10: View, View11: View, View12: View,
+    View13: View, View14: View, View15: View, View16: View, View17: View, View18: View,
+    View19: View
 > {
     public var view0: View0
     public var view1: View1
@@ -1573,7 +1738,8 @@ public struct TupleView20<
     public init(
         _ view0: View0, _ view1: View1, _ view2: View2, _ view3: View3, _ view4: View4,
         _ view5: View5, _ view6: View6, _ view7: View7, _ view8: View8, _ view9: View9,
-        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13, _ view14: View14,
+        _ view10: View10, _ view11: View11, _ view12: View12, _ view13: View13,
+        _ view14: View14,
         _ view15: View15, _ view16: View16, _ view17: View17, _ view18: View18, _ view19: View19
     ) {
         self.view0 = view0
@@ -1605,8 +1771,26 @@ extension TupleView20: View {
 
 extension TupleView20: TupleView {
     typealias Children = TupleViewChildren20<
-        View0, View1, View2, View3, View4, View5, View6, View7, View8, View9, View10, View11,
-        View12, View13, View14, View15, View16, View17, View18, View19
+        View0,
+        View1,
+        View2,
+        View3,
+        View4,
+        View5,
+        View6,
+        View7,
+        View8,
+        View9,
+        View10,
+        View11,
+        View12,
+        View13,
+        View14,
+        View15,
+        View16,
+        View17,
+        View18,
+        View19
     >
 
     func children<Backend: BaseAppBackend>(

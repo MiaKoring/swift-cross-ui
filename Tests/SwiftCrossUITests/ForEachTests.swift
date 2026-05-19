@@ -33,7 +33,7 @@ struct ForEachTests {
         )
         _ = node.commit()
     }
-    
+
     @MainActor
     @Test("Reordered children")
     func reorderedChildren() {
@@ -91,14 +91,17 @@ struct ForEachTests {
             for (newNode, newId) in zip(newNodes, newValues) {
                 #expect(
                     (originalNode === newNode)
-                    <=>
-                    (originalId == newId)
+                        <=>
+                        (originalId == newId)
                 )
             }
         }
 
         // Have we successfully re-arranged the widgets to match the nodes?
-        #expect(zip(originalWidgets, originalErasedNodes).allSatisfy { $0.0 === $0.1.getWidget().into() })
+        #expect(
+            zip(originalWidgets, originalErasedNodes)
+                .allSatisfy { $0.0 === $0.1.getWidget().into() }
+        )
         #expect(zip(newWidgets, newErasedNodes).allSatisfy { $0.0 === $0.1.getWidget().into() })
     }
 }

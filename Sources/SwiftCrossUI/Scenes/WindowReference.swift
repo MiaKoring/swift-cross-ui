@@ -62,8 +62,7 @@ final class WindowReference<SceneType: WindowingScene> {
                 needsWindowSizeCommit: false,
                 backend: backend,
                 environment: self.parentEnvironment,
-                windowSizeIsFinal:
-                    !backend.isWindowProgrammaticallyResizable(window)
+                windowSizeIsFinal: !backend.isWindowProgrammaticallyResizable(window)
             )
         }
 
@@ -75,8 +74,7 @@ final class WindowReference<SceneType: WindowingScene> {
                 needsWindowSizeCommit: false,
                 backend: backend,
                 environment: self.parentEnvironment,
-                windowSizeIsFinal:
-                    !backend.isWindowProgrammaticallyResizable(window)
+                windowSizeIsFinal: !backend.isWindowProgrammaticallyResizable(window)
             )
         }
     }
@@ -266,10 +264,6 @@ final class WindowReference<SceneType: WindowingScene> {
             in: containerWidget.into(),
             to: (proposedWindowSize &- finalContentResult.size.vector) / 2
         )
-        backend.setSize(
-            of: containerWidget.into(),
-            to: proposedWindowSize
-        )
 
         if needsWindowSizeCommit {
             backend.setSize(ofWindow: window, to: proposedWindowSize)
@@ -280,12 +274,12 @@ final class WindowReference<SceneType: WindowingScene> {
             func setBehaviors<NewBackend: BackendFeatures.WindowBehaviors>(backend: NewBackend) {
                 backend.setBehaviors(
                     ofWindow: window as! NewBackend.Window,
-                    closable:
-                        finalContentResult.preferences.windowDismissBehavior?.isEnabled ?? true,
-                    minimizable:
-                        finalContentResult.preferences.preferredWindowMinimizeBehavior?.isEnabled ?? true,
-                    resizable:
-                        finalContentResult.preferences.windowResizeBehavior?.isEnabled ?? true
+                    closable: finalContentResult.preferences.windowDismissBehavior?
+                        .isEnabled ?? true,
+                    minimizable: finalContentResult.preferences.preferredWindowMinimizeBehavior?
+                        .isEnabled ?? true,
+                    resizable: finalContentResult.preferences.windowResizeBehavior?
+                        .isEnabled ?? true
                 )
             }
             setBehaviors(backend: backend)

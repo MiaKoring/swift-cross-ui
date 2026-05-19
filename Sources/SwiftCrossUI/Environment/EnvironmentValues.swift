@@ -338,7 +338,8 @@ extension EnvironmentValues {
     /// Backing store for ``EnvironmentValues/openWindowFunctionsByID``.
     /// Used to resolve "non-sendable type" warnings in Swift 5 and errors in Swift 6 language mode.
     @Entry private var openWindowFunctionsByIDStore = UncheckedSendable(
-        wrappedValue: Box<[String: @MainActor () -> Void]>([:]))
+        wrappedValue: Box<[String: @MainActor () -> Void]>([:])
+    )
 
     /// A mapping of window IDs to functions that open the corresponding windows.
     internal var openWindowFunctionsByID: Box<[String: @MainActor () -> Void]> {
@@ -446,6 +447,9 @@ extension EnvironmentValues {
     public var lineLimit: Int? {
         lineLimitSettings?.limit
     }
+
+    /// Whether the current device has a circular screen. Primarily Android smart watches.
+    @Entry public var isCircularScreen: Bool = false
 }
 
 /// A key that can be used to extend the environment with new properties.

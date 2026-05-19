@@ -50,7 +50,9 @@ public final class WinUIBackend:
     BackendFeatures.Colors,
     BackendFeatures.DatePickers,
     BackendFeatures.Windowing,
-    BackendFeatures.Focus
+    BackendFeatures.LinearGradients,
+    BackendFeatures.RadialGradients,
+	BackendFeatures.Focus
 {
     // Logging
     private struct LogLocation: Hashable, Equatable {
@@ -89,7 +91,10 @@ public final class WinUIBackend:
     public let supportsMultipleWindows = true
     public let deviceClass = DeviceClass.desktop
     public let supportedDatePickerStyles: [DatePickerStyle] = [
-        .automatic, .graphical, .compact, .wheel,
+        .automatic,
+        .graphical,
+        .compact,
+        .wheel,
     ]
     public let supportedPickerStyles: [BackendPickerStyle] = [.menu, .radioGroup]
     public let canOverrideWindowColorScheme = true
@@ -434,8 +439,8 @@ public final class WinUIBackend:
 
         return
             defaultEnvironment
-            .with(\.colorScheme, isLight ? .light : .dark)
-            .with(\.appPhase, windows.contains(where: \.isActive) ? .active : .inactive)
+                .with(\.colorScheme, isLight ? .light : .dark)
+                .with(\.appPhase, windows.contains(where: \.isActive) ? .active : .inactive)
     }
 
     public func setRootEnvironmentChangeHandler(
@@ -693,7 +698,7 @@ public final class WinUIBackend:
                 5 + 6 + 2
             )
         } else if let toggleButton = widget as? WinUI.ToggleButton,
-            toggleButton.padding == noPadding
+                  toggleButton.padding == noPadding
         {
             // See the above comment regarding Button. Very similar situation.
             adjustment = SIMD2(
@@ -712,7 +717,8 @@ public final class WinUIBackend:
             // weekdays wrap, making it taller than it says it is. Value was derived by trial and
             // error.
             adjustment = SIMD2(20, 0)
-        } else if computedSize.width == 0 && computedSize.height == 0 && widget is CalendarDatePicker
+        } else if
+            computedSize.width == 0 && computedSize.height == 0 && widget is CalendarDatePicker
         {
             // I can't find any source on what the size of CalendarDatePicker is, but it reports 0x0
             // in at least some cases before initial render. In these cases, use a size derived
@@ -728,7 +734,7 @@ public final class WinUIBackend:
         widget.width = Double(size.x)
         widget.height = Double(size.y)
     }
-    
+
     public func createTooltipContainer(wrapping child: Widget) -> Widget {
         // TODO(bbrk24): Look into removing the container, like on AppKit
         TooltipContainer(child: child)
@@ -905,7 +911,7 @@ public final class WinUIBackend:
     public func createSelectableListView() -> Widget {
         let listView = CustomListView()
         listView.selectionMode = .single
-        listView.selectionChanged.addHandler { [weak listView] _, args in
+        listView.selectionChanged.addHandler { [weak listView] _, _ in
             guard let listView else { return }
             guard listView.selectedRanges.count > 0 else {
                 return
@@ -1256,7 +1262,7 @@ public final class WinUIBackend:
         let inputScopeName = InputScopeName(inputScope)
 
         if let inputScope = textField.inputScope,
-            inputScope.names.count == 1
+           inputScope.names.count == 1
         {
             inputScope.names[0] = inputScopeName
         } else {
@@ -1795,7 +1801,7 @@ public final class WinUIBackend:
     ) -> PathFigure {
         var pathGeometry: PathGeometry
         if collection.size > 0,
-            let castedLast = collection.getAt(collection.size - 1) as? PathGeometry
+           let castedLast = collection.getAt(collection.size - 1) as? PathGeometry
         {
             pathGeometry = castedLast
         } else {
@@ -1828,8 +1834,8 @@ public final class WinUIBackend:
                     lastPoint = Point(x: Float(point.x), y: Float(point.y))
 
                     if geometry.size > 0,
-                        let pathGeometry = geometry.getAt(geometry.size - 1) as? PathGeometry,
-                        pathGeometry.figures.size > 0
+                       let pathGeometry = geometry.getAt(geometry.size - 1) as? PathGeometry,
+                       pathGeometry.figures.size > 0
                     {
                         let figure = pathGeometry.figures.getAt(pathGeometry.figures.size - 1)!
                         if figure.segments.size > 0 {
@@ -1889,12 +1895,12 @@ public final class WinUIBackend:
                     ellipse.center = Point(x: Float(center.x), y: Float(center.y))
                     geometry.append(ellipse)
                 case .arc(
-                    let center,
-                    let radius,
-                    let startAngle,
-                    let endAngle,
-                    let clockwise
-                ):
+                let center,
+                let radius,
+                let startAngle,
+                let endAngle,
+                let clockwise
+            ):
                     let startPoint = Point(
                         x: Float(center.x + radius * cos(startAngle)),
                         y: Float(center.y + radius * sin(startAngle))
@@ -1964,8 +1970,8 @@ public final class WinUIBackend:
                     }
 
                     if geometry.size > 0,
-                        let pathGeometry = geometry.getAt(geometry.size - 1) as? PathGeometry,
-                        pathGeometry.figures.contains(where: { ($0?.segments.size ?? 0) > 0 })
+                       let pathGeometry = geometry.getAt(geometry.size - 1) as? PathGeometry,
+                       pathGeometry.figures.contains(where: { ($0?.segments.size ?? 0) > 0 })
                     {
                         // Start a new PathGeometry so that transforms don't apply going forward
                         geometry.append(PathGeometry())
@@ -1981,7 +1987,7 @@ public final class WinUIBackend:
         // Having empty paths in the geometry group causes rendering it to silently crash
         for i in (0..<geometry.size).reversed() {
             if let pathGeo = geometry.getAt(i) as? PathGeometry,
-                pathGeo.figures.size == 0
+               pathGeo.figures.size == 0
             {
                 geometry.removeAt(i)
             }
@@ -2221,7 +2227,7 @@ final class TooltipContainer: WinUI.Canvas {
     init(child: WinUI.FrameworkElement) {
         self.child = child
         self.tooltip = ToolTip()
-        
+
         super.init()
 
         children.append(child)
@@ -2243,6 +2249,103 @@ class SwiftIInitializeWithWindow: WindowsFoundation.IUnknown {
         _ = try perform(as: IInitializeWithWindow.self) { pThis in
             try CHECKED(pThis.pointee.lpVtbl.pointee.Initialize(pThis, hwnd))
         }
+    }
+}
+
+public class CustomWindow: WinUI.Window {
+    /// Hardcoded menu bar height from MenuBar_themeresources.xaml in the
+    /// microsoft-ui-xaml repository (the MenuBarHeight property)
+    private static let menuBarHeight = 40
+
+    var menuBar = WinUI.MenuBar()
+    var child: WinUIBackend.Widget?
+    var grid: WinUI.Grid
+    var cachedAppWindow: WinAppSDK.AppWindow!
+    var isActive = false
+
+    private(set) var menuBarIsVisible = false
+
+    /// The amount of height to subtract off the window height to obtain the
+    /// window's available content height.
+    var contentHeightAdjustment: Int {
+        menuBarIsVisible ? Self.menuBarHeight : 0
+    }
+
+    var scaleFactor: Double {
+        // I'm leaving this code here for future travellers. Be warned that this always
+        // seems to return 100% even if the scale factor is set to 125% in settings.
+        // Perhaps it's only the device's built-in default scaling? But that seems pretty
+        // useless, and isn't what the docs seem to imply.
+        //
+        //   var deviceScaleFactor = SCALE_125_PERCENT
+        //   _ = GetScaleFactorForMonitor(monitor, &deviceScaleFactor)
+
+        let hwnd = cachedAppWindow.getHWND()!
+        let monitor = MonitorFromWindow(hwnd, DWORD(bitPattern: MONITOR_DEFAULTTONEAREST))!
+
+        var x: UINT = 0
+        var y: UINT = 0
+        let result = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &x, &y)
+
+        let windowScaleFactor: Double
+        if result == S_OK {
+            windowScaleFactor = Double(x) / Double(USER_DEFAULT_SCREEN_DPI)
+        } else {
+            logger.warning("failed to get window scale factor, defaulting to 1.0")
+            windowScaleFactor = 1
+        }
+
+        return windowScaleFactor
+    }
+
+    public override init() {
+        grid = WinUI.Grid()
+
+        super.init()
+
+        let menuBarRowDefinition = WinUI.RowDefinition()
+        let contentRowDefinition = WinUI.RowDefinition()
+        grid.rowDefinitions.append(menuBarRowDefinition)
+        grid.rowDefinitions.append(contentRowDefinition)
+        grid.children.append(menuBar)
+        WinUI.Grid.setRow(menuBar, 0)
+        self.content = grid
+
+        // NB: This event fires when the window is activated _or_ deactivated.
+        self.activated.addHandler { [weak self] _, args in
+            switch args?.windowActivationState {
+                case .codeActivated, .pointerActivated: self?.isActive = true
+                case .deactivated: self?.isActive = false
+                // NB: The compiler apparently thinks we didn't exhaustively switch
+                // over this enum without this `default` (even after adding a `case nil`).
+                // Might be because it doesn't treat the underlying C enum as a Swift enum?
+                default: break
+            }
+        }
+
+        // Caching appWindow is apparently a good idea in terms of performance:
+        // https://github.com/thebrowsercompany/swift-winrt/issues/199#issuecomment-2611006020
+        cachedAppWindow = appWindow
+
+        // Default to not showing the menu bar; we only want to show it when it's non-empty
+        setMenuBarVisible(menuBarIsVisible)
+    }
+
+    /// Sets whether the menu bar of the current window is visible. The menu bar
+    /// is what holds the in-window app menu, it's not the title bar (the one with
+    /// the window controls).
+    public func setMenuBarVisible(_ visible: Bool) {
+        grid.rowDefinitions[0]!.height = WinUI.GridLength(
+            value: visible ? Double(Self.menuBarHeight) : 0,
+            gridUnitType: .pixel
+        )
+        menuBarIsVisible = visible
+    }
+
+    public func setChild(_ child: WinUIBackend.Widget) {
+        self.child = child
+        grid.children.append(child)
+        WinUI.Grid.setRow(child, 1)
     }
 }
 
@@ -2277,7 +2380,9 @@ final class CustomDatePicker: StackPanel {
         }
 
         enum Discriminator {
-            case calendarView, calendarDatePicker, datePicker
+            case calendarView
+            case calendarDatePicker
+            case datePicker
         }
 
         var discriminator: Discriminator {
@@ -2309,7 +2414,7 @@ final class CustomDatePicker: StackPanel {
                 guard let change else { return }
                 self.date =
                     calendar.startOfDay(for: date)
-                    + Double(change.newTime.duration) / ticksPerSecond
+                        + Double(change.newTime.duration) / ticksPerSecond
                 self.onChange?(self.date)
             }
             needsUpdate = true
@@ -2371,7 +2476,9 @@ final class CustomDatePicker: StackPanel {
 
                     guard let newDate = change?.newDate else { return }
                     self.date = componentsToFoundationDate(
-                        dateTime: newDate, timeSpan: timeView?.selectedTime)
+                        dateTime: newDate,
+                        timeSpan: timeView?.selectedTime
+                    )
                     self.onChange?(self.date)
                 }
                 needsUpdate = true
@@ -2385,7 +2492,9 @@ final class CustomDatePicker: StackPanel {
 
                     guard let selectedDate = datePicker.selectedDate else { return }
                     self.date = componentsToFoundationDate(
-                        dateTime: selectedDate, timeSpan: timeView?.selectedTime)
+                        dateTime: selectedDate,
+                        timeSpan: timeView?.selectedTime
+                    )
                     self.onChange?(self.date)
                 }
                 needsUpdate = true
