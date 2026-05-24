@@ -62,8 +62,8 @@ extension Button: ElementaryView {
 
         return
             ViewLayoutResult
-            .leafView(size: ViewSize(size))
-            .with(\.shouldSetFocusData, true)
+                .leafView(size: ViewSize(size))
+                .with(\.shouldSetFocusData, true)
     }
 
     public func commit<Backend: BaseAppBackend>(

@@ -23,16 +23,16 @@ class FocusStateManager {
 
         guard id != lastFocused else {
             if widget.focusState != .unfocused,
-                data.contains(where: { $0.shouldUnfocus }),
-                let root = widget.xamlRoot.content
+               data.contains(where: \.shouldUnfocus),
+               let root = widget.xamlRoot.content
             {
                 _ = try? root.focus(.programmatic)
             }
             return
         }
 
-        if data.contains(where: { $0.matches }),
-            widget.visibility == .visible
+        if data.contains(where: \.matches),
+           widget.visibility == .visible
         {
             // .keyboard is used instead of .programmatic
             // so WinUI displays the focus ring

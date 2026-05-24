@@ -266,13 +266,13 @@ public class ViewGraphNode<NodeView: View, Backend: BaseAppBackend>: Sendable {
             {
                 logger.warnOnce("\(Backend.self) doesn't support focus control/tracking.")
             }
-            
+
             func setFocusData<Backend2: BackendFeatures.Focus>(on backend: Backend2) {
                 backend.registerFocusObservers(
                     parentEnvironment.focusObservers,
                     on: widget as! Backend2.Widget
                 )
-                
+
                 backend.setFocusEffectDisabled(
                     on: widget as! Backend2.Widget,
                     disabled: parentEnvironment.focusEffectDisabled

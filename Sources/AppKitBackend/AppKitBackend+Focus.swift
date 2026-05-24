@@ -89,28 +89,28 @@ class FocusStateManager: NSObject {
         focusData[ObjectIdentifier(widget)] = Set(data)
 
         if let window = widget.window,
-            window.firstResponder == widget,
-            data.contains(where: { $0.shouldUnfocus })
+           window.firstResponder == widget,
+           data.contains(where: \.shouldUnfocus)
         {
             window.makeFirstResponder(nil)
         }
-        
-        if data.contains(where: { $0.matches }),
-            !widget.isHidden,
-            widget.acceptsFirstResponder,
-            // AppKit passes first responder from NSTextField/NSSecureTextField to an
-            // inner NSTextView/NSText.
-            // This means when it looks to us like the NSTextField is focused,
-            // the NSTextView is the actual first responder.
-            // Giving focus back to the surrounding field leads to weird input bugs
-            // This makes sure first responder is only given to the widget if its
-            // not the inner NSTextView having focus.
-            !textFieldsTextViewIsFocused(field: widget)
+
+        if data.contains(where: \.matches),
+           !widget.isHidden,
+           widget.acceptsFirstResponder,
+           // AppKit passes first responder from NSTextField/NSSecureTextField to an
+           // inner NSTextView/NSText.
+           // This means when it looks to us like the NSTextField is focused,
+           // the NSTextView is the actual first responder.
+           // Giving focus back to the surrounding field leads to weird input bugs
+           // This makes sure first responder is only given to the widget if its
+           // not the inner NSTextView having focus.
+           !textFieldsTextViewIsFocused(field: widget)
         {
             widget.window?.makeFirstResponder(widget)
         }
     }
-    
+
     private func textFieldsTextViewIsFocused(field: NSView) -> Bool {
         if let field = field as? NSTextField {
             return field.currentEditor() === field.window?.firstResponder
@@ -122,13 +122,15 @@ class FocusStateManager: NSObject {
     }
 
     override func observeValue(
-        forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?,
+        forKeyPath keyPath: String?,
+        of object: Any?,
+        change: [NSKeyValueChangeKey: Any]?,
         context: UnsafeMutableRawPointer?
     ) {
         guard let window = object as? NSCustomWindow else { return }
-        
+
         if let responder = window.firstResponder,
-            !(responder is NSCustomWindow)
+           !(responder is NSCustomWindow)
         {
             if responder is NSObservableTextField || responder is NSObservableSecureTextField {
                 shouldSkip = true

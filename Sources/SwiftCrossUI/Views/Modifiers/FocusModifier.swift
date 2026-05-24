@@ -20,10 +20,10 @@ extension View {
     ///
     /// Setting to `nil` on ``WinUIBackend`` causes the first focusable widget to gain focus
     /// due to WinUI not supporting setting an "unfocused" state.
-    public func focused<Value>(
+    public func focused<Value: Hashable>(
         _ focusBinding: FocusState<Value?>.Binding,
         equals match: Value
-    ) -> some View where Value: Hashable {
+    ) -> some View {
         EnvironmentModifier(self) { environment in
             environment.with(
                 \.focusObservers,
@@ -93,7 +93,7 @@ struct FocusModifier<Content: View>: TypeSafeView {
             environment: environment
         )
     }
-    
+
     @CastBackend<BackendFeatures.FocusDisabling>(backendGenericName: "NewBackend")
     func asWidget<Backend: BaseAppBackend>(
         _ children: Children,
@@ -135,4 +135,3 @@ struct FocusModifier<Content: View>: TypeSafeView {
         backend.updateFocusContainer(widget, focusability: focusability)
     }
 }
-

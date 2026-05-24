@@ -12,16 +12,16 @@ class FocusStateManager {
 
         guard id != lastFocused else {
             if widget.containsFocused,
-                data.contains(where: { $0.shouldUnfocus })
+               data.contains(where: \.shouldUnfocus)
             {
                 widget.root?.setFocus(to: nil)
             }
             return
         }
 
-        if data.contains(where: { $0.matches }),
-            widget.isVisible,
-            widget.isFocusable || widget is Gtk.Entry || widget is Gtk.DropDown
+        if data.contains(where: \.matches),
+           widget.isVisible,
+           widget.isFocusable || widget is Gtk.Entry || widget is Gtk.DropDown
         {
             widget.makeKey()
         }
@@ -76,11 +76,11 @@ extension GtkBackend {
             widget.addEventController(focusController)
             return
         }
-        
+
         guard widget.isFocusable else { return }
 
         focusManager.register(data, for: widget)
-        
+
         if !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) {
             let focusController = EventControllerFocus()
             focusController.notifyIsFocus = { _, _ in

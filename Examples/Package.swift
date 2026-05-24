@@ -101,9 +101,9 @@ let package = Package(
         ),
         .executableTarget(
             name: "ColorsExample",
-			dependencies: exampleDependencies
-		),
-		.executableTarget(
+            dependencies: exampleDependencies
+        ),
+        .executableTarget(
             name: "ControlFocusabilityTest",
             dependencies: exampleDependencies
         ),

@@ -31,7 +31,7 @@ public final class GtkBackend:
     BackendFeatures.Windowing,
     BackendFeatures.LinearGradients,
     BackendFeatures.RadialGradients,
-	BackendFeatures.Focus,
+    BackendFeatures.Focus,
     BackendFeatures.FocusDisabling
 {
     public typealias Window = Gtk.ApplicationWindow

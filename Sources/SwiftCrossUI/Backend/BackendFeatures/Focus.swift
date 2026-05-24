@@ -16,13 +16,13 @@ extension BackendFeatures {
             _ data: [FocusData],
             on widget: Widget
         )
-        
+
         /// Controls the focus effect of a widget.
         ///
         /// Used by ``View/focusable(_:)``.
         func setFocusEffectDisabled(on widget: Widget, disabled: Bool)
     }
-    
+
     /// Backend methods for disabling focusability of a subtree.
     ///
     /// Used by ``View/focusable(_:)``.
@@ -31,7 +31,7 @@ extension BackendFeatures {
         ///
         /// Used by ``View/focusable(_:)``.
         func createFocusContainer() -> Widget
-        
+
         /// Update a container controlling the focusability of the widgets below it.
         ///
         /// Used by ``View/focusable(_:)``.

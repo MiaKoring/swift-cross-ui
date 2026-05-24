@@ -53,8 +53,8 @@ extension FocusChainManager {
         var currentOption: Widget? = suggestion
         while let next = currentOption {
             if !isDescendantOfDisabledParent(next),
-                next.canBeTabStop,
-                !next.isHidden
+               next.canBeTabStop,
+               !next.isHidden
             {
                 return next
             }
@@ -82,7 +82,7 @@ extension FocusChainManager {
 
         while let next = current {
             if let next = next as? FocusabilityContainer,
-                next.focusability == .disabled
+               next.focusability == .disabled
             {
                 return true
             }

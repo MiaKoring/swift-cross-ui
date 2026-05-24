@@ -36,7 +36,8 @@ open class Widget: GObject {
         didSet {
             guard oldValue != css else { return }
             cssProvider.loadCss(
-                from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)")
+                from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)"
+            )
         }
     }
 
@@ -45,7 +46,8 @@ open class Widget: GObject {
         didSet {
             guard oldValue != focusCSS else { return }
             cssProvider.loadCss(
-                from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)")
+                from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)"
+            )
         }
     }
 
@@ -186,7 +188,9 @@ open class Widget: GObject {
                     gtk_window_set_focus_visible(windowPtr, true.toGBoolean())
                 }
                 return 0
-            }, widgetPointer)
+            },
+            widgetPointer
+        )
     }
 
     @GObjectProperty(named: "name") public var name: String?

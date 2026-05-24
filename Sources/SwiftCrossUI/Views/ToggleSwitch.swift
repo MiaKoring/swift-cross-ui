@@ -25,8 +25,8 @@ struct ToggleSwitch: ElementaryView, View {
         let size = ViewSize(backend.naturalSize(of: widget))
         return
             ViewLayoutResult
-            .leafView(size: size)
-            .with(\.shouldSetFocusData, true)
+                .leafView(size: size)
+                .with(\.shouldSetFocusData, true)
     }
 
     func commit<Backend: BaseAppBackend>(

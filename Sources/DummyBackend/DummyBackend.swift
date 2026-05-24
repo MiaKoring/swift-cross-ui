@@ -291,12 +291,12 @@ public final class DummyBackend:
                     }
                 ]
 
-                if control.isFocused, data.contains(where: { $0.shouldUnfocus }) {
+                if control.isFocused, data.contains(where: \.shouldUnfocus) {
                     backend.resignFocusedWidget()
                 }
             }
 
-            if data.contains(where: { $0.matches }) {
+            if data.contains(where: \.matches) {
                 backend.focus(widget)
             }
         }

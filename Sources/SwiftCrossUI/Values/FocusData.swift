@@ -8,7 +8,7 @@ public struct FocusData {
     public let set: () -> Void
     /// A function to set the ``FocusState`` to unfocused.
     public let reset: () -> Void
-    
+
     /// Whether the backend should remove focus from the view.
     public let shouldUnfocus: Bool
     /// Wheter the the ``FocusState``'s value matches ``match``.

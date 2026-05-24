@@ -50,8 +50,8 @@ public struct TextEditor: ElementaryView {
 
         return
             ViewLayoutResult
-            .leafView(size: size)
-            .with(\.shouldSetFocusData, true)
+                .leafView(size: size)
+                .with(\.shouldSetFocusData, true)
     }
 
     func commit<Backend: BaseAppBackend>(
