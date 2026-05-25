@@ -56,6 +56,8 @@ extension AppKitBackend {
         
         button.action = action
         
+        button.isEnabled = environment.isEnabled
+        
         setSize(of: button.subviews.first!, to: .init(50, 50))
     }
 }
@@ -65,13 +67,19 @@ public final class NSCustomButton: NSView {
     static let verticalPadding: CGFloat = 4.0
     
     fileprivate var action: (() -> Void)?
-    
     fileprivate let cell = NSButtonCell()
+    
+    var isEnabled = true {
+        didSet {
+            self.alphaValue = isEnabled ? 1.0: 0.5
+            noteFocusRingMaskChanged()
+        }
+    }
     
     // Whether left mousebutton is pressed on this view.
     private var isPressed = false
     
-    private var isHighlighted = false {
+    public var isHighlighted = false {
         didSet {
             cell.isHighlighted = isHighlighted
             self.needsDisplay = true
@@ -105,7 +113,7 @@ public final class NSCustomButton: NSView {
     override public var acceptsFirstResponder: Bool {
         // Even though its called FullKeyboardAccess, it actuall corresponds to
         // the Keyboard navigation setting.
-        NSApplication.shared.isFullKeyboardAccessEnabled
+        isEnabled && NSApplication.shared.isFullKeyboardAccessEnabled
     }
     
     override public var focusRingMaskBounds: NSRect { bounds }
@@ -123,10 +131,13 @@ public final class NSCustomButton: NSView {
     }
     
     override public func drawFocusRingMask() {
+        guard isEnabled else { return }
         cell.drawFocusRingMask(withFrame: bounds, in: self)
     }
     
     override public func keyDown(with event: NSEvent) {
+        guard isEnabled else { return }
+        
         let characters = event.charactersIgnoringModifiers ?? ""
         
         if characters == " " {
@@ -144,11 +155,15 @@ public final class NSCustomButton: NSView {
     }
     
     override public func mouseDown(with _: NSEvent) {
+        guard isEnabled else { return }
+        
         isPressed = true
         isHighlighted = true
     }
     
     override public func mouseDragged(with event: NSEvent) {
+        guard isEnabled else { return }
+        
         let pointInView = convert(event.locationInWindow, from: nil)
         
         if isPressed && bounds.contains(pointInView) {
@@ -159,6 +174,8 @@ public final class NSCustomButton: NSView {
     }
     
     override public func mouseUp(with event: NSEvent) {
+        guard isEnabled else { return }
+        
         let pointInView = self.convert(event.locationInWindow, from: nil)
         
         if bounds.contains(pointInView) {
