@@ -63,6 +63,15 @@ struct ControlsApp: App {
                             Button("Click me!") {
                                 count += 1
                             }
+                            
+                            Button {
+                                count += 1
+                            } label: {
+                                ZStack {
+                                    Color.blue.frame(width: 80, height: 20)
+                                    Text("Test")
+                                }
+                            }
                             Text("Count: \(count)")
                         }
 

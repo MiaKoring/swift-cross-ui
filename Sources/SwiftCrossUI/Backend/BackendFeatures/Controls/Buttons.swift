@@ -6,10 +6,10 @@ extension BackendFeatures {
     public protocol Buttons: Core {
         /// Creates a labelled button with an action triggered on click/tap.
         ///
-        /// Predominantly used by ``Button``.
+        /// Predominantly used by ``SimpleButton``.
         ///
         /// - Returns: A button.
-        func createButton() -> Widget
+        func createSimpleButton() -> Widget
 
         /// Sets a button's label and action.
         ///
@@ -19,9 +19,16 @@ extension BackendFeatures {
         ///   - environment: The current environment.
         ///   - action: The action to perform when the button is clicked/tapped.
         ///     This replaces any existing actions.
-        func updateButton(
+        func updateSimpleButton(
             _ button: Widget,
             label: String,
+            environment: EnvironmentValues,
+            action: @escaping () -> Void
+        )
+        
+        func createButton(wrapping: Widget) -> Widget
+        func updateButton(
+            _ button: Widget,
             environment: EnvironmentValues,
             action: @escaping () -> Void
         )

@@ -508,6 +508,7 @@ public final class AppKitBackend: FullAppBackend {
                 Int(size.height)
             )
         }
+        
         let size = widget.intrinsicContentSize
         return SIMD2(
             Int(size.width),
@@ -621,29 +622,6 @@ public final class AppKitBackend: FullAppBackend {
             field.abortEditing()
         }
         field.isSelectable = environment.isTextSelectionEnabled
-    }
-
-    public func createButton() -> Widget {
-        return NSButton(title: "", target: nil, action: nil)
-    }
-
-    public func updateButton(
-        _ button: Widget,
-        label: String,
-        environment: EnvironmentValues,
-        action: @escaping () -> Void
-    ) {
-        let button = button as! NSButton
-        button.attributedTitle = Self.attributedString(
-            for: label,
-            in: environment.with(\.multilineTextAlignment, .center)
-        )
-        button.bezelStyle = .regularSquare
-        button.appearance = environment.colorScheme.nsAppearance
-        button.isEnabled = environment.isEnabled
-        button.onAction = { _ in
-            action()
-        }
     }
 
     public func createSwitch() -> Widget {

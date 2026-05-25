@@ -8,10 +8,10 @@ public struct AlertActionsBuilder {
         [.default]
     }
 
-    public static func buildPartialBlock(first: Button) -> [AlertAction] {
+    public static func buildPartialBlock(first: Button<Text>) -> [AlertAction] {
         [
             AlertAction(
-                label: first.label,
+                label: first.body.view0.string,
                 action: first.action
             )
         ]
@@ -23,11 +23,11 @@ public struct AlertActionsBuilder {
 
     public static func buildPartialBlock(
         accumulated: [AlertAction],
-        next: Button
+        next: Button<Text>
     ) -> [AlertAction] {
         accumulated + [
             AlertAction(
-                label: next.label,
+                label: next.body.view0.string,
                 action: next.action
             )
         ]

@@ -1,39 +1,59 @@
 /// A control that initiates an action.
-public struct Button: Sendable {
+public struct Button<Content: View>: Sendable {
     /// The label to show on the button.
-    package var label: String
+    public var body: TupleView1<Content>
     /// The action to be performed when the button is clicked.
     package var action: @MainActor @Sendable () -> Void
-    /// The button's forced width if provided.
-    var width: Int?
-
+    
     /// Creates a button that displays a custom label.
     ///
     /// - Parameters:
     ///   - label: The label to show on the button.
     ///   - action: The action to be performed when the button is clicked.
-    public init(_ label: String, action: @escaping @MainActor @Sendable () -> Void = {}) {
-        self.label = label
+    public init(
+        _ label: String,
+        action: @escaping @MainActor @Sendable () -> Void = {}
+    ) where Content == Text {
+        self.body = TupleView1(Text(label))
         self.action = action
     }
-
-    /// A temporary button width solution until arbitrary labels are supported.
-    public func _buttonWidth(_ width: Int?) -> Button {
-        var button = self
-        button.width = width
-        return button
+    
+    @MainActor
+    public init (
+        action: @escaping @MainActor @Sendable () -> Void = {},
+        @ViewBuilder label: @escaping @MainActor @Sendable () -> Content
+    ) {
+        self.body = TupleView1(label())
+        self.action = action
     }
 }
 
-extension Button: View {}
-
-extension Button: ElementaryView {
-    public func asWidget<Backend: BaseAppBackend>(backend: Backend) -> Backend.Widget {
-        return backend.createButton()
+@MainActor
+extension Button: TypeSafeView {
+    typealias Children = TupleView1<Content>.Children
+    
+    func children<Backend: BaseAppBackend>(
+        backend: Backend,
+        snapshots: [ViewGraphSnapshotter.NodeSnapshot]?,
+        environment: EnvironmentValues
+    ) -> Children {
+        body.children(
+            backend: backend,
+            snapshots: snapshots,
+            environment: environment
+        )
     }
-
-    public func computeLayout<Backend: BaseAppBackend>(
+    
+    func asWidget<Backend: BaseAppBackend>(
+        _ children: Children,
+        backend: Backend
+    ) -> Backend.Widget {        
+        backend.createButton(wrapping: children.child0.widget.into())
+    }
+    
+    func computeLayout<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
+        children: TupleView1<Content>.Children,
         proposedSize: ProposedViewSize,
         environment: EnvironmentValues,
         backend: Backend
@@ -48,23 +68,32 @@ extension Button: ElementaryView {
         //   refresh), but the reason Gtk 3 doesn't like it is that the window gets set smaller
         //   than its content I think.
         //   See: https://github.com/moreSwift/swift-cross-ui/blob/27f50579c52e79323c3c368512d37e95af576c25/Sources/SwiftCrossUI/Scenes/WindowGroupNode.swift#L140
+        
+        let childrenResult = children.child0.computeLayout(
+            with: body.view0,
+            proposedSize: proposedSize,
+            environment: environment
+        )
+        
         backend.updateButton(
             widget,
-            label: label,
             environment: environment,
             action: action
         )
-        let naturalSize = backend.naturalSize(of: widget)
+        
         let size = SIMD2(
-            width ?? naturalSize.x,
-            naturalSize.y
+            Int(childrenResult.size.width) + 16,
+            Int(childrenResult.size.height) + 8
         )
-
+        
+        print("size: \(size)")
+        
         return ViewLayoutResult.leafView(size: ViewSize(size))
     }
-
-    public func commit<Backend: BaseAppBackend>(
+    
+    func commit<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
+        children: TupleView1<Content>.Children,
         layout: ViewLayoutResult,
         environment: EnvironmentValues,
         backend: Backend
