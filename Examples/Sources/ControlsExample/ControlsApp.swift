@@ -61,21 +61,25 @@ struct ControlsApp: App {
                         VStack {
                             HStack {
                                 Button("Lol") {}
-                                Menu("Lol", items: { Button("Lol")})
+                                Menu("Lol", items: { Button("Lol") { } })
                             }
                             Text("Button (persisted)")
                             Button("Click me!") {
                                 count += 1
-                            }.disabled(false)
+                            }.buttonStyle(.plain)
                             
                             Button {
                                 count += 1
                             } label: {
-                                ZStack {
-                                    Color.blue.frame(width: 80, height: 20)
-                                    Text("Test")
-                                }
+                                Text("Test")
+                                    .padding(.horizontal, 11)
+                                    .padding(.vertical, 4)
+                                    .background {
+                                        Color.purple.opacity(0.5)
+                                            .cornerRadius(5)
+                                    }
                             }
+                                .buttonStyle(.plain)
                             Text("Count: \(count)")
                         }
 

@@ -71,7 +71,7 @@ extension Button: TypeSafeView {
         
         var childEnvironment = environment
         
-        if !environment.isEnabled {
+        if !environment.isEnabled, environment.buttonStyle != .plain {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
                  environment.foregroundColor ?? .gray.opacity(0.5)
@@ -90,9 +90,11 @@ extension Button: TypeSafeView {
             action: action
         )
         
+        let buttonPadding = backend.buttonPadding(in: environment)
+        
         let size = SIMD2(
-            Int(childrenResult.size.width) + backend.buttonPadding.x,
-            Int(childrenResult.size.height) + backend.buttonPadding.y
+            Int(childrenResult.size.width) + buttonPadding.x,
+            Int(childrenResult.size.height) + buttonPadding.y
         )
         
         return ViewLayoutResult.leafView(size: ViewSize(size))

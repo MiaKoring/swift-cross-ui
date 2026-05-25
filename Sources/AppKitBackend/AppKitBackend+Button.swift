@@ -35,13 +35,6 @@ extension AppKitBackend {
         button.addSubview(child)
         child.translatesAutoresizingMaskIntoConstraints = false
         
-        NSLayoutConstraint.activate([
-            child.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: NSCustomButton.horizontalPadding),
-            child.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -NSCustomButton.horizontalPadding),
-            child.topAnchor.constraint(equalTo: button.topAnchor, constant: NSCustomButton.verticalPadding),
-            child.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -NSCustomButton.verticalPadding)
-        ])
-        
         return button
     }
     
@@ -58,7 +51,18 @@ extension AppKitBackend {
         
         button.isEnabled = environment.isEnabled
         
+        button.buttonStyle = environment.buttonStyle ?? .bordered
+        
+        button.buttonStyle.setConstraints(button)
+        
         setSize(of: button.subviews.first!, to: .init(50, 50))
+    }
+    
+    public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
+        switch environment.buttonStyle ?? .bordered {
+            case .bordered: SIMD2<Int>(22, 8)
+            case .plain: SIMD2<Int>(0, 0)
+        }
     }
 }
 
@@ -68,13 +72,12 @@ public final class NSCustomButton: NSView {
     
     fileprivate var action: (() -> Void)?
     fileprivate let cell = NSButtonCell()
+    fileprivate var buttonStyle: ButtonStyle = .bordered {
+        didSet { updateButtonAppearance() }
+    }
     
     var isEnabled = true {
-        didSet {
-            cell.isEnabled = isEnabled
-            noteFocusRingMaskChanged()
-            self.needsDisplay = true
-        }
+        didSet { updateButtonAppearance() }
     }
     
     // Whether left mousebutton is pressed on this view.
@@ -82,7 +85,7 @@ public final class NSCustomButton: NSView {
     
     public var isHighlighted = false {
         didSet {
-            cell.isHighlighted = isHighlighted
+            buttonStyle.handleHighlight(self)
             self.needsDisplay = true
         }
     }
@@ -106,7 +109,9 @@ public final class NSCustomButton: NSView {
     }
     
     override public func draw(_ dirtyRect: NSRect) {
-        cell.drawBezel(withFrame: self.bounds, in: self)
+        if buttonStyle.shouldRenderNativeBackground {
+            cell.drawBezel(withFrame: self.bounds, in: self)
+        }
         
         super.draw(dirtyRect)
     }
@@ -133,7 +138,7 @@ public final class NSCustomButton: NSView {
     
     override public func drawFocusRingMask() {
         guard isEnabled else { return }
-        cell.drawFocusRingMask(withFrame: bounds, in: self)
+        buttonStyle.drawFocusRingMask(on: self)
     }
     
     override public func keyDown(with event: NSEvent) {
@@ -185,5 +190,71 @@ public final class NSCustomButton: NSView {
         
         isPressed = false
         isHighlighted = false
+    }
+    
+    private func updateButtonAppearance() {
+        buttonStyle.applyModifications(self)
+        noteFocusRingMaskChanged()
+        self.needsDisplay = true
+    }
+}
+
+extension ButtonStyle {
+    func applyModifications(_ button: NSCustomButton) {
+        switch self {
+            case .bordered:
+                button.cell.isEnabled = button.isEnabled
+            case .plain:
+                button.alphaValue = button.isEnabled ? 1.0: 0.5
+        }
+    }
+    
+    var shouldRenderNativeBackground: Bool {
+        switch self {
+            case .bordered:
+                true
+            case .plain:
+                false
+        }
+    }
+    
+    func drawFocusRingMask(on button: NSCustomButton) {
+        switch self {
+            case .bordered:
+                button.cell.drawFocusRingMask(withFrame: button.bounds, in: button)
+            case .plain:
+                let maskPath = NSBezierPath(rect: button.bounds)
+                maskPath.fill()
+        }
+    }
+    
+    func setConstraints(_ button: NSCustomButton) {
+        let child = button.subviews.first!
+        var constraints = [
+            child.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: NSCustomButton.horizontalPadding),
+            child.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -NSCustomButton.horizontalPadding),
+            child.topAnchor.constraint(equalTo: button.topAnchor, constant: NSCustomButton.verticalPadding),
+            child.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -NSCustomButton.verticalPadding)
+        ]
+        
+        guard self != .plain else {
+            child.removeConstraints(constraints)
+            return
+        }
+        
+        NSLayoutConstraint.activate(constraints)
+    }
+    
+    func handleHighlight(_ button: NSCustomButton) {
+        switch self {
+            case .bordered:
+                button.cell.isHighlighted = button.isHighlighted
+            case .plain:
+                if button.isHighlighted {
+                    button.alphaValue = 0.75
+                } else {
+                    button.alphaValue = 1.0
+                }
+        }
     }
 }

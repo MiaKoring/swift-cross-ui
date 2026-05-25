@@ -28,7 +28,6 @@ public final class AppKitBackend: FullAppBackend {
         .radioGroup,
     ]
     public let canOverrideWindowColorScheme = true
-    public let buttonPadding = SIMD2<Int>(22, 8)
 
     public var scrollBarWidth: Int {
         // We assume that all scrollers have their controlSize set to `.regular` by default.
