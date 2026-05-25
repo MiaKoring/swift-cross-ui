@@ -11,7 +11,7 @@ public struct AlertActionsBuilder {
     public static func buildPartialBlock(first: Button<Text>) -> [AlertAction] {
         [
             AlertAction(
-                label: first.body.view0.string,
+                label: first.body.string,
                 action: first.action
             )
         ]
@@ -27,7 +27,7 @@ public struct AlertActionsBuilder {
     ) -> [AlertAction] {
         accumulated + [
             AlertAction(
-                label: next.body.view0.string,
+                label: next.body.string,
                 action: next.action
             )
         ]

@@ -30,8 +30,7 @@ extension AppKitBackend {
         wrapping child: Widget
     ) -> NSView {
         let button = NSCustomButton()
-        
-        print(child)
+        button.translatesAutoresizingMaskIntoConstraints = false
         
         button.addSubview(child)
         child.translatesAutoresizingMaskIntoConstraints = false
@@ -40,13 +39,8 @@ extension AppKitBackend {
             child.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: NSCustomButton.horizontalPadding),
             child.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -NSCustomButton.horizontalPadding),
             child.topAnchor.constraint(equalTo: button.topAnchor, constant: NSCustomButton.verticalPadding),
-            child.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -NSCustomButton.verticalPadding),
-            child.widthAnchor.constraint(greaterThanOrEqualToConstant: 20),
-            child.heightAnchor.constraint(greaterThanOrEqualToConstant: 20)
+            child.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -NSCustomButton.verticalPadding)
         ])
-        
-        child.wantsLayer = true
-        button.wantsLayer = true
         
         return button
     }
@@ -61,11 +55,13 @@ extension AppKitBackend {
         button.cell.isEnabled = environment.isEnabled
         
         button.action = action
+        
+        setSize(of: button.subviews.first!, to: .init(50, 50))
     }
 }
 
 public final class NSCustomButton: NSView {
-    static let horizontalPadding: CGFloat = 8.0
+    static let horizontalPadding: CGFloat = 11.0
     static let verticalPadding: CGFloat = 4.0
     
     fileprivate var action: (() -> Void)?

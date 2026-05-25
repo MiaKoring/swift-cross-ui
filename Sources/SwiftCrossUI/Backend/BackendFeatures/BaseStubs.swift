@@ -232,6 +232,8 @@ extension BackendFeatures.BaseStubs {
     ) {
         todo()
     }
+    
+    public var buttonPadding: SIMD2<Int> { SIMD2(22, 8) }
 
     public func createToggle() -> Widget {
         todo()

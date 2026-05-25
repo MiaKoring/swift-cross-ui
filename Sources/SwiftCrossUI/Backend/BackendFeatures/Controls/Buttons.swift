@@ -4,6 +4,7 @@ extension BackendFeatures {
     /// These are used by ``Button`` and ``Menu``.
     @MainActor
     public protocol Buttons: Core {
+        var buttonPadding: SIMD2<Int> { get }
         /// Creates a labelled button with an action triggered on click/tap.
         ///
         /// Predominantly used by ``SimpleButton``.

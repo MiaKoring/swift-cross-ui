@@ -1,7 +1,7 @@
 /// A control that initiates an action.
 public struct Button<Content: View>: Sendable {
     /// The label to show on the button.
-    public var body: TupleView1<Content>
+    public var body: Content
     /// The action to be performed when the button is clicked.
     package var action: @MainActor @Sendable () -> Void
     
@@ -14,7 +14,7 @@ public struct Button<Content: View>: Sendable {
         _ label: String,
         action: @escaping @MainActor @Sendable () -> Void = {}
     ) where Content == Text {
-        self.body = TupleView1(Text(label))
+        self.body = Text(label)
         self.action = action
     }
     
@@ -23,37 +23,35 @@ public struct Button<Content: View>: Sendable {
         action: @escaping @MainActor @Sendable () -> Void = {},
         @ViewBuilder label: @escaping @MainActor @Sendable () -> Content
     ) {
-        self.body = TupleView1(label())
+        self.body = label()
         self.action = action
     }
 }
 
 @MainActor
 extension Button: TypeSafeView {
-    typealias Children = TupleView1<Content>.Children
+    typealias Children = ButtonLabelChild<Content>
     
     func children<Backend: BaseAppBackend>(
         backend: Backend,
         snapshots: [ViewGraphSnapshotter.NodeSnapshot]?,
         environment: EnvironmentValues
     ) -> Children {
-        body.children(
-            backend: backend,
-            snapshots: snapshots,
-            environment: environment
-        )
+        let children = Children()
+        children.child = AnyViewGraphNode(for: body, backend: backend, environment: environment)
+        return children
     }
     
     func asWidget<Backend: BaseAppBackend>(
         _ children: Children,
         backend: Backend
-    ) -> Backend.Widget {        
-        backend.createButton(wrapping: children.child0.widget.into())
+    ) -> Backend.Widget {
+        backend.createButton(wrapping: children.widgets.first!.into())
     }
     
     func computeLayout<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
-        children: TupleView1<Content>.Children,
+        children: Children,
         proposedSize: ProposedViewSize,
         environment: EnvironmentValues,
         backend: Backend
@@ -69,8 +67,8 @@ extension Button: TypeSafeView {
         //   than its content I think.
         //   See: https://github.com/moreSwift/swift-cross-ui/blob/27f50579c52e79323c3c368512d37e95af576c25/Sources/SwiftCrossUI/Scenes/WindowGroupNode.swift#L140
         
-        let childrenResult = children.child0.computeLayout(
-            with: body.view0,
+        let childrenResult = children.child!.computeLayout(
+            with: body,
             proposedSize: proposedSize,
             environment: environment
         )
@@ -82,22 +80,35 @@ extension Button: TypeSafeView {
         )
         
         let size = SIMD2(
-            Int(childrenResult.size.width) + 16,
-            Int(childrenResult.size.height) + 8
+            Int(childrenResult.size.width) + backend.buttonPadding.x,
+            Int(childrenResult.size.height) + backend.buttonPadding.y
         )
-        
-        print("size: \(size)")
         
         return ViewLayoutResult.leafView(size: ViewSize(size))
     }
     
     func commit<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
-        children: TupleView1<Content>.Children,
+        children: Children,
         layout: ViewLayoutResult,
         environment: EnvironmentValues,
         backend: Backend
     ) {
         backend.setSize(of: widget, to: layout.size.vector)
+        children.child?.commit()
+    }
+}
+
+class ButtonLabelChild<Child: View>: ViewGraphNodeChildren {
+    var child: AnyViewGraphNode<Child>?
+    
+    var widgets: [AnyWidget] {
+        if let child { return [child.widget] }
+        return []
+    }
+    
+    var erasedNodes: [ErasedViewGraphNode] {
+        if let child { return [ErasedViewGraphNode(wrapping: child)] }
+        return []
     }
 }

@@ -59,6 +59,10 @@ struct ControlsApp: App {
                 ScrollView {
                     VStack(spacing: 30) {
                         VStack {
+                            HStack {
+                                Button("Lol") {}
+                                Menu("Lol", items: { Button("Lol")})
+                            }
                             Text("Button (persisted)")
                             Button("Click me!") {
                                 count += 1
