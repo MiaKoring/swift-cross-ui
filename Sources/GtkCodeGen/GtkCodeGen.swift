@@ -132,6 +132,7 @@ struct GtkCodeGen {
             "Gesture",
             "EventController",
             "GestureLongPress",
+            "GestureDrag",
             "GLArea",
             "DrawingArea",
             "CheckButton",

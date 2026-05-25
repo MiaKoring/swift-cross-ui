@@ -969,25 +969,6 @@ public final class GtkBackend:
 
     // MARK: Controls
 
-    public func createButton() -> Widget {
-        return Button()
-    }
-
-    public func updateButton(
-        _ button: Widget,
-        label: String,
-        environment: EnvironmentValues,
-        action: @escaping () -> Void
-    ) {
-        // TODO: Update button label color using environment
-        let button = button as! Gtk.Button
-        button.sensitive = environment.isEnabled
-        button.label = label
-        button.clicked = { _ in action() }
-        button.css.clear()
-        button.css.set(properties: Self.cssProperties(for: environment, isControl: true))
-    }
-
     public func createToggle() -> Widget {
         return ToggleButton()
     }
@@ -1835,7 +1816,7 @@ public final class GtkBackend:
         return container
     }
 
-    private static func cssProperties(
+    static func cssProperties(
         for environment: EnvironmentValues,
         isControl: Bool = false
     ) -> [CSSProperty] {
