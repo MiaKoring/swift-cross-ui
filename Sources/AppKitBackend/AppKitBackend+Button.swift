@@ -69,25 +69,14 @@ public final class NSCustomButton: NSView {
     fileprivate let cell = NSButtonCell()
     
     // Whether left mousebutton is pressed on this view.
-    private var isPressed = false {
+    private var isPressed = false
+    
+    private var isHighlighted = false {
         didSet {
-            if !isPressed && !isKeyboardDown, !suppressMouseAction {
-                action?()
-            }
-            suppressMouseAction = false
+            cell.isHighlighted = isHighlighted
+            self.needsDisplay = true
         }
     }
-    
-    // Whether the spacebar (button activation) is pressed on this view.
-    private var isKeyboardDown = false {
-        didSet {
-            if !isKeyboardDown && !isPressed {
-                action?()
-            }
-        }
-    }
-    
-    private var suppressMouseAction = false
     
     init() {
         cell.title = ""
@@ -141,33 +130,42 @@ public final class NSCustomButton: NSView {
         let characters = event.charactersIgnoringModifiers ?? ""
         
         if characters == " " {
-            isKeyboardDown = true
+            isHighlighted = true
+            action?()
+            
+            // Task with Task.sleep could be used in the future,
+            // it has a min version requirement of macOS 13.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.isHighlighted = false
+            }
         } else {
             super.keyDown(with: event)
         }
     }
     
-    override public func keyUp(with event: NSEvent) {
-        let characters = event.charactersIgnoringModifiers ?? ""
-        
-        if characters == " " {
-            isKeyboardDown = false
-        } else {
-            super.keyUp(with: event)
-        }
-    }
-    
     override public func mouseDown(with _: NSEvent) {
         isPressed = true
+        isHighlighted = true
+    }
+    
+    override public func mouseDragged(with event: NSEvent) {
+        let pointInView = convert(event.locationInWindow, from: nil)
+        
+        if isPressed && bounds.contains(pointInView) {
+            isHighlighted = true
+        } else {
+            isHighlighted = false
+        }
     }
     
     override public func mouseUp(with event: NSEvent) {
         let pointInView = self.convert(event.locationInWindow, from: nil)
         
-        if !bounds.contains(pointInView) {
-            suppressMouseAction = true
+        if bounds.contains(pointInView) {
+            action?()
         }
         
         isPressed = false
+        isHighlighted = false
     }
 }
