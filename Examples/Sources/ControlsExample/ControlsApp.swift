@@ -66,7 +66,7 @@ struct ControlsApp: App {
                             Text("Button (persisted)")
                             Button("Click me!") {
                                 count += 1
-                            }
+                            }.disabled(false)
                             
                             Button {
                                 count += 1

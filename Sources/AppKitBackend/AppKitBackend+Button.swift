@@ -71,8 +71,9 @@ public final class NSCustomButton: NSView {
     
     var isEnabled = true {
         didSet {
-            self.alphaValue = isEnabled ? 1.0: 0.5
+            cell.isEnabled = isEnabled
             noteFocusRingMaskChanged()
+            self.needsDisplay = true
         }
     }
     

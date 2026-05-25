@@ -1,5 +1,7 @@
 /// A control that initiates an action.
 public struct Button<Content: View>: Sendable {
+    @Environment(\.foregroundColor) var color
+    @Environment(\.isEnabled) var isEnabled
     /// The label to show on the button.
     public var body: Content
     /// The action to be performed when the button is clicked.
@@ -67,10 +69,19 @@ extension Button: TypeSafeView {
         //   than its content I think.
         //   See: https://github.com/moreSwift/swift-cross-ui/blob/27f50579c52e79323c3c368512d37e95af576c25/Sources/SwiftCrossUI/Scenes/WindowGroupNode.swift#L140
         
+        var childEnvironment = environment
+        
+        if !environment.isEnabled {
+            childEnvironment = childEnvironment.with(
+                \.foregroundColor,
+                 environment.foregroundColor ?? .gray.opacity(0.5)
+            )
+        }
+        
         let childrenResult = children.child!.computeLayout(
             with: body,
             proposedSize: proposedSize,
-            environment: environment
+            environment: childEnvironment
         )
         
         backend.updateButton(
