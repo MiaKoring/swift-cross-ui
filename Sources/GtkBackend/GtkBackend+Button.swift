@@ -53,8 +53,8 @@ extension GtkBackend {
 }
 
 fileprivate final class GtkCustomButton: CustomButton {
-    static let horizontalPadding: Double = 12
-    static let verticalPadding: Double = 6
+    static let horizontalPadding: Double = 9
+    static let verticalPadding: Double = 4
     
     fileprivate var action: (() -> Void)?
     fileprivate var buttonStyle: ButtonStyle = .bordered {
@@ -72,7 +72,7 @@ fileprivate final class GtkCustomButton: CustomButton {
     
     fileprivate var isHovered = false {
         didSet {
-            
+            buttonStyle.setHoverStyle(self)
         }
     }
     
@@ -187,6 +187,11 @@ extension ButtonStyle {
         }
     }
     
+    // Styles are based on
+    // https://github.com/GNOME/gtk/blob/main/gtk/theme/Default/_common.scss
+    // and
+    // https://github.com/GNOME/gtk/blob/main/gtk/theme/Default/_colors-public.scss
+    // where possible we use theme variables to avoid hardcoding.
     fileprivate func setStyle(_ button: GtkCustomButton) {
         button.css.clear()
         switch self {
@@ -194,7 +199,7 @@ extension ButtonStyle {
                 button.css.set(properties: [
                     .init(key: "background-color", value: "@theme_base_color"),
                     .init(key: "border", value: "1px solid @borders"),
-                    .init(key: "border-radius", value: "6px"),
+                    .init(key: "border-radius", value: "5px"),
                     .init(
                         key: "padding",
                         value: """
@@ -211,9 +216,15 @@ extension ButtonStyle {
     fileprivate func setHoverStyle(_ button: GtkCustomButton) {
         switch self {
             case .bordered:
-                button.css.set(properties: [
-                    .init(key: "background-color", value: "@theme_")
-                ])
+                if button.isHovered {
+                    button.css.set(properties: [
+                        .init(key: "background-color", value: "shade(@theme_base_color, 0.86)")
+                    ])
+                } else {
+                    button.css.set(properties: [
+                        .init(key: "background-color", value: "@theme_base_color")
+                    ])
+                }
             case .plain:
                 break
         }

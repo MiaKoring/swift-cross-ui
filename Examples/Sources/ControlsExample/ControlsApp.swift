@@ -61,7 +61,8 @@ struct ControlsApp: App {
                         VStack {
                             HStack {
                                 Button("Lol") {}
-                                Menu("Lol", items: { Button("Lol") { } })
+                                Toggle("Toggle me!", isOn: $exampleButtonState)
+                                    .toggleStyle(.button)
                             }
                             Text("Button (persisted)")
                             Button("Click me!") {
