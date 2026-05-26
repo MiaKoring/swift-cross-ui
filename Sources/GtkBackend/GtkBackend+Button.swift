@@ -76,6 +76,12 @@ fileprivate final class GtkCustomButton: CustomButton {
         }
     }
     
+    fileprivate var isFocused = false {
+        didSet {
+            buttonStyle.setFocusRing(self)
+        }
+    }
+    
     // Whether left mousebutton is pressed on this view.
     private var isPressed = false
     
@@ -93,6 +99,10 @@ fileprivate final class GtkCustomButton: CustomButton {
         addClickGesture()
         addDragGesture()
         addHoverGesture()
+        addFocusController()
+        addKeyController()
+        
+        focusable = true
     }
     
     private func addClickGesture() {
@@ -166,6 +176,41 @@ fileprivate final class GtkCustomButton: CustomButton {
         
         addEventController(hoverGesture)
     }
+    
+    private func addFocusController() {
+        let focusController = EventControllerFocus()
+        
+        focusController.enter = { [weak self] _ in
+            guard let self else { return }
+            isFocused = true
+        }
+        
+        focusController.leave = { [weak self] _ in
+            guard let self else { return }
+            isFocused = false
+        }
+        
+        addEventController(focusController)
+    }
+    
+    private func addKeyController() {
+        /*let keyController = EventControllerKey()
+        keyController.keyPressed = { [weak self] controller, keyVal, _, modifers in
+            guard
+                let self,
+                modifers == GDK_NO_MODIFIER_MASK
+            else { return }
+            
+            if keyVal == GDK_KEY_space {
+                action?()
+                return true
+            } else {
+                return false
+            }
+        }
+        
+        addEventController(keyController)*/
+    }
 }
 
 extension ButtonStyle {
@@ -187,20 +232,19 @@ extension ButtonStyle {
         }
     }
     
-    // Styles are based on
-    // https://github.com/GNOME/gtk/blob/main/gtk/theme/Default/_common.scss
-    // and
-    // https://github.com/GNOME/gtk/blob/main/gtk/theme/Default/_colors-public.scss
-    // where possible we use theme variables to avoid hardcoding.
+    // Styles are based on research made in:
+    // https://github.com/GNOME/gtk/blob/main/gtk/theme/Default
+    //
+    // Where possible we use theme variables to avoid hardcoding.
     fileprivate func setStyle(_ button: GtkCustomButton) {
         button.css.clear()
         switch self {
             case .bordered:
                 button.css.set(properties: [
-                    .init(key: "background-color", value: "@theme_base_color"),
-                    .init(key: "border", value: "1px solid @borders"),
-                    .init(key: "border-radius", value: "5px"),
-                    .init(
+                    CSSProperty(key: "background-color", value: "@theme_base_color"),
+                    CSSProperty(key: "border", value: "1px solid @borders"),
+                    CSSProperty(key: "border-radius", value: "5px"),
+                    CSSProperty(
                         key: "padding",
                         value: """
                             \(GtkCustomButton.verticalPadding)px \
@@ -218,15 +262,33 @@ extension ButtonStyle {
             case .bordered:
                 if button.isHovered {
                     button.css.set(properties: [
-                        .init(key: "background-color", value: "shade(@theme_base_color, 0.86)")
+                        CSSProperty(key: "background-color", value: "shade(@theme_base_color, 0.86)")
                     ])
                 } else {
                     button.css.set(properties: [
-                        .init(key: "background-color", value: "@theme_base_color")
+                        CSSProperty(key: "background-color", value: "@theme_base_color")
                     ])
                 }
             case .plain:
                 break
+        }
+    }
+    
+    fileprivate func setFocusRing(_ button: GtkCustomButton) {
+        guard button.isFocused else {
+            button.css.set(property: CSSProperty(key: "outline", value: "none"))
+            return
+        }
+        
+        switch self {
+            case .bordered, .plain:
+                button.css.set(properties: [
+                    CSSProperty(
+                        key: "outline",
+                        value: "2px solid color-mix(in srgb, @theme_selected_bg_color 50%, transparent)"
+                    ),
+                    CSSProperty(key: "outline-offset", value: "-2px")
+                ])
         }
     }
 }

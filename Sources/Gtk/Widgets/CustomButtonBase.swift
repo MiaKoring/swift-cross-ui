@@ -15,4 +15,6 @@ open class CustomButton: Widget {
         children.insert(child, at: index)
         child.parentWidget = self
     }
+    
+    @GObjectProperty(named: "focusable") public var focusable: Bool
 }
