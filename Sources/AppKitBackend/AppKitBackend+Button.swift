@@ -111,6 +111,10 @@ public final class NSCustomButton: NSView {
         super.init(frame: frameRect)
     }
     
+    public override func accessibilityRole() -> NSAccessibility.Role? {
+        .button
+    }
+    
     override public func draw(_ dirtyRect: NSRect) {
         if buttonStyle.shouldRenderNativeBackground {
             cell.drawBezel(withFrame: self.bounds, in: self)

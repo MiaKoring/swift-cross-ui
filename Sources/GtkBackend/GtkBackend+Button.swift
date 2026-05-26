@@ -26,6 +26,7 @@ extension GtkBackend {
     public func createButton(wrapping widget: Widget) -> Widget {
         let button = GtkCustomButton()
         button.put(widget, index: 0, x: 0, y: 0)
+        
         return button
     }
     
@@ -36,56 +37,65 @@ extension GtkBackend {
     ) {
         let button = button as! GtkCustomButton
         button.action = action
-        button.buttonStyle = environment.buttonStyle ?? .plain
+        button.buttonStyle = environment.buttonStyle ?? .bordered
         button.isEnabled = environment.isEnabled
     }
     
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
         switch environment.buttonStyle ?? .bordered {
             case .bordered: SIMD2<Int>(
-                GtkCustomButton.horizontalPadding * 2,
-                GtkCustomButton.verticalPadding * 2
+                Int(GtkCustomButton.horizontalPadding * 2),
+                Int(GtkCustomButton.verticalPadding * 2)
             )
             case .plain: SIMD2<Int>(0, 0)
         }
     }
 }
 
-public final class GtkCustomButton: Gtk.Fixed {
-    #if os(macOS)
-    static let horizontalPadding: Int = 11
-    static let verticalPadding: Int = 4
-    #else
-    static let horizontalPadding: Int = 11
-    static let verticalPadding: Int = 4
-    #endif
+fileprivate final class GtkCustomButton: CustomButton {
+    static let horizontalPadding: Double = 12
+    static let verticalPadding: Double = 6
     
     fileprivate var action: (() -> Void)?
     fileprivate var buttonStyle: ButtonStyle = .bordered {
-        didSet { }
+        didSet {
+            buttonStyle.setStyle(self)
+        }
     }
     
-    var isEnabled = true {
+    fileprivate var isEnabled = true {
         didSet {
             sensitive = isEnabled
             buttonStyle.applyModifications(self)
         }
     }
     
+    fileprivate var isHovered = false {
+        didSet {
+            
+        }
+    }
+    
     // Whether left mousebutton is pressed on this view.
     private var isPressed = false
     
-    public var isHighlighted = false {
+    fileprivate var isHighlighted = false {
         didSet {
             buttonStyle.handleHighlight(self)
         }
     }
     
-    var dragStart = SIMD2(0.0, 0.0)
+    private var dragStart = SIMD2(0.0, 0.0)
     
-    override init() {
-        super.init()
+    init() {
+        super.init(gtk_custom_button_new())
         
+        addClickGesture()
+        addDragGesture()
+        addHoverGesture()
+    }
+    
+    private func addClickGesture() {
         let clickGesture = GestureClick()
         clickGesture.pressed = { [weak self] _, _, _, _ in
             guard let self, isEnabled else { return }
@@ -107,6 +117,10 @@ public final class GtkCustomButton: Gtk.Fixed {
             isHighlighted = false
         }
         
+        addEventController(clickGesture)
+    }
+    
+    private func addDragGesture() {
         let dragGesture = GestureDrag()
         
         dragGesture.dragBegin = { [weak self] _, startX, startY in
@@ -126,7 +140,7 @@ public final class GtkCustomButton: Gtk.Fixed {
             
             if
                 (0.0...Double(width)).contains(currentX)
-                && (0.0...Double(height)).contains(currentY)
+                    && (0.0...Double(height)).contains(currentY)
             {
                 isHighlighted = true
             } else {
@@ -134,20 +148,35 @@ public final class GtkCustomButton: Gtk.Fixed {
             }
         }
         
-        addEventController(clickGesture)
         addEventController(dragGesture)
+    }
+    
+    private func addHoverGesture() {
+        let hoverGesture = EventControllerMotion()
+        
+        hoverGesture.enter = { [weak self] _, _, _ in
+            guard let self else { return }
+            isHovered = true
+        }
+        
+        hoverGesture.leave = { [weak self] _ in
+            guard let self else { return }
+            isHovered = false
+        }
+        
+        addEventController(hoverGesture)
     }
 }
 
 extension ButtonStyle {
-    func applyModifications(_ button: GtkCustomButton) {
+    fileprivate func applyModifications(_ button: GtkCustomButton) {
         switch self {
             case .plain, .bordered:
                 button.opacity = button.isEnabled ? 1.0: 0.5
         }
     }
     
-    func handleHighlight(_ button: GtkCustomButton) {
+    fileprivate func handleHighlight(_ button: GtkCustomButton) {
         switch self {
             case .plain, .bordered:
                 if button.isHighlighted {
@@ -155,6 +184,38 @@ extension ButtonStyle {
                 } else {
                     button.opacity = 1.0
                 }
+        }
+    }
+    
+    fileprivate func setStyle(_ button: GtkCustomButton) {
+        button.css.clear()
+        switch self {
+            case .bordered:
+                button.css.set(properties: [
+                    .init(key: "background-color", value: "@theme_base_color"),
+                    .init(key: "border", value: "1px solid @borders"),
+                    .init(key: "border-radius", value: "6px"),
+                    .init(
+                        key: "padding",
+                        value: """
+                            \(GtkCustomButton.verticalPadding)px \
+                            \(GtkCustomButton.horizontalPadding)px
+                        """
+                    )
+                ])
+            case .plain:
+                break
+        }
+    }
+    
+    fileprivate func setHoverStyle(_ button: GtkCustomButton) {
+        switch self {
+            case .bordered:
+                button.css.set(properties: [
+                    .init(key: "background-color", value: "@theme_")
+                ])
+            case .plain:
+                break
         }
     }
 }
