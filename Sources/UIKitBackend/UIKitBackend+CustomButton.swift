@@ -66,11 +66,11 @@ final class UICustomButton: UIControl {
     
     public override var isHighlighted: Bool {
         didSet {
-            self.alpha = isHighlighted ? 0.75 : 1.0
+            buttonStyle.handleHighlight(self)
         }
     }
     
-    public override var isEnabled: Bool {
+    override public var isEnabled: Bool {
         didSet {
             self.alpha = isEnabled ? 1.0 : 0.5
         }
@@ -150,5 +150,14 @@ extension ButtonStyle {
         }
         
         button.button.isHidden = hideButton
+    }
+    
+    fileprivate func handleHighlight(_ button: UICustomButton) {
+        switch self {
+            case .bordered:
+                button.button.isHighlighted = button.isHighlighted
+            case .plain, .borderless:
+                button.alpha = button.isHighlighted ? 0.75 : 1.0
+        }
     }
 }
