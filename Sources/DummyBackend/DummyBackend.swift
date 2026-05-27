@@ -77,6 +77,12 @@ public final class DummyBackend:
         public var font: Font.Resolved?
         public var action: (() -> Void)?
     }
+    
+    public class CustomButton: Widget {
+        public var label: Widget?
+        public var action: (() -> Void)?
+        public var buttonStyle: ButtonStyle = .bordered
+    }
 
     public class ToggleButton: Widget {
         public var label = ""
@@ -594,11 +600,11 @@ public final class DummyBackend:
         table.rowHeights = rowHeights
     }
 
-    public func createButton() -> Widget {
+    public func createSimpleButton() -> Widget {
         Button()
     }
 
-    public func updateButton(
+    public func updateSimpleButton(
         _ button: Widget,
         label: String,
         environment: EnvironmentValues,
@@ -607,6 +613,27 @@ public final class DummyBackend:
         let button = button as! Button
         button.label = label
         button.action = action
+    }
+    
+    public func createButton(wrapping widget: Widget) -> Widget {
+        let button = CustomButton()
+        button.label = widget
+        
+        return button
+    }
+    
+    public func updateButton(
+        _ button: Widget,
+        environment: EnvironmentValues,
+        action: @escaping () -> Void
+    ) {
+        let button = button as! CustomButton
+        button.buttonStyle = environment.buttonStyle ?? .bordered
+        button.action = action
+    }
+    
+    public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
+        SIMD2<Int>(0, 0)
     }
 
     public func createToggle() -> Widget {
