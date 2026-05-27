@@ -89,12 +89,12 @@ extension Button: ToolbarItem {
     }
 
     public func createBarButtonItem(in environment: EnvironmentValues) -> ItemType {
-        ItemType(title: label, callback: action)
+        ItemType(title: label ?? "", callback: action)
     }
 
     public func updateBarButtonItem(_ item: inout ItemType, in environment: EnvironmentValues) {
         item.callback = action
-        item.title = label
+        item.title = label ?? ""
     }
 }
 

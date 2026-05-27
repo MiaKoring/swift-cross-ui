@@ -7,6 +7,8 @@ public struct Button<Content: View>: Sendable {
     /// The action to be performed when the button is clicked.
     package var action: @MainActor @Sendable () -> Void
     
+    public let label: String?
+    
     /// Creates a button that displays a custom label.
     ///
     /// - Parameters:
@@ -18,6 +20,7 @@ public struct Button<Content: View>: Sendable {
     ) where Content == Text {
         self.body = Text(label)
         self.action = action
+        self.label = label
     }
     
     @MainActor
@@ -27,6 +30,7 @@ public struct Button<Content: View>: Sendable {
     ) {
         self.body = label()
         self.action = action
+        self.label = nil
     }
 }
 

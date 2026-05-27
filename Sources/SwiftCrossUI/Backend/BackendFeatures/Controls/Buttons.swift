@@ -4,7 +4,6 @@ extension BackendFeatures {
     /// These are used by ``Button`` and ``Menu``.
     @MainActor
     public protocol Buttons: Core {
-        func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int>
         /// Creates a labelled button with an action triggered on click/tap.
         ///
         /// Predominantly used by ``SimpleButton``.
@@ -27,12 +26,14 @@ extension BackendFeatures {
             action: @escaping () -> Void
         )
         
-        func createButton(wrapping: Widget) -> Widget
+        func createButton(wrapping widget: Widget) -> Widget
         
         func updateButton(
             _ button: Widget,
             environment: EnvironmentValues,
             action: @escaping () -> Void
         )
+        
+        func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int>
     }
 }

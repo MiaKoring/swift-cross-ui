@@ -50,7 +50,7 @@ struct ControlsApp: App {
     @State var isProgressViewResizable = true
     @State var pickerStyle: BuiltInPickerStyle? = .automatic
     
-    @State var isPlain = true
+    @State var isPlain = false
 
     @Environment(\.supportedDatePickerStyles) var supportedDatePickerStyles
     @Environment(\.isPickerStyleSupported) var isPickerStyleSupported
@@ -63,14 +63,14 @@ struct ControlsApp: App {
                         VStack {
                             HStack {
                                 Button("Lol") {}
-                                    .buttonStyle(.borderless)
+                                    .buttonStyle(.bordered)
                                 Toggle("isPlain", isOn: $isPlain)
-                                    .toggleStyle(.button)
+                                    .toggleStyle(.switch)
                             }
                             Text("Button (persisted)")
                             Button("Click me!") {
                                 count += 1
-                            }.buttonStyle(.plain)
+                            }.buttonStyle(.bordered)
                             
                             Button {
                                 count += 1
