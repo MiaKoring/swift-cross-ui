@@ -236,6 +236,10 @@ extension BackendFeatures.BaseStubs {
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
         todo()
     }
+    
+    public func defaultButtonStyle() -> ButtonStyle {
+        todo()
+    }
 
     public func createToggle() -> Widget {
         todo()

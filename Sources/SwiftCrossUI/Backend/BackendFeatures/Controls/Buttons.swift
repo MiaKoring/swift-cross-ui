@@ -35,5 +35,7 @@ extension BackendFeatures {
         )
         
         func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int>
+        
+        func defaultButtonStyle() -> ButtonStyle
     }
 }

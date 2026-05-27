@@ -70,7 +70,7 @@ struct ControlsApp: App {
                             Text("Button (persisted)")
                             Button("Click me!") {
                                 count += 1
-                            }.buttonStyle(.bordered)
+                            }
                             
                             Button {
                                 count += 1

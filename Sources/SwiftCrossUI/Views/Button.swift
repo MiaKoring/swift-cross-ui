@@ -75,17 +75,27 @@ extension Button: TypeSafeView {
         
         var childEnvironment = environment
         
-        if !environment.isEnabled, environment.buttonStyle != .plain {
+        let defaultButtonStyle = backend.defaultButtonStyle()
+        
+        if !environment.isEnabled, environment.buttonStyle ?? defaultButtonStyle != .plain {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
                  environment.foregroundColor ?? .gray.opacity(0.5)
             )
         }
         
-        if environment.buttonStyle == .borderless && backend.deviceClass == .desktop {
+        if
+            environment.buttonStyle ?? defaultButtonStyle == .borderless
+            && backend.deviceClass == .desktop
+        {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
                  environment.foregroundColor ?? .gray
+            )
+        } else if environment.buttonStyle ?? defaultButtonStyle == .borderless {
+            childEnvironment = childEnvironment.with(
+                \.foregroundColor,
+                 environment.foregroundColor ?? .blue // should be replaced with accent
             )
         }
         

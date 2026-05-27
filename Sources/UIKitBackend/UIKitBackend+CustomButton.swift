@@ -28,7 +28,14 @@ extension UIKitBackend {
     }
     
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
-        SIMD2(Int(UICustomButton.horizontalPadding * 2), Int(UICustomButton.verticalPadding * 2))
+        switch environment.buttonStyle ?? .borderless {
+            case .plain, .borderless: SIMD2(0, 0)
+            case .bordered: SIMD2(Int(UICustomButton.horizontalPadding * 2), Int(UICustomButton.verticalPadding * 2))
+        }
+    }
+    
+    public func defaultButtonStyle() -> ButtonStyle {
+        .borderless
     }
 }
 
@@ -36,30 +43,10 @@ final class CustomButtonWidget: WrapperWidget<UICustomButton> {
     init(button: UICustomButton) {
         super.init(child: button)
         
-        let constraints = [
-            button
-                .leadingAnchor
-                .constraint(
-                    equalTo: leadingAnchor
-                ),
-            button
-                .trailingAnchor
-                .constraint(
-                    equalTo: trailingAnchor
-                ),
-            button
-                .topAnchor
-                .constraint(
-                    equalTo: topAnchor
-                ),
-            button
-                .bottomAnchor
-                .constraint(
-                    equalTo: bottomAnchor
-                ),
-        ]
-        
-        NSLayoutConstraint.activate(constraints)
+        NSLayoutConstraint.activate([
+            button.centerXAnchor.constraint(equalTo: centerXAnchor),
+            button.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
     }
 }
 
@@ -70,15 +57,12 @@ final class UICustomButton: UIControl {
     
     var buttonStyle: ButtonStyle = .borderless {
         didSet {
-            buttonStyle.setConstraints(self)
             buttonStyle.updateBackground(self)
         }
     }
     
-    static let horizontalPadding: CGFloat = 11
-    static let verticalPadding: CGFloat = 4
-    
-    fileprivate var attachedConstraints = [NSLayoutConstraint]()
+    static let horizontalPadding: CGFloat = 12
+    static let verticalPadding: CGFloat = 6
     
     public override var isHighlighted: Bool {
         didSet {
@@ -118,13 +102,12 @@ final class UICustomButton: UIControl {
     
     func setupConstraints() {
         guard
-            subviews.count == 2,
-            attachedConstraints.isEmpty
+            subviews.count == 2
         else { return }
         let background = subviews[0]
         let child = subviews[1]
         
-        let backgroundConstraints = [
+        NSLayoutConstraint.activate([
             background
                 .leadingAnchor
                 .constraint(
@@ -145,65 +128,27 @@ final class UICustomButton: UIControl {
                 .constraint(
                     equalTo: bottomAnchor
                 ),
-        ]
+        ])
         
-        NSLayoutConstraint.activate(backgroundConstraints)
-        /*
-        attachedConstraints = [
-            child
-                .leadingAnchor
-                .constraint(
-                    equalTo: leadingAnchor,
-                    constant: 0
-                ),
-            child
-                .trailingAnchor
-                .constraint(
-                    equalTo: trailingAnchor,
-                    constant: 0
-                ),
-            child
-                .topAnchor
-                .constraint(
-                    equalTo: topAnchor,
-                    constant: 0
-                ),
-            child
-                .bottomAnchor
-                .constraint(
-                    equalTo: bottomAnchor,
-                    constant: 0
-                ),
-        ]
-        
-        NSLayoutConstraint.activate(attachedConstraints)*/
-        attachedConstraints = [
+        NSLayoutConstraint.activate([
             child.centerXAnchor.constraint(equalTo: centerXAnchor),
             child.centerYAnchor.constraint(equalTo: centerYAnchor),
-        ]
-        NSLayoutConstraint.activate(attachedConstraints)
+        ])
     }
 }
 
 extension ButtonStyle {
     fileprivate func updateBackground(_ button: UICustomButton) {
-        button.button.isHidden = [.plain, .borderless].contains(self)
-    }
-    
-    fileprivate func setConstraints(_ button: UICustomButton) {
-        /*guard
-            ![.plain, .borderless].contains(self),
-            button.attachedConstraints.count == 4
-        else {
-            for constraint in button.attachedConstraints {
-                constraint.constant = 0
-            }
-            return
+        guard #available(iOS 15.0, *) else { return }
+        var hideButton = false
+        
+        switch self {
+            case .bordered:
+                button.button.configuration = .bordered()
+            case .plain, .borderless:
+                hideButton = true
         }
         
-        button.attachedConstraints[0].constant = UICustomButton.horizontalPadding
-        button.attachedConstraints[1].constant = -UICustomButton.horizontalPadding
-        button.attachedConstraints[2].constant = UICustomButton.verticalPadding
-        button.attachedConstraints[3].constant = -UICustomButton.verticalPadding*/
+        button.button.isHidden = hideButton
     }
 }

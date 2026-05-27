@@ -54,6 +54,10 @@ extension Gtk3Backend {
             case .plain, .borderless: SIMD2<Int>(0, 0)
         }
     }
+    
+    public func defaultButtonStyle() -> ButtonStyle {
+        .bordered
+    }
 }
 
 fileprivate final class GtkCustomButton: Gtk3.Button {

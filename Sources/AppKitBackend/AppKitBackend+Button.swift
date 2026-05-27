@@ -64,6 +64,10 @@ extension AppKitBackend {
             case .plain, .borderless: SIMD2<Int>(0, 0)
         }
     }
+    
+    public func defaultButtonStyle() -> ButtonStyle {
+        .bordered
+    }
 }
 
 public final class NSCustomButton: NSView {
@@ -75,8 +79,6 @@ public final class NSCustomButton: NSView {
     fileprivate var buttonStyle: ButtonStyle = .bordered {
         didSet { updateButtonAppearance() }
     }
-    
-    fileprivate var attachedConstraints = [NSLayoutConstraint]()
     
     var isEnabled = true {
         didSet { updateButtonAppearance() }
@@ -223,45 +225,17 @@ public final class NSCustomButton: NSView {
     
     private func updateButtonAppearance() {
         buttonStyle.applyModifications(self)
-        buttonStyle.setConstraints(self)
         noteFocusRingMaskChanged()
         self.needsDisplay = true
     }
     
     fileprivate func setupContraints() {
-        guard
-            let child = subviews.first,
-            attachedConstraints.isEmpty
-        else { return }
+        guard let child = subviews.first else { return }
         
-        attachedConstraints = [
-            child
-                .leadingAnchor
-                .constraint(
-                    equalTo: leadingAnchor,
-                    constant: NSCustomButton.horizontalPadding
-                ),
-            child
-                .trailingAnchor
-                .constraint(
-                    equalTo: trailingAnchor,
-                    constant: -NSCustomButton.horizontalPadding
-                ),
-            child
-                .topAnchor
-                .constraint(
-                    equalTo: topAnchor,
-                    constant: NSCustomButton.verticalPadding
-                ),
-            child
-                .bottomAnchor
-                .constraint(
-                    equalTo: bottomAnchor,
-                    constant: -NSCustomButton.verticalPadding
-                )
-        ]
-        
-        NSLayoutConstraint.activate(attachedConstraints)
+        NSLayoutConstraint.activate([
+            child.centerXAnchor.constraint(equalTo: centerXAnchor),
+            child.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
     }
 }
 
@@ -292,23 +266,6 @@ extension ButtonStyle {
                 let maskPath = NSBezierPath(rect: button.bounds)
                 maskPath.fill()
         }
-    }
-    
-    fileprivate func setConstraints(_ button: NSCustomButton) {
-        guard
-            ![.plain, .borderless].contains(self),
-            button.attachedConstraints.count == 4
-        else {
-            for constraint in button.attachedConstraints {
-                constraint.constant = 0
-            }
-            return
-        }
-        
-        button.attachedConstraints[0].constant = NSCustomButton.horizontalPadding
-        button.attachedConstraints[1].constant = -NSCustomButton.horizontalPadding
-        button.attachedConstraints[2].constant = NSCustomButton.verticalPadding
-        button.attachedConstraints[3].constant = -NSCustomButton.verticalPadding
     }
     
     fileprivate func handleHighlight(_ button: NSCustomButton) {
