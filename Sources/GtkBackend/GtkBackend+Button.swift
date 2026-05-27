@@ -61,15 +61,12 @@ fileprivate final class GtkCustomButton: Gtk.Button {
     static let horizontalPadding: Double = 12
     static let verticalPadding: Double = 6
     
-    private var isPressed = false {
-        didSet {
-            
-        }
-    }
-    
     fileprivate var buttonStyle: ButtonStyle = .bordered {
+        willSet {
+            buttonStyle.removeClass(self)
+        }
         didSet {
-            buttonStyle.setStyle(self)
+            buttonStyle.setClass(self)
         }
     }
     
@@ -81,17 +78,6 @@ fileprivate final class GtkCustomButton: Gtk.Button {
         gtk_widget_add_css_class(widgetPointer, "customButton")
         
         loadCSS()
-    }
-    
-    fileprivate func addClass(named name: String) {
-        addedClasses.insert(name)
-        gtk_widget_add_css_class(widgetPointer, name)
-    }
-    
-    fileprivate func clearClasses() {
-        for cssClass in addedClasses {
-            gtk_widget_remove_css_class(widgetPointer, cssClass)
-        }
     }
     
     private func loadCSS() {
@@ -123,13 +109,22 @@ fileprivate final class GtkCustomButton: Gtk.Button {
 }
 
 extension ButtonStyle {
-    fileprivate func setStyle(_ button: GtkCustomButton) {
-        button.clearClasses()
-        
+    fileprivate func setClass(_ button: GtkCustomButton) {
+        if let cssClass {
+            gtk_widget_add_css_class(button.widgetPointer, cssClass)
+        }
+    }
+    
+    fileprivate func removeClass(_ button: GtkCustomButton) {
+        if let cssClass {
+            gtk_widget_remove_css_class(button.widgetPointer, cssClass)
+        }
+    }
+    
+    var cssClass: String? {
         switch self {
-            case .bordered: break
-            case .plain:
-                button.addClass(named: "flat")
+            case .bordered: nil
+            case .plain: "flat"
         }
     }
 }

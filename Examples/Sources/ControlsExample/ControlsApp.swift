@@ -49,6 +49,8 @@ struct ControlsApp: App {
     @State var progressViewSize: Int = 10
     @State var isProgressViewResizable = true
     @State var pickerStyle: BuiltInPickerStyle? = .automatic
+    
+    @State var isPlain = true
 
     @Environment(\.supportedDatePickerStyles) var supportedDatePickerStyles
     @Environment(\.isPickerStyleSupported) var isPickerStyleSupported
@@ -61,7 +63,7 @@ struct ControlsApp: App {
                         VStack {
                             HStack {
                                 Button("Lol") {}
-                                Toggle("Toggle me!", isOn: $exampleButtonState)
+                                Toggle("isPlain", isOn: $isPlain)
                                     .toggleStyle(.button)
                             }
                             Text("Button (persisted)")
@@ -80,7 +82,7 @@ struct ControlsApp: App {
                                             .cornerRadius(5)
                                     }
                             }
-                                .buttonStyle(.plain)
+                            .buttonStyle(isPlain ? .plain: .bordered)
                             Text("Count: \(count)")
                         }
 
