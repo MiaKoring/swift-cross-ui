@@ -1,9 +1,8 @@
-import Gtk
-import CGtk
-import GtkCHelpers
+import Gtk3
+import CGtk3
 import SwiftCrossUI
 
-extension GtkBackend {
+extension Gtk3Backend {
     public func createSimpleButton() -> Widget {
         return Button()
     }
@@ -15,17 +14,19 @@ extension GtkBackend {
         action: @escaping () -> Void
     ) {
         // TODO: Update button label color using environment
-        let button = button as! Gtk.Button
+        let button = button as! Gtk3.Button
         button.sensitive = environment.isEnabled
         button.label = label
         button.clicked = { _ in action() }
         button.css.clear()
-        button.css.set(properties: Self.cssProperties(for: environment, isControl: true))
+        button.css.set(
+            properties: Self.cssProperties(for: environment, isControl: true)
+        )
     }
     
     public func createButton(wrapping widget: Widget) -> Widget {
         let button = GtkCustomButton()
-        gtk_button_set_child(button.widgetPointer.cast(), widget.widgetPointer)
+        gtk_container_add(button.widgetPointer.cast(), widget.widgetPointer)
         
         gtk_widget_set_halign(widget.widgetPointer, GTK_ALIGN_CENTER)
         gtk_widget_set_valign(widget.widgetPointer, GTK_ALIGN_CENTER)
@@ -55,7 +56,7 @@ extension GtkBackend {
     }
 }
 
-fileprivate final class GtkCustomButton: Gtk.Button {
+fileprivate final class GtkCustomButton: Gtk3.Button {
     static let horizontalPadding: Double = 12
     static let verticalPadding: Double = 6
     
@@ -67,11 +68,12 @@ fileprivate final class GtkCustomButton: Gtk.Button {
             buttonStyle.setClass(self)
         }
     }
-
+    
     init() {
         super.init(gtk_button_new())
         
-        gtk_widget_add_css_class(widgetPointer, "customButton")
+        let context = gtk_widget_get_style_context(widgetPointer)
+        gtk_style_context_add_class(context, "customButton")
         
         loadCSS()
     }
@@ -84,19 +86,22 @@ fileprivate final class GtkCustomButton: Gtk.Button {
             padding: 0px;
         }
 
-        button.customButton.flat:active,
-        button.customButton.flat.keyboard-activating {
+        button.customButton.flat:active {
             opacity: 0.65;
         }
 
         button.customButton.flat {
+            background-image: none;
             background-color: transparent;
+            border-color: transparent;
+            box-shadow: none;
         }
-        
+
         button.customButton.flat:focus {
-            border-radius: 0px;
+            -gtk-outline-radius: 0px;
+            outline-offset: 0px;
         }
-        
+
         button.customButton.flat:disabled {
             opacity: 0.5;
         }
@@ -107,13 +112,15 @@ fileprivate final class GtkCustomButton: Gtk.Button {
 extension ButtonStyle {
     fileprivate func setClass(_ button: GtkCustomButton) {
         if let cssClass {
-            gtk_widget_add_css_class(button.widgetPointer, cssClass)
+            let context = gtk_widget_get_style_context(button.widgetPointer)
+            gtk_style_context_add_class(context, cssClass)
         }
     }
     
     fileprivate func removeClass(_ button: GtkCustomButton) {
         if let cssClass {
-            gtk_widget_remove_css_class(button.widgetPointer, cssClass)
+            let context = gtk_widget_get_style_context(button.widgetPointer)
+            gtk_style_context_remove_class(context, cssClass)
         }
     }
     
