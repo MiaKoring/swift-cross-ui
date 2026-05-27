@@ -78,6 +78,13 @@ extension Button: TypeSafeView {
             )
         }
         
+        if environment.buttonStyle == .borderless && backend.deviceClass == .desktop {
+            childEnvironment = childEnvironment.with(
+                \.foregroundColor,
+                 environment.foregroundColor ?? .gray
+            )
+        }
+        
         let childrenResult = children.child!.computeLayout(
             with: body,
             proposedSize: proposedSize,

@@ -61,7 +61,7 @@ extension AppKitBackend {
                 Int(NSCustomButton.horizontalPadding * 2),
                 Int(NSCustomButton.verticalPadding * 2)
             )
-            case .plain: SIMD2<Int>(0, 0)
+            case .plain, .borderless: SIMD2<Int>(0, 0)
         }
     }
 }
@@ -270,7 +270,7 @@ extension ButtonStyle {
         switch self {
             case .bordered:
                 button.cell.isEnabled = button.isEnabled
-            case .plain:
+            case .plain, .borderless:
                 button.alphaValue = button.isEnabled ? 1.0: 0.5
         }
     }
@@ -279,7 +279,7 @@ extension ButtonStyle {
         switch self {
             case .bordered:
                 true
-            case .plain:
+            case .plain, .borderless:
                 false
         }
     }
@@ -288,7 +288,7 @@ extension ButtonStyle {
         switch self {
             case .bordered:
                 button.cell.drawFocusRingMask(withFrame: button.bounds, in: button)
-            case .plain:
+            case .plain, .borderless:
                 let maskPath = NSBezierPath(rect: button.bounds)
                 maskPath.fill()
         }
@@ -296,7 +296,7 @@ extension ButtonStyle {
     
     fileprivate func setConstraints(_ button: NSCustomButton) {
         guard
-            self != .plain,
+            ![.plain, .borderless].contains(self),
             button.attachedConstraints.count == 4
         else {
             for constraint in button.attachedConstraints {
@@ -315,7 +315,7 @@ extension ButtonStyle {
         switch self {
             case .bordered:
                 button.cell.isHighlighted = button.isHighlighted
-            case .plain:
+            case .plain, .borderless:
                 if button.isHighlighted {
                     button.alphaValue = 0.75
                 } else {

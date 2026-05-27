@@ -51,7 +51,7 @@ extension Gtk3Backend {
                 Int(GtkCustomButton.horizontalPadding * 2),
                 Int(GtkCustomButton.verticalPadding * 2)
             )
-            case .plain: SIMD2<Int>(0, 0)
+            case .plain, .borderless: SIMD2<Int>(0, 0)
         }
     }
 }
@@ -127,7 +127,7 @@ extension ButtonStyle {
     var cssClass: String? {
         switch self {
             case .bordered: nil
-            case .plain: "flat"
+            case .plain, .borderless: "flat"
         }
     }
 }

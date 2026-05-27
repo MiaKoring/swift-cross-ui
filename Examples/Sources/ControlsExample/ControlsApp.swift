@@ -63,6 +63,7 @@ struct ControlsApp: App {
                         VStack {
                             HStack {
                                 Button("Lol") {}
+                                    .buttonStyle(.borderless)
                                 Toggle("isPlain", isOn: $isPlain)
                                     .toggleStyle(.button)
                             }
