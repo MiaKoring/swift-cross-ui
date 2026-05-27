@@ -25,7 +25,10 @@ extension GtkBackend {
     
     public func createButton(wrapping widget: Widget) -> Widget {
         let button = GtkCustomButton()
-        button.put(widget, index: 0, x: 0, y: 0)
+        gtk_button_set_child(button.widgetPointer.cast(), widget.widgetPointer)
+        
+        gtk_widget_set_halign(widget.widgetPointer, GTK_ALIGN_CENTER);
+        gtk_widget_set_valign(widget.widgetPointer, GTK_ALIGN_CENTER);
         
         return button
     }
@@ -36,9 +39,9 @@ extension GtkBackend {
         action: @escaping () -> Void
     ) {
         let button = button as! GtkCustomButton
-        button.action = action
+        button.clicked = { _ in action() }
         button.buttonStyle = environment.buttonStyle ?? .bordered
-        button.isEnabled = environment.isEnabled
+        button.sensitive = environment.isEnabled
     }
     
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
@@ -50,245 +53,83 @@ extension GtkBackend {
             case .plain: SIMD2<Int>(0, 0)
         }
     }
+    
+    public var shouldUseButtonContentForButtonSize: Bool { false }
 }
 
-fileprivate final class GtkCustomButton: CustomButton {
-    static let horizontalPadding: Double = 9
-    static let verticalPadding: Double = 4
+fileprivate final class GtkCustomButton: Gtk.Button {
+    static let horizontalPadding: Double = 12
+    static let verticalPadding: Double = 6
     
-    fileprivate var action: (() -> Void)?
+    private var isPressed = false {
+        didSet {
+            
+        }
+    }
+    
     fileprivate var buttonStyle: ButtonStyle = .bordered {
         didSet {
             buttonStyle.setStyle(self)
         }
     }
     
-    fileprivate var isEnabled = true {
-        didSet {
-            sensitive = isEnabled
-            buttonStyle.applyModifications(self)
-        }
-    }
-    
-    fileprivate var isHovered = false {
-        didSet {
-            buttonStyle.setHoverStyle(self)
-        }
-    }
-    
-    fileprivate var isFocused = false {
-        didSet {
-            buttonStyle.setFocusRing(self)
-        }
-    }
-    
-    // Whether left mousebutton is pressed on this view.
-    private var isPressed = false
-    
-    fileprivate var isHighlighted = false {
-        didSet {
-            buttonStyle.handleHighlight(self)
-        }
-    }
-    
-    private var dragStart = SIMD2(0.0, 0.0)
-    
+    private var addedClasses = Set<String>()
+
     init() {
-        super.init(gtk_custom_button_new())
+        super.init(gtk_button_new())
         
-        addClickGesture()
-        addDragGesture()
-        addHoverGesture()
-        addFocusController()
-        addKeyController()
+        gtk_widget_add_css_class(widgetPointer, "customButton")
         
-        focusable = true
+        loadCSS()
     }
     
-    private func addClickGesture() {
-        let clickGesture = GestureClick()
-        clickGesture.pressed = { [weak self] _, _, _, _ in
-            guard let self, isEnabled else { return }
-            isPressed = true
-            isHighlighted = true
-        }
-        
-        clickGesture.released = { [weak self] _, _, x, y in
-            guard let self, isEnabled else { return }
-            
-            let width = Int(gtk_widget_get_size(widgetPointer, GTK_ORIENTATION_HORIZONTAL))
-            let height = Int(gtk_widget_get_size(widgetPointer, GTK_ORIENTATION_VERTICAL))
-            
-            if (0...width).contains(Int(x)) && (0...height).contains(Int(y)) {
-                action?()
-            }
-            
-            isPressed = false
-            isHighlighted = false
-        }
-        
-        addEventController(clickGesture)
+    fileprivate func addClass(named name: String) {
+        addedClasses.insert(name)
+        gtk_widget_add_css_class(widgetPointer, name)
     }
     
-    private func addDragGesture() {
-        let dragGesture = GestureDrag()
-        
-        dragGesture.dragBegin = { [weak self] _, startX, startY in
-            guard let self, isEnabled else { return }
-            
-            dragStart = SIMD2(startX, startY)
+    fileprivate func clearClasses() {
+        for cssClass in addedClasses {
+            gtk_widget_remove_css_class(widgetPointer, cssClass)
         }
-        
-        dragGesture.dragUpdate = { [weak self] _, offsetX, offsetY  in
-            guard let self, isEnabled else { return }
-            
-            let currentX = dragStart.x + offsetX
-            let currentY = dragStart.y + offsetY
-            
-            let width = gtk_widget_get_size(widgetPointer, GTK_ORIENTATION_HORIZONTAL)
-            let height = gtk_widget_get_size(widgetPointer, GTK_ORIENTATION_VERTICAL)
-            
-            if
-                (0.0...Double(width)).contains(currentX)
-                    && (0.0...Double(height)).contains(currentY)
-            {
-                isHighlighted = true
-            } else {
-                isHighlighted = false
-            }
-        }
-        
-        addEventController(dragGesture)
     }
     
-    private func addHoverGesture() {
-        let hoverGesture = EventControllerMotion()
-        
-        hoverGesture.enter = { [weak self] _, _, _ in
-            guard let self else { return }
-            isHovered = true
+    private func loadCSS() {
+        cssProvider.loadCss(from: """
+        button.customButton {
+            min-width: 0px;
+            min-height: 0px;
+            padding: 0px;
+        }
+
+        button.customButton.flat:active,
+        button.customButton.flat.keyboard-activating {
+            opacity: 0.65;
+        }
+
+        button.customButton.flat {
+            background-color: transparent;
         }
         
-        hoverGesture.leave = { [weak self] _ in
-            guard let self else { return }
-            isHovered = false
+        button.customButton.flat:focus {
+            border-radius: 0px;
         }
         
-        addEventController(hoverGesture)
-    }
-    
-    private func addFocusController() {
-        let focusController = EventControllerFocus()
-        
-        focusController.enter = { [weak self] _ in
-            guard let self else { return }
-            isFocused = true
+        button.customButton.flat:disabled {
+            opacity: 0.5;
         }
-        
-        focusController.leave = { [weak self] _ in
-            guard let self else { return }
-            isFocused = false
-        }
-        
-        addEventController(focusController)
-    }
-    
-    private func addKeyController() {
-        /*let keyController = EventControllerKey()
-        keyController.keyPressed = { [weak self] controller, keyVal, _, modifers in
-            guard
-                let self,
-                modifers == GDK_NO_MODIFIER_MASK
-            else { return }
-            
-            if keyVal == GDK_KEY_space {
-                action?()
-                return true
-            } else {
-                return false
-            }
-        }
-        
-        addEventController(keyController)*/
+        """)
     }
 }
 
 extension ButtonStyle {
-    fileprivate func applyModifications(_ button: GtkCustomButton) {
-        switch self {
-            case .plain, .bordered:
-                button.opacity = button.isEnabled ? 1.0: 0.5
-        }
-    }
-    
-    fileprivate func handleHighlight(_ button: GtkCustomButton) {
-        switch self {
-            case .plain, .bordered:
-                if button.isHighlighted {
-                    button.opacity = 0.75
-                } else {
-                    button.opacity = 1.0
-                }
-        }
-    }
-    
-    // Styles are based on research made in:
-    // https://github.com/GNOME/gtk/blob/main/gtk/theme/Default
-    //
-    // Where possible we use theme variables to avoid hardcoding.
     fileprivate func setStyle(_ button: GtkCustomButton) {
-        button.css.clear()
-        switch self {
-            case .bordered:
-                button.css.set(properties: [
-                    CSSProperty(key: "background-color", value: "@theme_base_color"),
-                    CSSProperty(key: "border", value: "1px solid @borders"),
-                    CSSProperty(key: "border-radius", value: "5px"),
-                    CSSProperty(
-                        key: "padding",
-                        value: """
-                            \(GtkCustomButton.verticalPadding)px \
-                            \(GtkCustomButton.horizontalPadding)px
-                        """
-                    )
-                ])
-            case .plain:
-                break
-        }
-    }
-    
-    fileprivate func setHoverStyle(_ button: GtkCustomButton) {
-        switch self {
-            case .bordered:
-                if button.isHovered {
-                    button.css.set(properties: [
-                        CSSProperty(key: "background-color", value: "shade(@theme_base_color, 0.86)")
-                    ])
-                } else {
-                    button.css.set(properties: [
-                        CSSProperty(key: "background-color", value: "@theme_base_color")
-                    ])
-                }
-            case .plain:
-                break
-        }
-    }
-    
-    fileprivate func setFocusRing(_ button: GtkCustomButton) {
-        guard button.isFocused else {
-            button.css.set(property: CSSProperty(key: "outline", value: "none"))
-            return
-        }
+        button.clearClasses()
         
         switch self {
-            case .bordered, .plain:
-                button.css.set(properties: [
-                    CSSProperty(
-                        key: "outline",
-                        value: "2px solid color-mix(in srgb, @theme_selected_bg_color 50%, transparent)"
-                    ),
-                    CSSProperty(key: "outline-offset", value: "-2px")
-                ])
+            case .bordered: break
+            case .plain:
+                button.addClass(named: "flat")
         }
     }
 }
