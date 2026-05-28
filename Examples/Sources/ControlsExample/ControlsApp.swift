@@ -167,7 +167,7 @@ struct ControlsApp: App {
                                     .frame(width: progressViewSize, height: progressViewSize)
                             }
                         #endif
-
+/*
                         #if !canImport(Gtk3Backend)
                             VStack {
                                 Text("Picker")
@@ -216,7 +216,7 @@ struct ControlsApp: App {
                                     }
                                 }
                             #endif
-                        #endif
+                        #endif*/
                     }.padding().disabled(!enabled)
 
                     Toggle(enabled ? "Disable all" : "Enable all", isOn: $enabled)

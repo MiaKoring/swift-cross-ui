@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 
-class CustomContainer(val activity: Activity) : ViewGroup(activity) {
+open class CustomContainer(val activity: Activity) : ViewGroup(activity) {
     class LayoutParams(width: Int, height: Int, var x: Int, var y: Int) :
         ViewGroup.LayoutParams(width, height) {}
 

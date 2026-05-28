@@ -1,4 +1,5 @@
-public enum ButtonStyle: Sendable, Hashable {
+// ALWAYS KEEP ORDER CONSISTENT with CustomButton.ButtonStyle in kotlin
+public enum ButtonStyle: Int, Sendable, Hashable {
     /// A button style that applies the standard border style based on the button’s context.
     @available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *)
     case bordered

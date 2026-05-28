@@ -356,7 +356,7 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         widget.setLayoutParams(layoutParams)
     }
 
-    public func createButton() -> Widget {
+    public func createSimpleButton() -> Widget {
         AndroidKit.Button(Self.activity, environment: Self.env)
             .as(AndroidKit.View.self)!
     }
@@ -367,7 +367,7 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         return jstring.as(CharSequence.self)!
     }
 
-    public func updateButton(
+    public func updateSimpleButton(
         _ button: Widget,
         label: String,
         environment: EnvironmentValues,
