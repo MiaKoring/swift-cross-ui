@@ -118,9 +118,6 @@ final class UICustomButton: UIControl {
         
         if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
             button.configuration = UIButton.Configuration.bordered()
-        } else {
-            button.layer.backgroundColor = UIColor.gray.cgColor
-            button.layer.cornerRadius = 8
         }
         
         #if os(tvOS)
@@ -215,18 +212,24 @@ final class UICustomButton: UIControl {
 
 extension ButtonStyle {
     fileprivate func updateBackground(_ button: UICustomButton) {
-        guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else { return }
-        #if os(tvOS)
-        guard !button.isFocused else {
-            button.button.isHidden = false
-            button.button.isHighlighted = true
-            button.button.configuration = .bordered()
+        var hideButton = false
+        defer { button.button.isHidden = hideButton }
+        
+        // We don't support bordered button style on older versions.
+        guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else {
+            hideButton = true
             return
         }
-        button.button.isHighlighted = false
+        
+        #if os(tvOS)
+            guard !button.isFocused else {
+                button.button.isHighlighted = true
+                button.button.configuration = .bordered()
+                return
+            }
         #endif
         
-        var hideButton = false
+        button.button.isHighlighted = false
         
         switch self {
             case .bordered:
@@ -234,11 +237,13 @@ extension ButtonStyle {
             case .plain, .borderless:
                 hideButton = true
         }
-        
-        button.button.isHidden = hideButton
     }
     
     fileprivate func handleHighlight(_ button: UICustomButton) {
+        guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else {
+            button.alpha = button.isHighlighted ? 0.75 : 1.0
+            return
+        }
         switch self {
             case .bordered:
                 button.button.isHighlighted = button.isHighlighted

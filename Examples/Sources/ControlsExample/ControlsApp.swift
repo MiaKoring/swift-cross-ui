@@ -62,8 +62,10 @@ struct ControlsApp: App {
                     VStack(spacing: 30) {
                         VStack {
                             HStack {
-                                Button("Lol") {}
-                                    .buttonStyle(.bordered)
+                                if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
+                                    Button("Lol") {}
+                                        .buttonStyle(.bordered)
+                                }
                                 Toggle("isPlain", isOn: $isPlain)
                                     .toggleStyle(.switch)
                             }
@@ -72,18 +74,20 @@ struct ControlsApp: App {
                                 count += 1
                             }
                             
-                            Button {
-                                count += 1
-                            } label: {
-                                Text("Test")
-                                    .padding(.horizontal, 11)
-                                    .padding(.vertical, 4)
-                                    .background {
-                                        Color.purple.opacity(0.5)
-                                            .cornerRadius(5)
-                                    }
+                            if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
+                                Button {
+                                    count += 1
+                                } label: {
+                                    Text("Test")
+                                        .padding(.horizontal, 11)
+                                        .padding(.vertical, 4)
+                                        .background {
+                                            Color.purple.opacity(0.5)
+                                                .cornerRadius(5)
+                                        }
+                                }
+                                .buttonStyle(isPlain ? .plain: .bordered)
                             }
-                            .buttonStyle(isPlain ? .plain: .bordered)
                             Text("Count: \(count)")
                         }
 

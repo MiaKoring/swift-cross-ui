@@ -1,5 +1,6 @@
 public enum ButtonStyle: Sendable, Hashable {
     /// A button style that applies the standard border style based on the button’s context.
+    @available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *)
     case bordered
     /// A button style that doesn’t style or decorate its content while idle,
     /// but may apply a visual effect to indicate the pressed, focused, or enabled state of the button.
