@@ -16,7 +16,8 @@ extension AndroidBackend {
         let button = button.as(CustomButton.self)!
         button.set(
             action: SwiftAction(action: action),
-            type: Int32((environment.buttonStyle ?? .bordered).rawValue)
+            buttonType: Int32((environment.buttonStyle ?? .bordered).rawValue),
+            isEnabled: environment.isEnabled
         )
     }
     

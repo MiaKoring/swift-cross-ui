@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.drawable.GradientDrawable
@@ -16,6 +17,8 @@ import android.widget.FrameLayout
 class CustomButton(activity: Activity) : FrameLayout(activity) {
     var buttonType: Int = ButtonStyle.BORDERED
     var action: SwiftAction? = null
+    var _isEnabled: Boolean = true
+    var foregroundDrawable: Drawable?
 
     class ButtonStyle{
         companion object {
@@ -35,7 +38,8 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
 
         val outValue = TypedValue()
         activity.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
-        foreground = activity.getDrawable(outValue.resourceId)
+        foregroundDrawable = activity.getDrawable(outValue.resourceId)
+        foreground = foregroundDrawable
 
         isClickable = true
         isFocusable = true
@@ -43,13 +47,22 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
         setPadding(12, 5, 12, 5)
 
         setOnClickListener { view ->
-            this.action?.call()
+            if (_isEnabled) {
+                this.action?.call()
+            }
         }
     }
 
-    fun set(action: SwiftAction, type: Int) {
-        buttonType = type
+    fun set(action: SwiftAction, buttonType: Int, isEnabled: Boolean) {
+        this.buttonType = buttonType
         this.action = action
+        this._isEnabled = isEnabled
+
+        if (isEnabled) {
+            foreground = foregroundDrawable
+        } else {
+            foreground = null
+        }
     }
 
     override fun addView(child: View, index: Int, params: ViewGroup.LayoutParams) {
