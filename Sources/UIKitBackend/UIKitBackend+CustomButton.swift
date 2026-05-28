@@ -73,7 +73,16 @@ final class UICustomButton: UIControl {
     
     override public var isHighlighted: Bool {
         didSet {
-            buttonStyle.handleHighlight(self)
+            UIView.animate(
+                withDuration: 0.1,
+                delay: 0,
+                options: [.allowUserInteraction],
+                animations: { [weak self] in
+                    guard let self else { return }
+                    self.buttonStyle.handleHighlight(self)
+                },
+                completion: nil
+            )
         }
     }
     
