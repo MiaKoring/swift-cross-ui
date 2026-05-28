@@ -25,6 +25,13 @@ extension UIKitBackend {
         button.action = action
         button.isEnabled = environment.isEnabled
         button.buttonStyle = environment.buttonStyle ?? .borderless
+   
+        // Automatically sets the label text of a Button("") {} as accessibilityLabel.
+        // This should be improved via a future .accessibilityLabel(_:) modifier.
+        // The ViewBuilder button init is not covered by this current solution.
+        if let child = (button.subviews[1] as? WrapperWidget<TextView>)?.child {
+            button.accessibilityLabel = child.text
+        }
     }
     
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
@@ -64,7 +71,7 @@ final class UICustomButton: UIControl {
     static let horizontalPadding: CGFloat = 12
     static let verticalPadding: CGFloat = 6
     
-    public override var isHighlighted: Bool {
+    override public var isHighlighted: Bool {
         didSet {
             buttonStyle.handleHighlight(self)
         }
@@ -82,6 +89,9 @@ final class UICustomButton: UIControl {
         button.isUserInteractionEnabled = false
         button.translatesAutoresizingMaskIntoConstraints = false
         
+        self.isAccessibilityElement = true
+        self.accessibilityTraits = [.button]
+        
         addSubview(button)
         
         if #available(iOS 15.0, *) {
@@ -96,6 +106,11 @@ final class UICustomButton: UIControl {
     
     @objc private func handleTap() {
         action?()
+    }
+    
+    override public func accessibilityActivate() -> Bool {
+        action?()
+        return true
     }
     
     required init?(coder: NSCoder) { fatalError() }

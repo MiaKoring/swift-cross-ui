@@ -45,13 +45,10 @@ extension AppKitBackend {
         action: @escaping () -> Void
     ) {
         let button = button as! NSCustomButton
-        button.cell.bezelStyle = .flexiblePush
         button.cell.isEnabled = environment.isEnabled
         
         button.action = action
-        
         button.isEnabled = environment.isEnabled
-        
         button.buttonStyle = environment.buttonStyle ?? .bordered
     }
     
@@ -99,6 +96,7 @@ public final class NSCustomButton: NSView {
     init() {
         cell.title = ""
         cell.isBordered = true
+        cell.bezelStyle = .flexiblePush
         super.init()
     }
     
@@ -125,6 +123,13 @@ public final class NSCustomButton: NSView {
     override public func accessibilityPerformPress() -> Bool {
         self.action?()
         return true
+    }
+    
+    override public func accessibilityLabel() -> String? {
+        // Automatically uses the label text of a Button("") {} as accessibilityLabel.
+        // This should be improved via a future .accessibilityLabel(_:) modifier.
+        // The ViewBuilder button init is not covered by this current solution.
+        (subviews.first as? NSTextField)?.stringValue
     }
     
     override public func draw(_ dirtyRect: NSRect) {
