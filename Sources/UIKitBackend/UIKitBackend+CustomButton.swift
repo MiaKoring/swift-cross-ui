@@ -35,9 +35,20 @@ extension UIKitBackend {
     }
     
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
-        switch environment.buttonStyle ?? .borderless {
+        let borderedPadding = SIMD2(
+            Int(UICustomButton.horizontalPadding * 2),
+            Int(UICustomButton.verticalPadding * 2)
+        )
+        
+        // tvOS always gets full padding, due to highlighting using
+        // the highlighted state of bordered button for all styles.
+        #if os(tvOS)
+            return borderedPadding
+        #endif
+        
+        return switch environment.buttonStyle ?? .borderless {
             case .plain, .borderless: SIMD2(0, 0)
-            case .bordered: SIMD2(Int(UICustomButton.horizontalPadding * 2), Int(UICustomButton.verticalPadding * 2))
+            case .bordered: borderedPadding
         }
     }
     
@@ -92,6 +103,8 @@ final class UICustomButton: UIControl {
         }
     }
     
+    override public var canBecomeFocused: Bool { isEnabled }
+    
     init() {
         super.init(frame: .zero)
         
@@ -103,14 +116,18 @@ final class UICustomButton: UIControl {
         
         addSubview(button)
         
-        if #available(iOS 15.0, *) {
+        if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
             button.configuration = UIButton.Configuration.bordered()
         } else {
             button.layer.backgroundColor = UIColor.gray.cgColor
             button.layer.cornerRadius = 8
         }
-    
-        addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+        
+        #if os(tvOS)
+            addTarget(self, action: #selector(handleTap), for: .primaryActionTriggered)
+        #else
+            addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+        #endif
     }
     
     @objc private func handleTap() {
@@ -120,6 +137,13 @@ final class UICustomButton: UIControl {
     override public func accessibilityActivate() -> Bool {
         action?()
         return true
+    }
+    
+    override public func didUpdateFocus(
+        in _: UIFocusUpdateContext,
+        with _: UIFocusAnimationCoordinator
+    ) {
+        buttonStyle.updateBackground(self)
     }
     
     required init?(coder: NSCoder) { fatalError() }
@@ -159,11 +183,49 @@ final class UICustomButton: UIControl {
             child.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
     }
+    
+    // The primary action triggered didn't work out of the box on tvOS
+#if os(tvOS)
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        guard presses.first?.type == .select else {
+            super.pressesBegan(presses, with: event)
+            return
+        }
+        isHighlighted = true
+    }
+    
+    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        guard presses.first?.type == .select else {
+            super.pressesEnded(presses, with: event)
+            return
+        }
+        isHighlighted = false
+        sendActions(for: .primaryActionTriggered)
+    }
+    
+    override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        guard presses.first?.type == .select else {
+            super.pressesCancelled(presses, with: event)
+            return
+        }
+        isHighlighted = false
+    }
+#endif
 }
 
 extension ButtonStyle {
     fileprivate func updateBackground(_ button: UICustomButton) {
-        guard #available(iOS 15.0, *) else { return }
+        guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else { return }
+        #if os(tvOS)
+        guard !button.isFocused else {
+            button.button.isHidden = false
+            button.button.isHighlighted = true
+            button.button.configuration = .bordered()
+            return
+        }
+        button.button.isHighlighted = false
+        #endif
+        
         var hideButton = false
         
         switch self {
