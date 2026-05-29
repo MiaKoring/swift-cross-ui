@@ -9,7 +9,7 @@ public struct Button<Content: View>: Sendable {
     
     public let label: String?
     
-    /// Creates a button that displays a custom label.
+    /// Creates a button that displays a text label.
     ///
     /// - Parameters:
     ///   - label: The label to show on the button.
@@ -23,6 +23,11 @@ public struct Button<Content: View>: Sendable {
         self.label = label
     }
     
+    /// Creates a button that displays a custom view as label.
+    ///
+    /// - Parameters:
+    ///   - label: The label to show on the button.
+    ///   - action: The action to be performed when the button is clicked.
     @MainActor
     public init (
         action: @escaping @MainActor @Sendable () -> Void = {},
@@ -62,31 +67,25 @@ extension Button: TypeSafeView {
         environment: EnvironmentValues,
         backend: Backend
     ) -> ViewLayoutResult {
-        // TODO: Implement button sizing within SwiftCrossUI so that we can move this to
-        //   commit. Relying on the backend for button sizing also makes the Gtk 3 backend
-        //   basically impossible to implement correctly, hence the
-        //   `finalContentSize != contentSize` check in WindowGroupNode to catch any weird
-        //   behaviour. Without that extra safety net logic, buttons all end up label-less
-        //   whenever the window grows due to a view containing buttons appearing. Not sure
-        //   why all buttons lose their labels (until you click off the window, forcing it to
-        //   refresh), but the reason Gtk 3 doesn't like it is that the window gets set smaller
-        //   than its content I think.
-        //   See: https://github.com/moreSwift/swift-cross-ui/blob/27f50579c52e79323c3c368512d37e95af576c25/Sources/SwiftCrossUI/Scenes/WindowGroupNode.swift#L140
-        
         var childEnvironment = environment
         
         let defaultButtonStyle = backend.defaultButtonStyle()
         
-        if !environment.isEnabled, environment.buttonStyle ?? defaultButtonStyle != .plain {
+        if
+            !environment.isEnabled,
+            environment.buttonStyle ?? defaultButtonStyle != .plain
+        {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
                  environment.foregroundColor ?? .gray.opacity(0.5)
             )
         }
         
+        // Set the default foregroundColor for the label unless overridden.
+        // Uses the same colors as SwiftUI.
         if
-            environment.buttonStyle ?? defaultButtonStyle == .borderless
-            && backend.deviceClass == .desktop
+            environment.buttonStyle ?? defaultButtonStyle == .borderless,
+            backend.deviceClass == .desktop
         {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
@@ -95,7 +94,7 @@ extension Button: TypeSafeView {
         } else if environment.buttonStyle ?? defaultButtonStyle == .borderless {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
-                 environment.foregroundColor ?? .blue // should be replaced with accent
+                 environment.foregroundColor ?? .blue // TODO: Replace with .accent
             )
         }
         
@@ -113,6 +112,8 @@ extension Button: TypeSafeView {
         
         let buttonPadding = backend.buttonPadding(in: environment)
         
+        // Buttons should always be set to label size + padding.
+        // The backend representation of a button is expected not to have a minSize.
         let size = SIMD2(
             Int(childrenResult.size.width) + buttonPadding.x,
             Int(childrenResult.size.height) + buttonPadding.y
