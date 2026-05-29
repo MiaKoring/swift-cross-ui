@@ -816,7 +816,7 @@ public final class WinUIBackend:
         environment.apply(to: block)
     }
 
-    public func createButton() -> Widget {
+    public func createSimpleButton() -> Widget {
         let button = Button()
         button.click.addHandler { [weak internalState] _, _ in
             guard let internalState else { return }
@@ -825,7 +825,7 @@ public final class WinUIBackend:
         return button
     }
 
-    public func updateButton(
+    public func updateSimpleButton(
         _ button: Widget,
         label: String,
         environment: EnvironmentValues,

@@ -130,7 +130,7 @@ extension Button: TypeSafeView {
         backend: Backend
     ) {
         backend.setSize(of: widget, to: layout.size.vector)
-        children.child?.commit()
+        _ = children.child?.commit()
     }
 }
 
