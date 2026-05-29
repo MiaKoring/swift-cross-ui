@@ -15,5 +15,5 @@ class CustomButton: AndroidKit.FrameLayout {
     )
     
     @JavaMethod
-    func set(action: SwiftAction?, buttonType: Int32, isEnabled: Bool)
+    func set(action: SwiftAction?, buttonStyle: Int32, isEnabled: Bool)
 }

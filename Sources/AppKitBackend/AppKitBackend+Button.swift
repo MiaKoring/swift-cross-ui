@@ -49,11 +49,11 @@ extension AppKitBackend {
         
         button.action = action
         button.isEnabled = environment.isEnabled
-        button.buttonStyle = environment.buttonStyle ?? .bordered
+        button.buttonStyle = environment.buttonStyle ?? defaultButtonStyle()
     }
     
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
-        switch environment.buttonStyle ?? .bordered {
+        switch environment.buttonStyle ?? defaultButtonStyle() {
             case .bordered: SIMD2<Int>(
                 Int(NSCustomButton.horizontalPadding * 2),
                 Int(NSCustomButton.verticalPadding * 2)

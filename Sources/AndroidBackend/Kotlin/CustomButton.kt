@@ -15,10 +15,28 @@ import android.util.TypedValue
 import android.widget.FrameLayout
 
 class CustomButton(activity: Activity) : FrameLayout(activity) {
-    var buttonType: Int = ButtonStyle.BORDERED
+    var buttonStyle: Int = ButtonStyle.BORDERED
     var action: SwiftAction? = null
     var _isEnabled: Boolean = true
-    var foregroundDrawable: Drawable?
+
+    private val borderedDrawable by lazy {
+        val outValue = TypedValue()
+        activity.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
+        activity.getDrawable(outValue.resourceId)
+    }
+    private val borderlessDrawable by lazy {
+        val outValue = TypedValue()
+        activity.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true)
+        activity.getDrawable(outValue.resourceId)
+    }
+
+    private val borderedBackground by lazy {
+        GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(getAdaptiveGray(context))
+            cornerRadius = 3f * resources.displayMetrics.density
+        }
+    }
 
     class ButtonStyle{
         companion object {
@@ -29,17 +47,8 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
     }
 
     init {
-        val shape = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(getAdaptiveGray(context))
-            cornerRadius = 3f * resources.displayMetrics.density
-        }
-        background = shape
-
-        val outValue = TypedValue()
-        activity.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
-        foregroundDrawable = activity.getDrawable(outValue.resourceId)
-        foreground = foregroundDrawable
+        background = borderedBackground
+        foreground = borderedDrawable
 
         isClickable = true
         isFocusable = true
@@ -54,14 +63,50 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
     }
 
     fun set(action: SwiftAction, buttonType: Int, isEnabled: Boolean) {
-        this.buttonType = buttonType
+        this.buttonStyle = buttonType
         this.action = action
         this._isEnabled = isEnabled
 
+        adjustButtonStyle()
+        setOpacity()
+
         if (isEnabled) {
-            foreground = foregroundDrawable
+            setForegroundDrawable()
         } else {
             foreground = null
+        }
+    }
+
+    fun setForegroundDrawable() {
+        foreground = when (buttonStyle) {
+            ButtonStyle.BORDERED -> borderedDrawable
+            ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> borderlessDrawable
+            else -> borderedDrawable
+        }
+    }
+
+    fun setOpacity() {
+        alpha = when (buttonStyle) {
+            ButtonStyle.BORDERED -> 1.0f
+            ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> if (_isEnabled) 1.0f else 0.38f
+            else -> 1.0f
+        }
+    }
+
+    fun adjustButtonStyle() {
+        when (buttonStyle) {
+            ButtonStyle.BORDERED -> {
+                background = borderedBackground
+                setPadding(12, 5, 12, 5)
+            }
+            ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> {
+                background = null
+                setPadding(0, 0, 0, 0)
+            }
+            else -> {
+                background = borderedBackground
+                setPadding(12, 5, 12, 5)
+            }
         }
     }
 

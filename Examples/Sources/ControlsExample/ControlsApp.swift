@@ -64,7 +64,7 @@ struct ControlsApp: App {
                             HStack {
                                 if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
                                     Button("Lol") {}
-                                        .buttonStyle(.bordered)
+                                        .buttonStyle(.borderless)
                                 }
                                 Toggle("isPlain", isOn: $isPlain)
                                     .toggleStyle(.switch)

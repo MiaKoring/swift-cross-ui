@@ -16,16 +16,21 @@ extension AndroidBackend {
         let button = button.as(CustomButton.self)!
         button.set(
             action: SwiftAction(action: action),
-            buttonType: Int32((environment.buttonStyle ?? .bordered).rawValue),
+            buttonStyle: Int32(
+                (environment.buttonStyle ?? defaultButtonStyle()).rawValue
+            ),
             isEnabled: environment.isEnabled
         )
     }
     
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
-        return SIMD2(
-            CustomButton.horizontalPadding * 2,
-            CustomButton.verticalPadding * 2
-        )
+        switch environment.buttonStyle ?? defaultButtonStyle() {
+            case .bordered: SIMD2(
+                    CustomButton.horizontalPadding * 2,
+                    CustomButton.verticalPadding * 2
+                )
+            case .plain, .borderless: SIMD2(0, 0)
+        }
     }
     
     public func defaultButtonStyle() -> ButtonStyle {
