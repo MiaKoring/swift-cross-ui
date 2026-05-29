@@ -10,7 +10,7 @@ extension WinUIBackend {
         button.content = widget
         return button
     }
-    
+
     public func updateButton(
         _ button: Widget,
         environment: EnvironmentValues,
@@ -25,22 +25,22 @@ extension WinUIBackend {
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
         switch environment.buttonStyle ?? defaultButtonStyle() {
             case .bordered: SIMD2(
-                CustomButton.horizontalPadding * 2,
-                CustomButton.verticalPadding * 2,
+                    CustomButton.horizontalPadding * 2,
+                    CustomButton.verticalPadding * 2,
                 )
             case .plain, .borderless: SIMD2(0, 0)
         }
     }
-    
+
     public func defaultButtonStyle() -> ButtonStyle { .bordered }
 }
 
 fileprivate final class CustomButton: WinUI.Button {
     static let horizontalPadding: Int = 11
     static let verticalPadding: Int = 4
-    
+
     fileprivate var action: (() -> Void)?
-    
+
     private var isPointerCaptured = false
     fileprivate var isHighlighted = false {
         didSet {
@@ -52,7 +52,7 @@ fileprivate final class CustomButton: WinUI.Button {
             buttonStyle.handleHighlight(self)
         }
     }
-    
+
     fileprivate var buttonStyle: ButtonStyle = .bordered {
         didSet {
             if buttonStyle != oldValue {
@@ -60,17 +60,17 @@ fileprivate final class CustomButton: WinUI.Button {
             }
         }
     }
-    
+
     // Sadly we can't override isEnabled due to it not being an open property
     public var enabled: Bool = true {
         didSet {
             self.isEnabled = enabled
-            
+
             if !enabled {
                 isPointerCaptured = false
                 isHighlighted = false
             }
-            
+
             buttonStyle.applyModifications(self)
         }
     }
@@ -80,30 +80,30 @@ fileprivate final class CustomButton: WinUI.Button {
         padding = Thickness.null
         horizontalContentAlignment = HorizontalAlignment.center
         verticalContentAlignment = VerticalAlignment.center
-        
+
         click.addHandler { [weak self] _, _ in
             guard let self else { return }
             self.action?()
         }
     }
-    
+
     override func onPointerPressed(_ e: PointerRoutedEventArgs!) throws {
         try super.onPointerPressed(e)
         isPointerCaptured = true
         isHighlighted = true
     }
-    
+
     override func onPointerMoved(_ e: PointerRoutedEventArgs!) throws {
         try super.onPointerMoved(e)
-        
+
         if isPointerCaptured {
             // Pointer position relative to the button.
             guard let currentPoint = try e.getCurrentPoint(self) else { return }
             let position = currentPoint.position
-            
+
             let width = self.actualWidth
             let height = self.actualHeight
-            
+
             if
                 (0...width).contains(Double(position.x)),
                 (0...height).contains(Double(position.y))
@@ -114,46 +114,46 @@ fileprivate final class CustomButton: WinUI.Button {
             }
         }
     }
-    
+
     override func onPointerReleased(_ e: PointerRoutedEventArgs!) throws {
         try super.onPointerReleased(e)
         isPointerCaptured = false
         isHighlighted = false
     }
-    
+
     override func onPointerCaptureLost(_ e: PointerRoutedEventArgs!) throws {
         try super.onPointerCaptureLost(e)
         isPointerCaptured = false
         isHighlighted = false
     }
-    
+
     override func onKeyDown(_ e: KeyRoutedEventArgs!) throws {
         try super.onKeyDown(e)
-        
+
         let targetKey = e.key
-        
+
         if [.space, .enter].contains(targetKey) {
             isKeyboardHighlighted = true
         }
     }
-    
+
     override func onKeyUp(_ e: KeyRoutedEventArgs!) throws {
         try super.onKeyUp(e)
-        
+
         let targetKey = e.key
-        
+
         if [.space, .enter].contains(targetKey) {
             isKeyboardHighlighted = false
         }
     }
-    
+
     override func onLostFocus(_ e: RoutedEventArgs!) throws {
         try super.onLostFocus(e)
         isKeyboardHighlighted = false
         isPointerCaptured = false
         isHighlighted = false
     }
-    
+
     private func updateButtonAppearance() {
         buttonStyle.applyModifications(self)
         buttonStyle.handleHighlight(self)
@@ -164,18 +164,18 @@ fileprivate final class CustomButton: WinUI.Button {
 extension ButtonStyle {
     fileprivate func updateRenderedStyle(_ button: CustomButton) {
         guard let resources = button.resources else { return }
-        
+
         switch button.buttonStyle {
             case .bordered:
                 _ = try? button.clearValue(WinUI.Button.backgroundProperty)
                 _ = try? button.clearValue(WinUI.Button.borderBrushProperty)
                 _ = try? button.clearValue(WinUI.Button.borderThicknessProperty)
                 _ = try? button.clearValue(WinUI.Button.cornerRadiusProperty)
-                
+
                 _ = try? resources.remove("ButtonBackgroundPointerOver")
                 _ = try? resources.remove("ButtonBackgroundPressed")
                 _ = try? resources.remove("ButtonBackgroundDisabled")
-                
+
                 _ = try? resources.remove("ButtonBorderBrushPointerOver")
                 _ = try? resources.remove("ButtonBorderBrushPressed")
                 _ = try? resources.remove("ButtonBorderBrushDisabled")
@@ -185,17 +185,17 @@ extension ButtonStyle {
                 button.borderBrush = transparentBrush
                 button.borderThickness = Thickness.null
                 button.cornerRadius = CornerRadius.null
-                
+
                 resources.insert("ButtonBackgroundPointerOver", transparentBrush)
                 resources.insert("ButtonBackgroundPressed", transparentBrush)
                 resources.insert("ButtonBackgroundDisabled", transparentBrush)
-                
+
                 resources.insert("ButtonBorderBrushPointerOver", transparentBrush)
                 resources.insert("ButtonBorderBrushPressed", transparentBrush)
                 resources.insert("ButtonBorderBrushDisabled", transparentBrush)
         }
     }
-    
+
     fileprivate func applyModifications(_ button: CustomButton) {
         switch self {
             case .bordered: button.opacity = 1.0
@@ -203,10 +203,10 @@ extension ButtonStyle {
                 button.opacity = button.enabled ? 1.0: 0.36
         }
     }
-    
+
     fileprivate func handleHighlight(_ button: CustomButton) {
         let isHighlighted = button.isHighlighted || button.isKeyboardHighlighted
-        
+
         switch self {
             case .bordered: button.opacity = 1.0
             case .plain, .borderless:
