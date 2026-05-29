@@ -84,6 +84,7 @@ public final class NSCustomButton: NSView {
                 isHighlighted = false
             }
             buttonStyle.applyModifications(self)
+            self.needsDisplay = true
         }
     }
 
@@ -93,7 +94,10 @@ public final class NSCustomButton: NSView {
     private var highlightResetWorkItem: DispatchWorkItem?
 
     public var isHighlighted = false {
-        didSet { buttonStyle.handleHighlight(self) }
+        didSet {
+            buttonStyle.handleHighlight(self)
+            needsDisplay = true
+        }
     }
 
     init() {
@@ -106,12 +110,14 @@ public final class NSCustomButton: NSView {
     public required init?(coder: NSCoder) {
         cell.title = ""
         cell.isBordered = true
+        cell.bezelStyle = .flexiblePush
         super.init(coder: coder)
     }
 
     override public init(frame frameRect: NSRect) {
         cell.title = ""
         cell.isBordered = true
+        cell.bezelStyle = .flexiblePush
         super.init(frame: frameRect)
     }
 
