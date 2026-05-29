@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.drawable.GradientDrawable
+import android.view.accessibility.AccessibilityNodeInfo
 import android.util.TypedValue
 
 import android.widget.FrameLayout
@@ -17,7 +18,8 @@ import android.widget.FrameLayout
 class CustomButton(activity: Activity) : FrameLayout(activity) {
     var buttonStyle: Int = ButtonStyle.BORDERED
     var action: SwiftAction? = null
-    var _isEnabled: Boolean = true
+
+    private val density = resources.displayMetrics.density
 
     private val borderedDrawable by lazy {
         val outValue = TypedValue()
@@ -47,57 +49,30 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
     }
 
     init {
-        background = borderedBackground
-        foreground = borderedDrawable
-
         isClickable = true
         isFocusable = true
-
-        setPadding(12, 5, 12, 5)
+        updateButtonStyle()
 
         setOnClickListener { view ->
-            if (_isEnabled) {
-                this.action?.call()
-            }
+            if (isEnabled) this.action?.call()
         }
     }
 
     fun set(action: SwiftAction, buttonType: Int, isEnabled: Boolean) {
         this.buttonStyle = buttonType
         this.action = action
-        this._isEnabled = isEnabled
+        this.isEnabled = isEnabled
 
-        adjustButtonStyle()
-        setOpacity()
-
-        if (isEnabled) {
-            setForegroundDrawable()
-        } else {
-            foreground = null
-        }
+        updateButtonStyle()
     }
 
-    fun setForegroundDrawable() {
-        foreground = when (buttonStyle) {
-            ButtonStyle.BORDERED -> borderedDrawable
-            ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> borderlessDrawable
-            else -> borderedDrawable
-        }
-    }
+    fun updateButtonStyle() {
+        alpha = if (isEnabled || buttonStyle == ButtonStyle.BORDERED) 1.0f else 0.38f
 
-    fun setOpacity() {
-        alpha = when (buttonStyle) {
-            ButtonStyle.BORDERED -> 1.0f
-            ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> if (_isEnabled) 1.0f else 0.38f
-            else -> 1.0f
-        }
-    }
-
-    fun adjustButtonStyle() {
         when (buttonStyle) {
             ButtonStyle.BORDERED -> {
                 background = borderedBackground
-                setPadding(12, 5, 12, 5)
+                setPadding((12 * density).toInt(), (5 * density).toInt(), (12 * density).toInt(), (6 * density).toInt())
             }
             ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> {
                 background = null
@@ -105,9 +80,24 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
             }
             else -> {
                 background = borderedBackground
-                setPadding(12, 5, 12, 5)
+                setPadding((12 * density).toInt(), (5 * density).toInt(), (12 * density).toInt(), (6 * density).toInt())
             }
         }
+
+        if (isEnabled) {
+            foreground = when (buttonStyle) {
+                ButtonStyle.BORDERED -> borderedDrawable
+                ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> borderlessDrawable
+                else -> borderedDrawable
+            }
+        } else {
+            foreground = null
+        }
+    }
+
+    override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
+        super.onInitializeAccessibilityNodeInfo(info)
+        info.className = "android.widget.Button"
     }
 
     override fun addView(child: View, index: Int, params: ViewGroup.LayoutParams) {
