@@ -817,7 +817,7 @@ public final class WinUIBackend:
     }
 
     public func createSimpleButton() -> Widget {
-        let button = Button()
+        let button = WinUI.Button()
         button.click.addHandler { [weak internalState] _, _ in
             guard let internalState else { return }
             internalState.buttonClickActions[ObjectIdentifier(button)]?()

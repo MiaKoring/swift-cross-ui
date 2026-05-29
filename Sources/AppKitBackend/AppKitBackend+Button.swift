@@ -78,7 +78,13 @@ public final class NSCustomButton: NSView {
     }
 
     var isEnabled = true {
-        didSet { updateButtonAppearance() }
+        didSet {
+            if !isEnabled {
+                isPressed = false
+                isHighlighted = false
+            }
+            buttonStyle.applyModifications(self)
+        }
     }
 
     // Whether left mousebutton is pressed on this view.
@@ -87,10 +93,7 @@ public final class NSCustomButton: NSView {
     private var highlightResetWorkItem: DispatchWorkItem?
 
     public var isHighlighted = false {
-        didSet {
-            buttonStyle.handleHighlight(self)
-            self.needsDisplay = true
-        }
+        didSet { buttonStyle.handleHighlight(self) }
     }
 
     init() {
@@ -230,6 +233,7 @@ public final class NSCustomButton: NSView {
 
     private func updateButtonAppearance() {
         buttonStyle.applyModifications(self)
+        buttonStyle.handleHighlight(self)
         noteFocusRingMaskChanged()
         self.needsDisplay = true
     }
@@ -278,11 +282,7 @@ extension ButtonStyle {
             case .bordered:
                 button.cell.isHighlighted = button.isHighlighted
             case .plain, .borderless:
-                if button.isHighlighted {
-                    button.alphaValue = 0.75
-                } else {
-                    button.alphaValue = 1.0
-                }
+                button.alphaValue = button.isHighlighted ? 1.0: 0.75
         }
     }
 }
