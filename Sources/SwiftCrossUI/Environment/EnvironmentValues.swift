@@ -444,7 +444,7 @@ extension EnvironmentValues {
 
     /// Whether the current device has a circular screen. Primarily Android smart watches.
     @Entry public var isCircularScreen: Bool = false
-    
+
     /// The display style used by ``Button``.
     @Entry public var buttonStyle: ButtonStyle?
 }

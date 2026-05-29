@@ -7,7 +7,7 @@ extension AndroidBackend {
         button.addView(widget.as(AndroidKit.View.self)!, 0)
         return button.as(AndroidKit.View.self)!
     }
-    
+
     public func updateButton(
         _ button: Widget,
         environment: EnvironmentValues,
@@ -22,7 +22,7 @@ extension AndroidBackend {
             isEnabled: environment.isEnabled
         )
     }
-    
+
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
         switch environment.buttonStyle ?? defaultButtonStyle() {
             case .bordered: SIMD2(
@@ -32,7 +32,7 @@ extension AndroidBackend {
             case .plain, .borderless: SIMD2(0, 0)
         }
     }
-    
+
     public func defaultButtonStyle() -> ButtonStyle {
         .bordered
     }

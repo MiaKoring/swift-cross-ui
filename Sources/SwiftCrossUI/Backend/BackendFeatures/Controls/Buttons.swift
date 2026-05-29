@@ -26,7 +26,7 @@ extension BackendFeatures {
             environment: EnvironmentValues,
             action: @escaping () -> Void
         )
-        
+
         /// Creates a button supporting ``View`` as label with an action triggered on click/tap.
         ///
         /// Predominantly used by ``Button``.
@@ -36,7 +36,7 @@ extension BackendFeatures {
         ///
         /// - Returns: A button.
         func createButton(wrapping widget: Widget) -> Widget
-        
+
         /// Sets a button's action and updates the rendered style based on the environment.
         ///
         /// - Parameters:
@@ -49,7 +49,7 @@ extension BackendFeatures {
             environment: EnvironmentValues,
             action: @escaping () -> Void
         )
-        
+
         /// Buttons are set to label size + padding by SwiftCrossUI.
         /// Backends may choose different amounts of padding for different button styles.
         ///
@@ -60,7 +60,7 @@ extension BackendFeatures {
         ///
         /// A padding of (0, 0) is recommended for all styles without a system defined background.
         func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int>
-        
+
         /// The default style of a button the backend expects, that's used when no ``ButtonStyle`` is set.
         ///
         /// - Returns: The default ``ButtonStyle``.

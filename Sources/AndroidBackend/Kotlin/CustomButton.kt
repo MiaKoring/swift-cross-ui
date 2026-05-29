@@ -1,18 +1,16 @@
 package dev.swiftcrossui.androidbackend
 
-import android.app.Activity
 import android.R
+import android.app.Activity
+import android.content.Context
+import android.content.res.Configuration
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.graphics.Color
-import android.graphics.drawable.Drawable
-import android.content.Context
-import android.content.res.Configuration
-import android.graphics.drawable.GradientDrawable
 import android.view.accessibility.AccessibilityNodeInfo
-import android.util.TypedValue
-
 import android.widget.FrameLayout
 
 class CustomButton(activity: Activity) : FrameLayout(activity) {
@@ -28,7 +26,11 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
     }
     private val borderlessDrawable by lazy {
         val outValue = TypedValue()
-        activity.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true)
+        activity.theme.resolveAttribute(
+            android.R.attr.selectableItemBackgroundBorderless,
+            outValue,
+            true,
+        )
         activity.getDrawable(outValue.resourceId)
     }
 
@@ -40,7 +42,7 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
         }
     }
 
-    class ButtonStyle{
+    class ButtonStyle {
         companion object {
             const val BORDERED = 0
             const val PLAIN = 1
@@ -53,9 +55,7 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
         isFocusable = true
         updateButtonStyle()
 
-        setOnClickListener { view ->
-            if (isEnabled) this.action?.call()
-        }
+        setOnClickListener { view -> if (isEnabled) this.action?.call() }
     }
 
     fun set(action: SwiftAction, buttonType: Int, isEnabled: Boolean) {
@@ -72,24 +72,37 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
         when (buttonStyle) {
             ButtonStyle.BORDERED -> {
                 background = borderedBackground
-                setPadding((12 * density).toInt(), (5 * density).toInt(), (12 * density).toInt(), (6 * density).toInt())
+                setPadding(
+                    (12 * density).toInt(),
+                    (5 * density).toInt(),
+                    (12 * density).toInt(),
+                    (6 * density).toInt(),
+                )
             }
-            ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> {
+            ButtonStyle.PLAIN,
+            ButtonStyle.BORDERLESS -> {
                 background = null
                 setPadding(0, 0, 0, 0)
             }
             else -> {
                 background = borderedBackground
-                setPadding((12 * density).toInt(), (5 * density).toInt(), (12 * density).toInt(), (6 * density).toInt())
+                setPadding(
+                    (12 * density).toInt(),
+                    (5 * density).toInt(),
+                    (12 * density).toInt(),
+                    (6 * density).toInt(),
+                )
             }
         }
 
         if (isEnabled) {
-            foreground = when (buttonStyle) {
-                ButtonStyle.BORDERED -> borderedDrawable
-                ButtonStyle.PLAIN, ButtonStyle.BORDERLESS -> borderlessDrawable
-                else -> borderedDrawable
-            }
+            foreground =
+                when (buttonStyle) {
+                    ButtonStyle.BORDERED -> borderedDrawable
+                    ButtonStyle.PLAIN,
+                    ButtonStyle.BORDERLESS -> borderlessDrawable
+                    else -> borderedDrawable
+                }
         } else {
             foreground = null
         }
@@ -111,9 +124,9 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
     }
 
     fun getAdaptiveGray(context: Context): Int {
-        val isDarkMode = (
-                    context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-                ) == Configuration.UI_MODE_NIGHT_YES
+        val isDarkMode =
+            (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
 
         return if (isDarkMode) {
             Color.DKGRAY

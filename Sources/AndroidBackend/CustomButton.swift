@@ -13,7 +13,7 @@ class CustomButton: AndroidKit.FrameLayout {
         _ activity: Activity?,
         environment: JNIEnvironment? = nil
     )
-    
+
     @JavaMethod
     func set(action: SwiftAction?, buttonStyle: Int32, isEnabled: Bool)
 }

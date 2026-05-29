@@ -49,7 +49,7 @@ struct ControlsApp: App {
     @State var progressViewSize: Int = 10
     @State var isProgressViewResizable = true
     @State var pickerStyle: BuiltInPickerStyle? = .automatic
-    
+
     @State var isPlain = false
 
     @Environment(\.supportedDatePickerStyles) var supportedDatePickerStyles
@@ -73,7 +73,7 @@ struct ControlsApp: App {
                             Button("Click me!") {
                                 count += 1
                             }
-                            
+
                             if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
                                 Button {
                                     count += 1
@@ -167,56 +167,55 @@ struct ControlsApp: App {
                                     .frame(width: progressViewSize, height: progressViewSize)
                             }
                         #endif
-/*
-                        #if !canImport(Gtk3Backend)
-                            VStack {
-                                Text("Picker")
-
-                                HStack {
-                                    Text("Picker Style:")
-                                    Picker(
-                                        of: BuiltInPickerStyle.allCases.filter {
-                                            isPickerStyleSupported($0.asPickerStyle)
-                                        },
-                                        selection: $pickerStyle
-                                    )
-                                }
-
-                                HStack {
-                                    Text("Flavor: ")
-
-                                    Picker(
-                                        of: ["Vanilla", "Chocolate", "Strawberry"],
-                                        selection: $flavor
-                                    )
-                                    .pickerStyle(
-                                        pickerStyle?.asPickerStyle ?? DefaultPickerStyle()
-                                    )
-                                }
-                                Text("You chose: \(flavor ?? "Nothing yet!")")
-                            }
-
-                            #if !os(tvOS) && !canImport(AndroidBackend)
-                                VStack {
-                                    Text("Selected date: \(date)")
-
-                                    HStack {
-                                        Text("Date picker style: ")
-                                        Picker(
-                                            of: supportedDatePickerStyles,
-                                            selection: $datePickerStyle
-                                        )
-                                    }
-
-                                    DatePicker(selection: $date) {}
-                                        .datePickerStyle(datePickerStyle ?? .automatic)
-
-                                    Button("Reset date to now") {
-                                        date = Date()
-                                    }
-                                }
-                            #endif
-                        #endif*/
+                        // #if !canImport(Gtk3Backend)
+                        //    VStack {
+                        //        Text("Picker")
+                        //
+                        //        HStack {
+                        //            Text("Picker Style:")
+                        //            Picker(
+                        //                of: BuiltInPickerStyle.allCases.filter {
+                        //                    isPickerStyleSupported($0.asPickerStyle)
+                        //                },
+                        //                selection: $pickerStyle
+                        //            )
+                        //        }
+                        //
+                        //        HStack {
+                        //            Text("Flavor: ")
+                        //
+                        //            Picker(
+                        //                of: ["Vanilla", "Chocolate", "Strawberry"],
+                        //                selection: $flavor
+                        //            )
+                        //            .pickerStyle(
+                        //                pickerStyle?.asPickerStyle ?? DefaultPickerStyle()
+                        //            )
+                        //        }
+                        //        Text("You chose: \(flavor ?? "Nothing yet!")")
+                        //    }
+                        //
+                        //    #if !os(tvOS) && !canImport(AndroidBackend)
+                        //        VStack {
+                        //            Text("Selected date: \(date)")
+                        //
+                        //            HStack {
+                        //                Text("Date picker style: ")
+                        //                Picker(
+                        //                    of: supportedDatePickerStyles,
+                        //                    selection: $datePickerStyle
+                        //                )
+                        //            }
+                        //
+                        //            DatePicker(selection: $date) {}
+                        //                .datePickerStyle(datePickerStyle ?? .automatic)
+                        //
+                        //            Button("Reset date to now") {
+                        //                date = Date()
+                        //            }
+                        //        }
+                        //    #endif
+                        // #endif
                     }.padding().disabled(!enabled)
 
                     Toggle(enabled ? "Disable all" : "Enable all", isOn: $enabled)

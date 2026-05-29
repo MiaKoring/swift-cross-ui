@@ -218,13 +218,13 @@ extension BackendFeatures.BaseStubs {
     ) {
         todo()
     }
-    
+
     public func createButton(
         wrapping: Widget
     ) -> Widget {
         todo()
     }
-    
+
     public func updateButton(
         _ button: Widget,
         environment: EnvironmentValues,
@@ -232,11 +232,11 @@ extension BackendFeatures.BaseStubs {
     ) {
         todo()
     }
-    
+
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
         todo()
     }
-    
+
     public func defaultButtonStyle() -> ButtonStyle {
         todo()
     }

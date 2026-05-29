@@ -77,7 +77,7 @@ public final class DummyBackend:
         public var font: Font.Resolved?
         public var action: (() -> Void)?
     }
-    
+
     public class CustomButton: Widget {
         public var label: Widget?
         public var action: (() -> Void)?
@@ -614,14 +614,14 @@ public final class DummyBackend:
         button.label = label
         button.action = action
     }
-    
+
     public func createButton(wrapping widget: Widget) -> Widget {
         let button = CustomButton()
         button.label = widget
-        
+
         return button
     }
-    
+
     public func updateButton(
         _ button: Widget,
         environment: EnvironmentValues,
@@ -631,9 +631,13 @@ public final class DummyBackend:
         button.buttonStyle = environment.buttonStyle ?? .bordered
         button.action = action
     }
-    
+
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
         SIMD2<Int>(0, 0)
+    }
+
+    public func defaultButtonStyle() -> ButtonStyle {
+        .bordered
     }
 
     public func createToggle() -> Widget {
