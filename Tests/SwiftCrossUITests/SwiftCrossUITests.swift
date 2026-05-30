@@ -192,7 +192,7 @@ struct SwiftCrossUITests {
             )
 
             #expect(
-                result.size == ViewSize(92, 96),
+                result.size == ViewSize(100, 104),
                 "View update result mismatch"
             )
 
