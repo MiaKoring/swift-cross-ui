@@ -53,7 +53,7 @@ struct ControlsApp: App {
 
     @Environment(\.supportedDatePickerStyles) var supportedDatePickerStyles
     @Environment(\.isPickerStyleSupported) var isPickerStyleSupported
-    
+
     var defaultButtonStyle: ButtonStyle {
         backend.defaultButtonStyle()
     }
@@ -172,53 +172,53 @@ struct ControlsApp: App {
                             }
                         #endif
                         #if !canImport(Gtk3Backend)
-                           VStack {
-                               Text("Picker")
-                        
-                               HStack {
-                                   Text("Picker Style:")
-                                   Picker(
-                                       of: BuiltInPickerStyle.allCases.filter {
-                                           isPickerStyleSupported($0.asPickerStyle)
-                                       },
-                                       selection: $pickerStyle
-                                   )
-                               }
-                        
-                               HStack {
-                                   Text("Flavor: ")
-                        
-                                   Picker(
-                                       of: ["Vanilla", "Chocolate", "Strawberry"],
-                                       selection: $flavor
-                                   )
-                                   .pickerStyle(
-                                       pickerStyle?.asPickerStyle ?? DefaultPickerStyle()
-                                   )
-                               }
-                               Text("You chose: \(flavor ?? "Nothing yet!")")
-                           }
-                        
-                           #if !os(tvOS) && !canImport(AndroidBackend)
-                               VStack {
-                                   Text("Selected date: \(date)")
-                        
-                                   HStack {
-                                       Text("Date picker style: ")
-                                       Picker(
-                                           of: supportedDatePickerStyles,
-                                           selection: $datePickerStyle
-                                       )
-                                   }
-                        
-                                   DatePicker(selection: $date) {}
-                                       .datePickerStyle(datePickerStyle ?? .automatic)
-                        
-                                   Button("Reset date to now") {
-                                       date = Date()
-                                   }
-                               }
-                           #endif
+                            VStack {
+                                Text("Picker")
+
+                                HStack {
+                                    Text("Picker Style:")
+                                    Picker(
+                                        of: BuiltInPickerStyle.allCases.filter {
+                                            isPickerStyleSupported($0.asPickerStyle)
+                                        },
+                                        selection: $pickerStyle
+                                    )
+                                }
+
+                                HStack {
+                                    Text("Flavor: ")
+
+                                    Picker(
+                                        of: ["Vanilla", "Chocolate", "Strawberry"],
+                                        selection: $flavor
+                                    )
+                                    .pickerStyle(
+                                        pickerStyle?.asPickerStyle ?? DefaultPickerStyle()
+                                    )
+                                }
+                                Text("You chose: \(flavor ?? "Nothing yet!")")
+                            }
+
+                            #if !os(tvOS) && !canImport(AndroidBackend)
+                                VStack {
+                                    Text("Selected date: \(date)")
+
+                                    HStack {
+                                        Text("Date picker style: ")
+                                        Picker(
+                                            of: supportedDatePickerStyles,
+                                            selection: $datePickerStyle
+                                        )
+                                    }
+
+                                    DatePicker(selection: $date) {}
+                                        .datePickerStyle(datePickerStyle ?? .automatic)
+
+                                    Button("Reset date to now") {
+                                        date = Date()
+                                    }
+                                }
+                            #endif
                         #endif
                     }.padding().disabled(!enabled)
 

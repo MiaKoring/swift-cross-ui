@@ -259,8 +259,8 @@ extension ButtonStyle {
                 button.cell.isHighlighted = button.isHighlighted
             case .plain, .borderless:
                 button.alphaValue = button.isEnabled
-                ? button.isHighlighted ? 0.75: 1.0
-                : 0.5
+                    ? button.isHighlighted ? 0.75: 1.0
+                    : 0.5
         }
     }
 

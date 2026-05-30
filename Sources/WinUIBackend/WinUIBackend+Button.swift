@@ -195,8 +195,8 @@ extension ButtonStyle {
             case .bordered: button.opacity = 1.0
             case .plain, .borderless:
                 button.opacity = button.enabled
-                ? button.isHighlighted ? 0.7: 1.0
-                : 0.36
+                    ? button.isHighlighted ? 0.7: 1.0
+                    : 0.36
         }
     }
 }

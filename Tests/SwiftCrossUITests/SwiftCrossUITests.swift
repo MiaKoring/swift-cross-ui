@@ -190,38 +190,38 @@ struct SwiftCrossUITests {
                 proposedSize: ProposedViewSize(200, 200),
                 environment: environment
             )
-            
+
             let decreaseSize = measureText("Decrease", in: window, with: environment)
             let increaseSize = measureText("Increase", in: window, with: environment)
             let textSize = measureText("Count: 1", in: window, with: environment)
-            
+
             let buttonPadding = backend.buttonPadding(in: environment)
-            
+
             let widestViewWidth = max(
                 decreaseSize.width + Double(buttonPadding.x),
                 increaseSize.width + Double(buttonPadding.x),
                 textSize.width
             )
-            
+
             let totalViewHeight = decreaseSize.height
                 + increaseSize.height
                 + Double(buttonPadding.y) * 2
                 + textSize.height
                 + Double(VStack<Text>.defaultSpacing * 2)
                 + Double(backend.defaultPaddingAmount * 2)
-            
+
             let expectedViewSize = ViewSize(
                 widestViewWidth + Double(backend.defaultPaddingAmount) * 2,
                 totalViewHeight
             )
-            
+
             #expect(contentViewResult.size == expectedViewSize)
 
             #expect(
                 contentViewResult.preferences.onOpenURL == nil,
                 "onOpenURL not nil"
             )
-            
+
             func measureText(
                 _ string: String,
                 in window: AppKitBackend.Window,
@@ -237,7 +237,7 @@ struct SwiftCrossUITests {
                     proposedSize: ProposedViewSize(200, 200),
                     environment: environment
                 )
-                
+
                 return result.size
             }
         }
