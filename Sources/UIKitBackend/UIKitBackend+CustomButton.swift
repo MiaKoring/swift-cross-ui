@@ -24,7 +24,7 @@ extension UIKitBackend {
         let button = (button as! CustomButtonWidget).child
         button.action = action
         button.isEnabled = environment.isEnabled
-        button.buttonStyle = environment.buttonStyle ?? defaultButtonStyle()
+        button.buttonStyle = (environment.buttonStyle ?? defaultButtonStyle()).kind
 
         // Automatically sets the label text of a Button("") {} as accessibilityLabel.
         // This should be improved via a future .accessibilityLabel(_:) modifier.
@@ -45,7 +45,7 @@ extension UIKitBackend {
         #if os(tvOS)
             return borderedPadding
         #else
-            return switch environment.buttonStyle ?? defaultButtonStyle() {
+            return switch (environment.buttonStyle ?? defaultButtonStyle()).kind {
                 case .plain, .borderless: SIMD2(0, 0)
                 case .bordered: borderedPadding
             }
@@ -73,7 +73,7 @@ final class UICustomButton: UIControl {
 
     let button = UIButton(type: .system)
 
-    var buttonStyle: ButtonStyle = .borderless {
+    var buttonStyle: ButtonStyle.Kind = .borderless {
         didSet {
             buttonStyle.updateBackground(self)
         }
@@ -210,7 +210,7 @@ final class UICustomButton: UIControl {
     #endif
 }
 
-extension ButtonStyle {
+extension ButtonStyle.Kind {
     fileprivate func updateBackground(_ button: UICustomButton) {
         var hideButton = false
         defer { button.button.isHidden = hideButton }

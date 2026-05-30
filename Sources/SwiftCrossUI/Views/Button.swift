@@ -67,11 +67,11 @@ extension Button: TypeSafeView {
     ) -> ViewLayoutResult {
         var childEnvironment = environment
 
-        let defaultButtonStyle = backend.defaultButtonStyle()
+        let buttonStyle = (environment.buttonStyle ?? backend.defaultButtonStyle()).kind
 
         if
             !environment.isEnabled,
-            ![.plain, .borderless].contains(environment.buttonStyle ?? defaultButtonStyle)
+            buttonStyle == .bordered
         {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
@@ -82,14 +82,14 @@ extension Button: TypeSafeView {
         // Set the default foregroundColor for the label unless overridden.
         // Uses the same colors as SwiftUI.
         if
-            environment.buttonStyle ?? defaultButtonStyle == .borderless,
+            buttonStyle == .borderless,
             backend.deviceClass == .desktop
         {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
                 environment.foregroundColor ?? .gray
             )
-        } else if environment.buttonStyle ?? defaultButtonStyle == .borderless {
+        } else if buttonStyle == .borderless {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
                 environment.foregroundColor ?? .blue // TODO: Replace with .accent

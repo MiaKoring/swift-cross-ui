@@ -53,10 +53,7 @@ struct ControlsApp: App {
 
     @Environment(\.supportedDatePickerStyles) var supportedDatePickerStyles
     @Environment(\.isPickerStyleSupported) var isPickerStyleSupported
-
-    var defaultButtonStyle: ButtonStyle {
-        backend.defaultButtonStyle()
-    }
+    @Environment(\.defaultButtonStyle) var defaultButtonStyle
 
     var body: some Scene {
         WindowGroup("ControlsApp") {

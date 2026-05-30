@@ -1,9 +1,9 @@
 extension BackendFeatures {
-    /// Backend methods for buttons.
+    /// Backend methods for simple buttons.
     ///
-    /// These are used by ``Button`` and ``Menu``.
+    /// These are used by ``Toggle`` and ``Menu``.
     @MainActor
-    public protocol Buttons: Core {
+    public protocol SimpleButtons: Core {
         /// Creates a labelled button with an action triggered on click/tap.
         ///
         /// Used by controls in button style like ``Menu`` or ``Toggle``.
@@ -25,7 +25,13 @@ extension BackendFeatures {
             environment: EnvironmentValues,
             action: @escaping () -> Void
         )
+    }
 
+    /// Backend methods for more complex buttons supporting an arbitrary ``View`` as label.
+    ///
+    /// These are used by ``Button``.
+    @MainActor
+    public protocol Buttons: Core {
         /// Creates a button supporting ``View`` as label with an action triggered on click/tap.
         ///
         /// Predominantly used by ``Button``.

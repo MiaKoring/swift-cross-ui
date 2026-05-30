@@ -447,6 +447,11 @@ extension EnvironmentValues {
 
     /// The display style used by ``Button``.
     @Entry public var buttonStyle: ButtonStyle?
+
+    @MainActor
+    public var defaultButtonStyle: ButtonStyle {
+        backend.defaultButtonStyle()
+    }
 }
 
 /// A key that can be used to extend the environment with new properties.

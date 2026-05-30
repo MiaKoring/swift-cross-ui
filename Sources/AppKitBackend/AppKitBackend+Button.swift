@@ -47,11 +47,11 @@ extension AppKitBackend {
 
         button.action = action
         button.isEnabled = environment.isEnabled
-        button.buttonStyle = environment.buttonStyle ?? defaultButtonStyle()
+        button.buttonStyle = (environment.buttonStyle ?? defaultButtonStyle()).kind
     }
 
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
-        switch environment.buttonStyle ?? defaultButtonStyle() {
+        switch (environment.buttonStyle ?? defaultButtonStyle()).kind {
             case .bordered: SIMD2<Int>(
                     Int(NSCustomButton.horizontalPadding * 2),
                     Int(NSCustomButton.verticalPadding * 2)
@@ -71,7 +71,7 @@ public final class NSCustomButton: NSView {
 
     fileprivate var action: (() -> Void)?
     fileprivate let cell = NSButtonCell()
-    fileprivate var buttonStyle: ButtonStyle = .bordered {
+    fileprivate var buttonStyle: ButtonStyle.Kind = .bordered {
         didSet { updateButtonAppearance() }
     }
 
@@ -251,7 +251,7 @@ public final class NSCustomButton: NSView {
     }
 }
 
-extension ButtonStyle {
+extension ButtonStyle.Kind {
     fileprivate func applyModifications(_ button: NSCustomButton) {
         switch self {
             case .bordered:

@@ -41,12 +41,12 @@ extension Gtk3Backend {
     ) {
         let button = button as! GtkCustomButton
         button.clicked = { _ in action() }
-        button.buttonStyle = environment.buttonStyle ?? defaultButtonStyle()
+        button.buttonStyle = (environment.buttonStyle ?? defaultButtonStyle()).kind
         button.sensitive = environment.isEnabled
     }
 
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
-        switch environment.buttonStyle ?? defaultButtonStyle() {
+        switch (environment.buttonStyle ?? defaultButtonStyle()).kind {
             case .bordered: SIMD2<Int>(
                     Int(GtkCustomButton.horizontalPadding * 2),
                     Int(GtkCustomButton.verticalPadding * 2)
@@ -64,7 +64,7 @@ fileprivate final class GtkCustomButton: Gtk3.Button {
     static let horizontalPadding: Double = 12
     static let verticalPadding: Double = 6
 
-    fileprivate var buttonStyle: ButtonStyle = .bordered {
+    fileprivate var buttonStyle: ButtonStyle.Kind = .bordered {
         willSet {
             buttonStyle.removeClass(self)
         }
@@ -113,7 +113,7 @@ fileprivate final class GtkCustomButton: Gtk3.Button {
     }
 }
 
-extension ButtonStyle {
+extension ButtonStyle.Kind {
     fileprivate func setClass(_ button: GtkCustomButton) {
         if let cssClass {
             let context = gtk_widget_get_style_context(button.widgetPointer)

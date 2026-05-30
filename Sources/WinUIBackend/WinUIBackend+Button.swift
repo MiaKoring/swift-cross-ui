@@ -18,7 +18,7 @@ extension WinUIBackend {
     ) {
         let button = button as! CustomButton
         button.action = action
-        button.buttonStyle = environment.buttonStyle ?? defaultButtonStyle()
+        button.buttonStyle = (environment.buttonStyle ?? defaultButtonStyle()).kind
         button.enabled = environment.isEnabled
     }
 
@@ -48,7 +48,7 @@ fileprivate final class CustomButton: WinUI.Button {
         }
     }
 
-    fileprivate var buttonStyle: ButtonStyle = .bordered {
+    fileprivate var buttonStyle: ButtonStyle.Kind = .bordered {
         didSet {
             if buttonStyle != oldValue {
                 updateButtonAppearance()

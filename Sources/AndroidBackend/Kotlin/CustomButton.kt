@@ -3,8 +3,8 @@ package dev.swiftcrossui.androidbackend
 import android.R
 import android.app.Activity
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
@@ -19,55 +19,50 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
 
     private val density = resources.displayMetrics.density
 
-    private val borderedDrawable by lazy {
-        val outValue = TypedValue()
-        activity.theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
-        activity.getDrawable(outValue.resourceId)
-    }
-    private val borderlessDrawable by lazy {
-        val outValue = TypedValue()
-        activity.theme.resolveAttribute(
-            android.R.attr.selectableItemBackgroundBorderless,
-            outValue,
-            true,
-        )
-        activity.getDrawable(outValue.resourceId)
-    }
+    companion object {
+        private val BORDERED_ATTR = R.attr.selectableItemBackground
+        private val BORDERLESS_ATTR = R.attr.selectableItemBackgroundBorderless
 
-    private val borderedBackground by lazy {
-        GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(getAdaptiveGray(context))
-            cornerRadius = 3f * resources.displayMetrics.density
+        private fun getDrawable(context: Context, attrId: Int): Drawable? {
+            val outValue = TypedValue()
+            context.theme.resolveAttribute(attrId, outValue, true)
+            return context.getDrawable(outValue.resourceId)
         }
     }
 
-    class ButtonStyle {
-        companion object {
-            const val BORDERED = 0
-            const val PLAIN = 1
-            const val BORDERLESS = 2
-        }
+    object ButtonStyle {
+        const val BORDERED = 0
+        const val PLAIN = 1
+        const val BORDERLESS = 2
     }
 
     init {
         isClickable = true
         isFocusable = true
-        updateButtonStyle()
 
         setOnClickListener { view -> if (isEnabled) this.action?.call() }
     }
 
-    fun set(action: SwiftAction, buttonType: Int, isEnabled: Boolean) {
+    fun set(action: SwiftAction, buttonType: Int, isEnabled: Boolean, isDarkMode: Boolean) {
         this.buttonStyle = buttonType
         this.action = action
         this.isEnabled = isEnabled
 
-        updateButtonStyle()
+        updateButtonStyle(isDarkMode)
     }
 
-    fun updateButtonStyle() {
+    fun updateButtonStyle(isDarkMode: Boolean) {
+        // Why 38% opacity was chosen:
+        // https://m2.material.io/design/interaction/states.html#disabled
         alpha = if (isEnabled || buttonStyle == ButtonStyle.BORDERED) 1.0f else 0.38f
+
+        val borderedBackground by lazy {
+            GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setColor(getAdaptiveGray(isDarkMode))
+                cornerRadius = 3f * resources.displayMetrics.density
+            }
+        }
 
         when (buttonStyle) {
             ButtonStyle.BORDERED -> {
@@ -95,14 +90,15 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
             }
         }
 
+        val foregroundAttr =
+            when (buttonStyle) {
+                ButtonStyle.PLAIN,
+                ButtonStyle.BORDERLESS -> BORDERLESS_ATTR
+                else -> BORDERED_ATTR
+            }
+
         if (isEnabled) {
-            foreground =
-                when (buttonStyle) {
-                    ButtonStyle.BORDERED -> borderedDrawable
-                    ButtonStyle.PLAIN,
-                    ButtonStyle.BORDERLESS -> borderlessDrawable
-                    else -> borderedDrawable
-                }
+            foreground = getDrawable(context, foregroundAttr)
         } else {
             foreground = null
         }
@@ -123,15 +119,7 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
         super.addView(child, index, frameParams)
     }
 
-    fun getAdaptiveGray(context: Context): Int {
-        val isDarkMode =
-            (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-                Configuration.UI_MODE_NIGHT_YES
-
-        return if (isDarkMode) {
-            Color.DKGRAY
-        } else {
-            Color.LTGRAY
-        }
+    fun getAdaptiveGray(isDarkMode: Boolean): Int {
+        return if (isDarkMode) Color.DKGRAY else Color.LTGRAY
     }
 }
