@@ -186,20 +186,60 @@ struct SwiftCrossUITests {
             )
             backend.setChild(ofWindow: window, to: viewGraph.rootNode.widget.into())
 
-            let result = viewGraph.computeLayout(
+            let contentViewResult = viewGraph.computeLayout(
                 proposedSize: ProposedViewSize(200, 200),
                 environment: environment
             )
-
-            #expect(
-                result.size == ViewSize(100, 104),
-                "View update result mismatch"
+            
+            let decreaseSize = measureText("Decrease", in: window, with: environment)
+            let increaseSize = measureText("Decrease", in: window, with: environment)
+            let textSize = measureText("Count: 1", in: window, with: environment)
+            
+            let buttonPadding = backend.buttonPadding(in: environment)
+            
+            let widestViewWidth = max(
+                decreaseSize.width + Double(buttonPadding.x),
+                increaseSize.width + Double(buttonPadding.x),
+                textSize.width
             )
+            
+            let totalViewHeight = decreaseSize.height
+                + increaseSize.height
+                + Double(buttonPadding.y) * 2
+                + textSize.height
+                + Double(VStack<Text>.defaultSpacing * 2)
+                + Double(backend.defaultPaddingAmount * 2)
+            
+            let expectedViewSize = ViewSize(
+                widestViewWidth + Double(backend.defaultPaddingAmount) * 2,
+                totalViewHeight
+            )
+            
+            #expect(contentViewResult.size == expectedViewSize)
 
             #expect(
-                result.preferences.onOpenURL == nil,
+                contentViewResult.preferences.onOpenURL == nil,
                 "onOpenURL not nil"
             )
+            
+            func measureText(
+                _ string: String,
+                in window: AppKitBackend.Window,
+                with environment: EnvironmentValues
+            ) -> ViewSize {
+                let viewGraph = ViewGraph(
+                    for: Text(string),
+                    backend: backend,
+                    environment: environment
+                )
+                backend.setChild(ofWindow: window, to: viewGraph.rootNode.widget.into())
+                let result = viewGraph.computeLayout(
+                    proposedSize: ProposedViewSize(200, 200),
+                    environment: environment
+                )
+                
+                return result.size
+            }
         }
 
         /// Snapshots an AppKit view to a TIFF image.
