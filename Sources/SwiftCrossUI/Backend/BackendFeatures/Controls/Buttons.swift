@@ -7,7 +7,6 @@ extension BackendFeatures {
         /// Creates a labelled button with an action triggered on click/tap.
         ///
         /// Used by controls in button style like ``Menu`` or ``Toggle``.
-        /// Will be removed in the future
         ///
         /// - Returns: A button.
         func createSimpleButton() -> Widget

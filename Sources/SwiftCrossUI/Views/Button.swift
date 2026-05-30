@@ -1,5 +1,5 @@
 /// A control that initiates an action.
-public struct Button<Content: View>: Sendable {
+public struct Button<Content: View> {
     @Environment(\.foregroundColor) var color
     @Environment(\.isEnabled) var isEnabled
     /// The label to show on the button.
@@ -73,7 +73,7 @@ extension Button: TypeSafeView {
 
         if
             !environment.isEnabled,
-            environment.buttonStyle ?? defaultButtonStyle != .plain
+            environment.buttonStyle ?? defaultButtonStyle == .bordered
         {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,

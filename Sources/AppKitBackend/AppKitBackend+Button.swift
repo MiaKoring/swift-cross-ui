@@ -12,7 +12,6 @@ extension AppKitBackend {
         environment: EnvironmentValues,
         action: @escaping () -> Void
     ) {
-
         let button = button as! NSButton
         button.attributedTitle = Self.attributedString(
             for: label,
@@ -34,7 +33,7 @@ extension AppKitBackend {
 
         button.addSubview(child)
         child.translatesAutoresizingMaskIntoConstraints = false
-        button.setupContraints()
+        button.setupConstraints()
 
         return button
     }
@@ -244,7 +243,7 @@ public final class NSCustomButton: NSView {
         self.needsDisplay = true
     }
 
-    fileprivate func setupContraints() {
+    fileprivate func setupConstraints() {
         guard let child = subviews.first else { return }
 
         NSLayoutConstraint.activate([
@@ -288,7 +287,7 @@ extension ButtonStyle {
             case .bordered:
                 button.cell.isHighlighted = button.isHighlighted
             case .plain, .borderless:
-                button.alphaValue = button.isHighlighted ? 1.0: 0.75
+                button.alphaValue = button.isHighlighted ? 0.75: 1.0
         }
     }
 }

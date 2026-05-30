@@ -73,10 +73,10 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
             ButtonStyle.BORDERED -> {
                 background = borderedBackground
                 setPadding(
-                    (12 * density).toInt(),
+                    (11 * density).toInt(),
                     (5 * density).toInt(),
-                    (12 * density).toInt(),
-                    (6 * density).toInt(),
+                    (11 * density).toInt(),
+                    (5 * density).toInt(),
                 )
             }
             ButtonStyle.PLAIN,
@@ -87,10 +87,10 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
             else -> {
                 background = borderedBackground
                 setPadding(
-                    (12 * density).toInt(),
+                    (11 * density).toInt(),
                     (5 * density).toInt(),
-                    (12 * density).toInt(),
-                    (6 * density).toInt(),
+                    (11 * density).toInt(),
+                    (5 * density).toInt(),
                 )
             }
         }

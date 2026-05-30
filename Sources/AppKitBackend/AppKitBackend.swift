@@ -508,7 +508,6 @@ public final class AppKitBackend: FullAppBackend {
                 Int(size.height)
             )
         }
-
         let size = widget.intrinsicContentSize
         return SIMD2(
             Int(size.width),

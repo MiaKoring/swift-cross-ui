@@ -192,7 +192,7 @@ struct SwiftCrossUITests {
             )
             
             let decreaseSize = measureText("Decrease", in: window, with: environment)
-            let increaseSize = measureText("Decrease", in: window, with: environment)
+            let increaseSize = measureText("Increase", in: window, with: environment)
             let textSize = measureText("Count: 1", in: window, with: environment)
             
             let buttonPadding = backend.buttonPadding(in: environment)
