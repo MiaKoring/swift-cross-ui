@@ -44,12 +44,7 @@ fileprivate final class CustomButton: WinUI.Button {
     private var isPointerCaptured = false
     fileprivate var isHighlighted = false {
         didSet {
-            buttonStyle.handleHighlight(self)
-        }
-    }
-    fileprivate var isKeyboardHighlighted = false {
-        didSet {
-            buttonStyle.handleHighlight(self)
+            buttonStyle.applyModifications(self)
         }
     }
 
@@ -104,9 +99,10 @@ fileprivate final class CustomButton: WinUI.Button {
             let width = self.actualWidth
             let height = self.actualHeight
 
+            // Apparently windows uses 0 <= x < actualWidth ¯\_(ツ)_/¯
             if
-                (0...width).contains(Double(position.x)),
-                (0...height).contains(Double(position.y))
+                (0..<width).contains(Double(position.x)),
+                (0..<height).contains(Double(position.y))
             {
                 isHighlighted = true
             } else {
@@ -133,7 +129,7 @@ fileprivate final class CustomButton: WinUI.Button {
         let targetKey = e.key
 
         if [.space, .enter].contains(targetKey) {
-            isKeyboardHighlighted = true
+            isHighlighted = true
         }
     }
 
@@ -143,20 +139,18 @@ fileprivate final class CustomButton: WinUI.Button {
         let targetKey = e.key
 
         if [.space, .enter].contains(targetKey) {
-            isKeyboardHighlighted = false
+            isHighlighted = false
         }
     }
 
     override func onLostFocus(_ e: RoutedEventArgs!) throws {
         try super.onLostFocus(e)
-        isKeyboardHighlighted = false
         isPointerCaptured = false
         isHighlighted = false
     }
 
     private func updateButtonAppearance() {
         buttonStyle.applyModifications(self)
-        buttonStyle.handleHighlight(self)
         buttonStyle.updateRenderedStyle(self)
     }
 }
@@ -200,17 +194,9 @@ extension ButtonStyle {
         switch self {
             case .bordered: button.opacity = 1.0
             case .plain, .borderless:
-                button.opacity = button.enabled ? 1.0: 0.36
-        }
-    }
-
-    fileprivate func handleHighlight(_ button: CustomButton) {
-        let isHighlighted = button.isHighlighted || button.isKeyboardHighlighted
-
-        switch self {
-            case .bordered: button.opacity = 1.0
-            case .plain, .borderless:
-                button.opacity = isHighlighted ? 0.7: 1.0
+                button.opacity = button.enabled
+                ? button.isHighlighted ? 0.7: 1.0
+                : 0.36
         }
     }
 }

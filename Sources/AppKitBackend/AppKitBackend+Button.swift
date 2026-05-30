@@ -44,7 +44,6 @@ extension AppKitBackend {
         action: @escaping () -> Void
     ) {
         let button = button as! NSCustomButton
-        button.cell.isEnabled = environment.isEnabled
 
         button.action = action
         button.isEnabled = environment.isEnabled
@@ -83,7 +82,7 @@ public final class NSCustomButton: NSView {
                 isHighlighted = false
             }
             buttonStyle.applyModifications(self)
-            self.needsDisplay = true
+            needsDisplay = true
         }
     }
 
@@ -94,7 +93,7 @@ public final class NSCustomButton: NSView {
 
     public var isHighlighted = false {
         didSet {
-            buttonStyle.handleHighlight(self)
+            buttonStyle.applyModifications(self)
             needsDisplay = true
         }
     }
@@ -238,7 +237,6 @@ public final class NSCustomButton: NSView {
 
     private func updateButtonAppearance() {
         buttonStyle.applyModifications(self)
-        buttonStyle.handleHighlight(self)
         noteFocusRingMaskChanged()
         self.needsDisplay = true
     }
@@ -258,8 +256,11 @@ extension ButtonStyle {
         switch self {
             case .bordered:
                 button.cell.isEnabled = button.isEnabled
+                button.cell.isHighlighted = button.isHighlighted
             case .plain, .borderless:
-                button.alphaValue = button.isEnabled ? 1.0: 0.5
+                button.alphaValue = button.isEnabled
+                ? button.isHighlighted ? 0.75: 1.0
+                : 0.5
         }
     }
 
@@ -279,15 +280,6 @@ extension ButtonStyle {
             case .plain, .borderless:
                 let maskPath = NSBezierPath(rect: button.bounds)
                 maskPath.fill()
-        }
-    }
-
-    fileprivate func handleHighlight(_ button: NSCustomButton) {
-        switch self {
-            case .bordered:
-                button.cell.isHighlighted = button.isHighlighted
-            case .plain, .borderless:
-                button.alphaValue = button.isHighlighted ? 0.75: 1.0
         }
     }
 }
