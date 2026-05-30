@@ -91,7 +91,7 @@ fileprivate final class GtkCustomButton: Gtk3.Button {
             }
 
             button.customButton.flat:active {
-                opacity: 0.65;
+                opacity: 0.8;
             }
 
             button.customButton.flat {
@@ -110,6 +110,14 @@ fileprivate final class GtkCustomButton: Gtk3.Button {
                 opacity: 0.5;
             }
             """)
+        
+        // Why 50% disabled opacity was chosen:
+        // https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/css-variables.html#opacity
+        // (switch to the variable when we have adwaita)
+        
+        // Why 80% for active(pressed) was chosen:
+        // A pressed SwiftUI .plain button looks visually the same as
+        // a not pressed one at 0.8 opacity.
     }
 }
 

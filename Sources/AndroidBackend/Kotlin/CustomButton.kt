@@ -54,7 +54,7 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
     fun updateButtonStyle(isDarkMode: Boolean) {
         // Why 38% opacity was chosen:
         // https://m2.material.io/design/interaction/states.html#disabled
-        alpha = if (isEnabled || buttonStyle == ButtonStyle.BORDERED) 1.0f else 0.38f
+        alpha = if (isEnabled) 1.0f else 0.38f
 
         val borderedBackground by lazy {
             GradientDrawable().apply {

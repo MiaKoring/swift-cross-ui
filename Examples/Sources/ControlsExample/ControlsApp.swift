@@ -82,6 +82,7 @@ struct ControlsApp: App {
                                             Color.purple.opacity(0.5)
                                                 .cornerRadius(5)
                                         }
+                                        .foregroundColor(.adaptive(light: .black, dark: .white))
                                 }
                                 .buttonStyle(buttonStyle)
                             } else {

@@ -90,7 +90,7 @@ final class UICustomButton: UIControl {
                 options: [.allowUserInteraction],
                 animations: { [weak self] in
                     guard let self else { return }
-                    self.buttonStyle.handleHighlight(self)
+                    self.buttonStyle.applyModifications(self)
                 },
                 completion: nil
             )
@@ -99,7 +99,8 @@ final class UICustomButton: UIControl {
 
     override public var isEnabled: Bool {
         didSet {
-            self.alpha = isEnabled ? 1.0 : 0.5
+            button.isEnabled = isEnabled
+            buttonStyle.applyModifications(self)
         }
     }
 
@@ -239,16 +240,29 @@ extension ButtonStyle.Kind {
         }
     }
 
-    fileprivate func handleHighlight(_ button: UICustomButton) {
+    fileprivate func applyModifications(_ button: UICustomButton) {
         guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else {
-            button.alpha = button.isHighlighted ? 0.75 : 1.0
+            button.alpha = button.isHighlighted ? 0.8 : 1.0
             return
         }
         switch self {
             case .bordered:
                 button.button.isHighlighted = button.isHighlighted
+                button.alpha = button.isEnabled ? 1.0: 0.92
+                // 92% was the closest I found in combination
+                // with reducing the foregroundColor opacity to 80%.
             case .plain, .borderless:
-                button.alpha = button.isHighlighted ? 0.75 : 1.0
+                button.alpha = button.isEnabled
+                ? button.isHighlighted ? 0.80: 1.0
+                : 0.5
+                
+                // Why 50% disabled opacity was chosen:
+                // A disabled SwiftUI .plain button looks visually the same as
+                // an enabled one at 0.5 opacity.
+                
+                // Why 80% for active(pressed) was chosen:
+                // A pressed SwiftUI .plain button looks visually the same as
+                // a not pressed one at 0.8 opacity.
         }
     }
 }
