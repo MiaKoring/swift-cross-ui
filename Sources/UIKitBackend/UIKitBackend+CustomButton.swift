@@ -44,12 +44,12 @@ extension UIKitBackend {
         // the highlighted state of bordered button for all styles.
         #if os(tvOS)
             return borderedPadding
+        #else
+            return switch environment.buttonStyle ?? defaultButtonStyle() {
+                case .plain, .borderless: SIMD2(0, 0)
+                case .bordered: borderedPadding
+            }
         #endif
-
-        return switch environment.buttonStyle ?? defaultButtonStyle() {
-            case .plain, .borderless: SIMD2(0, 0)
-            case .bordered: borderedPadding
-        }
     }
 
     public func defaultButtonStyle() -> ButtonStyle {
