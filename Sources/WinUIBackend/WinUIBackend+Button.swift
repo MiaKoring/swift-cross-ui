@@ -197,8 +197,8 @@ extension ButtonStyle {
                 button.opacity = button.enabled
                     ? button.isHighlighted ? 0.7: 1.0
                     : 0.38
-            // Why 38% opacity was chosen (I couldn't find a Fluent guideline):
-            // https://m2.material.io/design/interaction/states.html#disabled
+                // Why 38% opacity was chosen (I couldn't find a Fluent guideline):
+                // https://m2.material.io/design/interaction/states.html#disabled
         }
     }
 }

@@ -108,7 +108,7 @@ fileprivate final class GtkCustomButton: Gtk.Button {
         // Why 50% disabled opacity was chosen:
         // https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/css-variables.html#opacity
         // (switch to the variable when we have adwaita)
-        
+
         // Why 80% for active(pressed) was chosen:
         // A pressed SwiftUI .plain button looks visually the same as
         // a not pressed one at 0.8 opacity.

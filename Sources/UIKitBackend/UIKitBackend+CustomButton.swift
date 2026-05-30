@@ -249,17 +249,15 @@ extension ButtonStyle.Kind {
             case .bordered:
                 button.button.isHighlighted = button.isHighlighted
                 button.alpha = button.isEnabled ? 1.0: 0.92
-                // 92% was the closest I found in combination
-                // with reducing the foregroundColor opacity to 80%.
+            // 92% was the closest I found in combination
+            // with reducing the foregroundColor opacity to 80%.
             case .plain, .borderless:
                 button.alpha = button.isEnabled
-                ? button.isHighlighted ? 0.80: 1.0
-                : 0.5
-                
+                    ? button.isHighlighted ? 0.80: 1.0
+                    : 0.5
                 // Why 50% disabled opacity was chosen:
                 // A disabled SwiftUI .plain button looks visually the same as
                 // an enabled one at 0.5 opacity.
-                
                 // Why 80% for active(pressed) was chosen:
                 // A pressed SwiftUI .plain button looks visually the same as
                 // a not pressed one at 0.8 opacity.

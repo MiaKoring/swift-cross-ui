@@ -68,28 +68,28 @@ extension Button: TypeSafeView {
         var childEnvironment = environment
 
         let buttonStyle = (environment.buttonStyle ?? backend.defaultButtonStyle()).kind
-        
+
         if !environment.isEnabled, buttonStyle == .bordered {
-            if backend.deviceClass == .desktop || backend.deviceClass == .tv {
+            if backend.deviceClass == .desktop || backend.deviceClass == .tv {
                 childEnvironment = childEnvironment.with(
                     \.foregroundColor,
-                     environment.foregroundColor ?? .gray.opacity(0.5) // SwiftUI is closer to secondary.
+                    environment.foregroundColor ?? .gray
+                        .opacity(0.5) // SwiftUI is closer to secondary.
                 )
             } else if backend.deviceClass == .phone || backend.deviceClass == .tablet {
                 childEnvironment = childEnvironment.with(
                     \.foregroundColor,
-                     environment.foregroundColor?.opacity(0.8) ?? .blue.opacity(0.8)
+                    environment.foregroundColor?.opacity(0.8) ?? .blue.opacity(0.8)
                 )
             } else if backend.deviceClass == .tv {
                 childEnvironment = childEnvironment.with(
                     \.foregroundColor,
-                     environment.foregroundColor ?? .white.opacity(0.5)
+                    environment.foregroundColor ?? .white.opacity(0.5)
                 )
             }
         }
         // The disabled opacities and defaults are based on discoveries in SwiftUI.
         // iOS appears to dimm even foregroundColors in the environment.
-        
 
         // Set the default foregroundColor for the label unless overridden.
         // Uses the same colors as SwiftUI.
@@ -103,7 +103,8 @@ extension Button: TypeSafeView {
             )
         } else if
             (backend.deviceClass == .phone || backend.deviceClass == .tablet),
-            (buttonStyle == .borderless || buttonStyle == .bordered) {
+            (buttonStyle == .borderless || buttonStyle == .bordered)
+        {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,
                 environment.foregroundColor ?? .blue // TODO: Replace with .accent
