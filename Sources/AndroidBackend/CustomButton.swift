@@ -19,7 +19,7 @@ class CustomButton: AndroidKit.FrameLayout {
 extension JavaClass where JavaClass_T == CustomButton {
     @JavaStaticField(isFinal: true)
     var horizontalPadding: Int32
-    
+
     @JavaStaticField(isFinal: true)
     var verticalPadding: Int32
 }

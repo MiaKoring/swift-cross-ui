@@ -1,6 +1,7 @@
 import AndroidKit
 import SwiftCrossUI
 
+// swiftlint:disable force_try
 extension AndroidBackend {
     public func createButton(wrapping widget: Widget) -> Widget {
         let button = CustomButton(Self.activity, environment: Self.env)

@@ -22,7 +22,7 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
     companion object {
         const val horizontalPadding = 11
         const val verticalPadding = 5
-        
+
         private val BORDERED_ATTR = R.attr.selectableItemBackground
         private val BORDERLESS_ATTR = R.attr.selectableItemBackgroundBorderless
 
