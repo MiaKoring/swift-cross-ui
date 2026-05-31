@@ -161,18 +161,18 @@ extension ButtonStyle.Kind {
 
         switch self {
             case .bordered:
-                button.clearValue(WinUI.Button.backgroundProperty)
-                button.clearValue(WinUI.Button.borderBrushProperty)
-                button.clearValue(WinUI.Button.borderThicknessProperty)
-                button.clearValue(WinUI.Button.cornerRadiusProperty)
+                _ = try? button.clearValue(WinUI.Button.backgroundProperty)
+                _ = try? button.clearValue(WinUI.Button.borderBrushProperty)
+                _ = try? button.clearValue(WinUI.Button.borderThicknessProperty)
+                _ = try? button.clearValue(WinUI.Button.cornerRadiusProperty)
 
-                resources.remove("ButtonBackgroundPointerOver")
-                resources.remove("ButtonBackgroundPressed")
-                resources.remove("ButtonBackgroundDisabled")
+                _ = resources.remove("ButtonBackgroundPointerOver")
+                _ = resources.remove("ButtonBackgroundPressed")
+                _ = resources.remove("ButtonBackgroundDisabled")
 
-                resources.remove("ButtonBorderBrushPointerOver")
-                resources.remove("ButtonBorderBrushPressed")
-                resources.remove("ButtonBorderBrushDisabled")
+                _ = resources.remove("ButtonBorderBrushPointerOver")
+                _ = resources.remove("ButtonBorderBrushPressed")
+                _ = resources.remove("ButtonBorderBrushDisabled")
             case .plain, .borderless:
                 let transparentBrush = SolidColorBrush(UWP.Color.transparent)
                 button.background = transparentBrush
@@ -180,13 +180,13 @@ extension ButtonStyle.Kind {
                 button.borderThickness = Thickness.null
                 button.cornerRadius = CornerRadius.null
 
-                resources.insert("ButtonBackgroundPointerOver", transparentBrush)
-                resources.insert("ButtonBackgroundPressed", transparentBrush)
-                resources.insert("ButtonBackgroundDisabled", transparentBrush)
+                _ = resources.insert("ButtonBackgroundPointerOver", transparentBrush)
+                _ = resources.insert("ButtonBackgroundPressed", transparentBrush)
+                _ = resources.insert("ButtonBackgroundDisabled", transparentBrush)
 
-                resources.insert("ButtonBorderBrushPointerOver", transparentBrush)
-                resources.insert("ButtonBorderBrushPressed", transparentBrush)
-                resources.insert("ButtonBorderBrushDisabled", transparentBrush)
+                _ = resources.insert("ButtonBorderBrushPointerOver", transparentBrush)
+                _ = resources.insert("ButtonBorderBrushPressed", transparentBrush)
+                _ = resources.insert("ButtonBorderBrushDisabled", transparentBrush)
         }
     }
 
