@@ -155,7 +155,7 @@ fileprivate final class CustomButton: WinUI.Button {
     }
 }
 
-extension ButtonStyle {
+extension ButtonStyle.Kind {
     fileprivate func updateRenderedStyle(_ button: CustomButton) {
         guard let resources = button.resources else { return }
 
