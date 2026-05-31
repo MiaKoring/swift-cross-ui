@@ -5,11 +5,6 @@ extension AndroidBackend {
     public func createButton(wrapping widget: Widget) -> Widget {
         let button = CustomButton(Self.activity, environment: Self.env)
         button.addView(widget.as(AndroidKit.View.self)!, 0)
-        // When I tried setting it in the initializer somehow click stopped working?
-        button.setPadding(
-            horizontal: Int32(CustomButton.horizontalPadding),
-            vertical: Int32(CustomButton.verticalPadding)
-        )
         return button.as(AndroidKit.View.self)!
     }
 
@@ -28,10 +23,11 @@ extension AndroidBackend {
     }
 
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
+        let buttonClass = try! JavaClass<CustomButton>()
         return switch environment.resolvedButtonStyle.kind {
             case .bordered: SIMD2(
-                    CustomButton.horizontalPadding * 2,
-                    CustomButton.verticalPadding * 2
+                    Int(buttonClass.horizontalPadding) * 2,
+                    Int(buttonClass.verticalPadding) * 2
                 )
             case .plain, .borderless: SIMD2(0, 0)
         }

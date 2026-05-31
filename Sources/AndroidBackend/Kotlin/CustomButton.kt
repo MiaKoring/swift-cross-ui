@@ -14,14 +14,15 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
 
 class CustomButton(activity: Activity) : FrameLayout(activity) {
-    var horizontalPadding = 0
-    var verticalPadding = 0
     var buttonStyle: Short = ButtonStyle.BORDERED
     var action: SwiftAction? = null
 
     private val density = resources.displayMetrics.density
 
     companion object {
+        const val horizontalPadding = 11
+        const val verticalPadding = 5
+        
         private val BORDERED_ATTR = R.attr.selectableItemBackground
         private val BORDERLESS_ATTR = R.attr.selectableItemBackgroundBorderless
 
@@ -43,11 +44,6 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
         isFocusable = true
 
         setOnClickListener { view -> if (isEnabled) this.action?.call() }
-    }
-
-    fun setPadding(horizontal: Int, vertical: Int) {
-        horizontalPadding = horizontal
-        verticalPadding = vertical
     }
 
     fun set(action: SwiftAction, buttonStyle: Short, isEnabled: Boolean, isDarkMode: Boolean) {
