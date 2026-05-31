@@ -1,12 +1,14 @@
 extension BackendFeatures {
+    public typealias Buttons = StringLabelButtons & ViewLabelButtons
+
     /// Backend methods for simple buttons.
     ///
     /// These are used by ``Toggle`` and ``Menu``.
     @MainActor
-    public protocol SimpleButtons: Core {
+    public protocol StringLabelButtons: Core {
         /// Creates a labelled button with an action triggered on click/tap.
         ///
-        /// Used by controls in button style like ``Menu`` or ``Toggle``.
+        /// Used by controls in button style like ``Menu``, ``Toggle`` or more constrained result builders.
         ///
         /// - Returns: A button.
         func createSimpleButton() -> Widget
@@ -31,7 +33,7 @@ extension BackendFeatures {
     ///
     /// These are used by ``Button``.
     @MainActor
-    public protocol Buttons: Core {
+    public protocol ViewLabelButtons: Core {
         /// Creates a button supporting ``View`` as label with an action triggered on click/tap.
         ///
         /// Predominantly used by ``Button``.

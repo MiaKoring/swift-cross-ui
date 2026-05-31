@@ -40,12 +40,12 @@ extension GtkBackend {
     ) {
         let button = button as! GtkCustomButton
         button.clicked = { _ in action() }
-        button.buttonStyle = (environment.buttonStyle ?? defaultButtonStyle()).kind
+        button.buttonStyle = environment.resolvedButtonStyle.kind
         button.sensitive = environment.isEnabled
     }
 
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
-        switch (environment.buttonStyle ?? defaultButtonStyle()).kind {
+        switch environment.resolvedButtonStyle.kind {
             case .bordered: SIMD2<Int>(
                     Int(GtkCustomButton.horizontalPadding * 2),
                     Int(GtkCustomButton.verticalPadding * 2)

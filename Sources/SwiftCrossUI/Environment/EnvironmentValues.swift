@@ -448,9 +448,17 @@ extension EnvironmentValues {
     /// The display style used by ``Button``.
     @Entry public var buttonStyle: ButtonStyle?
 
+    /// The default button style as declared by the backend.
     @MainActor
     public var defaultButtonStyle: ButtonStyle {
         backend.defaultButtonStyle()
+    }
+
+    /// The resolved ``ButtonStyle`` for backends to use.
+    /// Either the set buttonStyle in environment or the ``defaultButtonStyle`` if nil.
+    @MainActor
+    public var resolvedButtonStyle: ButtonStyle {
+        buttonStyle ?? defaultButtonStyle
     }
 }
 

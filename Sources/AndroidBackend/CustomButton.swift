@@ -15,5 +15,8 @@ class CustomButton: AndroidKit.FrameLayout {
     )
 
     @JavaMethod
-    func set(action: SwiftAction?, buttonStyle: Int32, isEnabled: Bool, isDarkMode: Bool)
+    func set(action: SwiftAction?, buttonStyle: Int16, isEnabled: Bool, isDarkMode: Bool)
+
+    @JavaMethod
+    func setPadding(horizontal: Int32, vertical: Int32)
 }

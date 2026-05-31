@@ -18,12 +18,12 @@ extension WinUIBackend {
     ) {
         let button = button as! CustomButton
         button.action = action
-        button.buttonStyle = (environment.buttonStyle ?? defaultButtonStyle()).kind
+        button.buttonStyle = environment.resolvedButtonStyle.kind
         button.enabled = environment.isEnabled
     }
 
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
-        switch environment.buttonStyle ?? defaultButtonStyle() {
+        switch environment.resolvedButtonStyle.kind {
             case .bordered: SIMD2(
                     CustomButton.horizontalPadding * 2,
                     CustomButton.verticalPadding * 2,
@@ -159,20 +159,20 @@ extension ButtonStyle.Kind {
     fileprivate func updateRenderedStyle(_ button: CustomButton) {
         guard let resources = button.resources else { return }
 
-        switch button.buttonStyle {
+        switch self {
             case .bordered:
-                _ = try? button.clearValue(WinUI.Button.backgroundProperty)
-                _ = try? button.clearValue(WinUI.Button.borderBrushProperty)
-                _ = try? button.clearValue(WinUI.Button.borderThicknessProperty)
-                _ = try? button.clearValue(WinUI.Button.cornerRadiusProperty)
+                button.clearValue(WinUI.Button.backgroundProperty)
+                button.clearValue(WinUI.Button.borderBrushProperty)
+                button.clearValue(WinUI.Button.borderThicknessProperty)
+                button.clearValue(WinUI.Button.cornerRadiusProperty)
 
-                _ = try? resources.remove("ButtonBackgroundPointerOver")
-                _ = try? resources.remove("ButtonBackgroundPressed")
-                _ = try? resources.remove("ButtonBackgroundDisabled")
+                resources.remove("ButtonBackgroundPointerOver")
+                resources.remove("ButtonBackgroundPressed")
+                resources.remove("ButtonBackgroundDisabled")
 
-                _ = try? resources.remove("ButtonBorderBrushPointerOver")
-                _ = try? resources.remove("ButtonBorderBrushPressed")
-                _ = try? resources.remove("ButtonBorderBrushDisabled")
+                resources.remove("ButtonBorderBrushPointerOver")
+                resources.remove("ButtonBorderBrushPressed")
+                resources.remove("ButtonBorderBrushDisabled")
             case .plain, .borderless:
                 let transparentBrush = SolidColorBrush(UWP.Color.transparent)
                 button.background = transparentBrush

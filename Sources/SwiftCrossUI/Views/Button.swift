@@ -67,7 +67,7 @@ extension Button: TypeSafeView {
     ) -> ViewLayoutResult {
         var childEnvironment = environment
 
-        let buttonStyle = (environment.buttonStyle ?? backend.defaultButtonStyle()).kind
+        let buttonStyle = environment.resolvedButtonStyle.kind
 
         if !environment.isEnabled, buttonStyle == .bordered {
             if backend.deviceClass == .desktop || backend.deviceClass == .tv {
@@ -102,8 +102,8 @@ extension Button: TypeSafeView {
                 environment.foregroundColor ?? .gray
             )
         } else if
-            (backend.deviceClass == .phone || backend.deviceClass == .tablet),
-            (buttonStyle == .borderless || buttonStyle == .bordered)
+            backend.deviceClass == .phone || backend.deviceClass == .tablet,
+            buttonStyle == .borderless || buttonStyle == .bordered
         {
             childEnvironment = childEnvironment.with(
                 \.foregroundColor,

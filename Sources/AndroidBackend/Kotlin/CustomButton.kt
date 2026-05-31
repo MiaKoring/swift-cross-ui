@@ -14,7 +14,9 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
 
 class CustomButton(activity: Activity) : FrameLayout(activity) {
-    var buttonStyle: Int = ButtonStyle.BORDERED
+    var horizontalPadding = 0
+    var verticalPadding = 0
+    var buttonStyle: Short = ButtonStyle.BORDERED
     var action: SwiftAction? = null
 
     private val density = resources.displayMetrics.density
@@ -31,9 +33,9 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
     }
 
     object ButtonStyle {
-        const val BORDERED = 0
-        const val PLAIN = 1
-        const val BORDERLESS = 2
+        const val BORDERED: Short = 0
+        const val PLAIN: Short = 1
+        const val BORDERLESS: Short = 2
     }
 
     init {
@@ -43,8 +45,13 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
         setOnClickListener { view -> if (isEnabled) this.action?.call() }
     }
 
-    fun set(action: SwiftAction, buttonType: Int, isEnabled: Boolean, isDarkMode: Boolean) {
-        this.buttonStyle = buttonType
+    fun setPadding(horizontal: Int, vertical: Int) {
+        horizontalPadding = horizontal
+        verticalPadding = vertical
+    }
+
+    fun set(action: SwiftAction, buttonStyle: Short, isEnabled: Boolean, isDarkMode: Boolean) {
+        this.buttonStyle = buttonStyle
         this.action = action
         this.isEnabled = isEnabled
 
@@ -64,14 +71,17 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
             }
         }
 
+        val convertedHorizontalPadding = (horizontalPadding * density).toInt()
+        val convertedVerticalPadding = (verticalPadding * density).toInt()
+
         when (buttonStyle) {
             ButtonStyle.BORDERED -> {
                 background = borderedBackground
                 setPadding(
-                    (11 * density).toInt(),
-                    (5 * density).toInt(),
-                    (11 * density).toInt(),
-                    (5 * density).toInt(),
+                    convertedHorizontalPadding,
+                    convertedVerticalPadding,
+                    convertedHorizontalPadding,
+                    convertedVerticalPadding,
                 )
             }
             ButtonStyle.PLAIN,
@@ -82,10 +92,10 @@ class CustomButton(activity: Activity) : FrameLayout(activity) {
             else -> {
                 background = borderedBackground
                 setPadding(
-                    (11 * density).toInt(),
-                    (5 * density).toInt(),
-                    (11 * density).toInt(),
-                    (5 * density).toInt(),
+                    convertedHorizontalPadding,
+                    convertedVerticalPadding,
+                    convertedHorizontalPadding,
+                    convertedVerticalPadding,
                 )
             }
         }

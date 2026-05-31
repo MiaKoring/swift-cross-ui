@@ -628,7 +628,7 @@ public final class DummyBackend:
         action: @escaping () -> Void
     ) {
         let button = button as! CustomButton
-        button.buttonStyle = environment.buttonStyle ?? defaultButtonStyle()
+        button.buttonStyle = environment.resolvedButtonStyle
         button.action = action
     }
 
