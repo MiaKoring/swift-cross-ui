@@ -1,11 +1,12 @@
 /// A control that initiates an action.
-public struct Button<Content: View> {
+public struct Button<Label: View> {
+    public typealias Content = TupleView1<Label>
     /// The label to show on the button.
-    public var body: Content
+    public var label: () -> Label
     /// The action to be performed when the button is clicked.
     package var action: @MainActor @Sendable () -> Void
-
-    public let label: String?
+    
+    public var stringLabel: String?
 
     /// Creates a button that displays a text label.
     ///
@@ -15,10 +16,10 @@ public struct Button<Content: View> {
     public init(
         _ label: String,
         action: @escaping @MainActor @Sendable () -> Void = {}
-    ) where Content == Text {
-        self.body = Text(label)
+    ) where Label == Text {
+        self.label = { Text(label) }
         self.action = action
-        self.label = label
+        self.stringLabel = label
     }
 
     /// Creates a button that displays a custom view as label.
@@ -29,33 +30,38 @@ public struct Button<Content: View> {
     @MainActor
     public init (
         action: @escaping @MainActor @Sendable () -> Void = {},
-        @ViewBuilder label: @escaping @MainActor @Sendable () -> Content
+        @ViewBuilder label: @escaping @MainActor @Sendable () -> Label
     ) {
-        self.body = label()
+        self.label = label
         self.action = action
-        self.label = nil
     }
 }
 
 @MainActor
 extension Button: TypeSafeView {
-    typealias Children = ButtonLabelChild<Content>
+    public var body: TupleView1<Label> {
+        label()
+    }
+    
+    typealias Children = TupleViewChildren1<Label>
 
     func children<Backend: BaseAppBackend>(
         backend: Backend,
         snapshots: [ViewGraphSnapshotter.NodeSnapshot]?,
         environment: EnvironmentValues
     ) -> Children {
-        let children = Children()
-        children.child = AnyViewGraphNode(for: body, backend: backend, environment: environment)
-        return children
+        Children(label(), backend: backend, snapshots: snapshots, environment: environment)
     }
 
     func asWidget<Backend: BaseAppBackend>(
         _ children: Children,
         backend: Backend
     ) -> Backend.Widget {
-        backend.createButton(wrapping: children.widgets.first!.into())
+        if Label.self == Text.self {
+            backend.createSimpleButton()
+        } else {
+            backend.createButton(wrapping: children.child0.widget.into())
+        }
     }
 
     func computeLayout<Backend: BaseAppBackend>(
@@ -65,6 +71,19 @@ extension Button: TypeSafeView {
         environment: EnvironmentValues,
         backend: Backend
     ) -> ViewLayoutResult {
+        guard Label.self != Text.self else {
+            backend.updateSimpleButton(
+                widget,
+                label: stringLabel!,
+                environment: environment,
+                action: action
+            )
+            
+            let size = backend.naturalSize(of: widget)
+            
+            return .leafView(size: ViewSize(Double(size.x), Double(size.y)))
+        }
+        
         var childEnvironment = environment
 
         let buttonStyle = environment.resolvedButtonStyle.kind
@@ -111,8 +130,8 @@ extension Button: TypeSafeView {
             )
         }
 
-        let childrenResult = children.child!.computeLayout(
-            with: body,
+        let childrenResult = children.child0.computeLayout(
+            with: body.view0,
             proposedSize: proposedSize,
             environment: childEnvironment
         )
@@ -142,21 +161,9 @@ extension Button: TypeSafeView {
         environment: EnvironmentValues,
         backend: Backend
     ) {
+        if Label.self != Text.self {
+            children.child0.commit()
+        }
         backend.setSize(of: widget, to: layout.size.vector)
-        _ = children.child?.commit()
-    }
-}
-
-class ButtonLabelChild<Child: View>: ViewGraphNodeChildren {
-    var child: AnyViewGraphNode<Child>?
-
-    var widgets: [AnyWidget] {
-        if let child { return [child.widget] }
-        return []
-    }
-
-    var erasedNodes: [ErasedViewGraphNode] {
-        if let child { return [ErasedViewGraphNode(wrapping: child)] }
-        return []
     }
 }

@@ -80,7 +80,7 @@ final class UICustomButton: UIControl {
     }
 
     static let horizontalPadding: CGFloat = 12
-    static let verticalPadding: CGFloat = 6
+    static let verticalPadding: CGFloat = 7
 
     override public var isHighlighted: Bool {
         didSet {

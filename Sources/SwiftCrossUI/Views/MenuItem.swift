@@ -28,7 +28,7 @@ protocol MenuItemRepresentable: View {
     nonisolated var asMenuItem: MenuItem { get }
 }
 
-extension Button: MenuItemRepresentable where Content == Text {
+extension Button: MenuItemRepresentable where Label == Text {
     nonisolated var asMenuItem: MenuItem { .button(self) }
 }
 

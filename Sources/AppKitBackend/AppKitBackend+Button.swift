@@ -17,7 +17,6 @@ extension AppKitBackend {
             for: label,
             in: environment.with(\.multilineTextAlignment, .center)
         )
-        button.bezelStyle = .regularSquare
         button.appearance = environment.colorScheme.nsAppearance
         button.isEnabled = environment.isEnabled
         button.onAction = { _ in
@@ -66,7 +65,7 @@ extension AppKitBackend {
 }
 
 public final class NSCustomButton: NSView {
-    static let horizontalPadding: CGFloat = 11.0
+    static let horizontalPadding: CGFloat = 12.0
     static let verticalPadding: CGFloat = 4.0
 
     fileprivate var action: (() -> Void)?
