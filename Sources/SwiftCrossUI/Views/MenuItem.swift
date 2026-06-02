@@ -1,7 +1,7 @@
 /// An item of a ``Menu`` or ``CommandMenu``.
 public enum MenuItem {
     /// A button.
-    case button(Button<Text>)
+    case button(Button<TupleView1<Text>>)
     /// Text.
     case text(Text)
     /// A toggle.
@@ -28,7 +28,7 @@ protocol MenuItemRepresentable: View {
     nonisolated var asMenuItem: MenuItem { get }
 }
 
-extension Button: MenuItemRepresentable where Label == Text {
+extension Button: MenuItemRepresentable where Label == TupleView1<Text> {
     nonisolated var asMenuItem: MenuItem { .button(self) }
 }
 

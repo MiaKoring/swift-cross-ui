@@ -3,15 +3,12 @@ import SwiftCrossUI
 
 extension UIKitBackend {
     public func createButton(wrapping widget: Widget) -> Widget {
-        let button = UICustomButton()
         let widget = widget as! UIView
-
+        let button = UICustomButton(label: widget)
+        
         button.translatesAutoresizingMaskIntoConstraints = false
-        widget.translatesAutoresizingMaskIntoConstraints = false
         widget.isUserInteractionEnabled = false
-
-        button.addSubview(widget)
-        button.setupConstraints()
+        button.isUserInteractionEnabled = true
 
         return CustomButtonWidget(button: button)
     }
@@ -22,9 +19,16 @@ extension UIKitBackend {
         action: @escaping () -> Void
     ) {
         let button = (button as! CustomButtonWidget).child
-        button.action = action
+        button.onTap = action
         button.isEnabled = environment.isEnabled
-        button.buttonStyle = environment.resolvedButtonStyle.kind
+        
+        if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
+            button.configuration = switch environment.resolvedButtonStyle.kind {
+                case .bordered: .bordered()
+                case .borderless: .borderless()
+                case .plain: .plain()
+            }
+        }
 
         // Automatically sets the label text of a Button("") {} as accessibilityLabel.
         // This should be improved via a future .accessibilityLabel(_:) modifier.
@@ -36,8 +40,8 @@ extension UIKitBackend {
 
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
         let borderedPadding = SIMD2(
-            Int(UICustomButton.horizontalPadding * 2),
-            Int(UICustomButton.verticalPadding * 2)
+            Int(UICustomButton.horizontalInsets),
+            Int(UICustomButton.verticalInsets)
         )
 
         // tvOS always gets full padding, due to highlighting using
@@ -68,20 +72,29 @@ final class CustomButtonWidget: WrapperWidget<UICustomButton> {
     }
 }
 
-final class UICustomButton: UIControl {
-    var action: (() -> Void)?
-
-    let button = UIButton(type: .system)
-
-    var buttonStyle: ButtonStyle.Kind = .borderless {
-        didSet {
-            buttonStyle.updateBackground(self)
+final class UICustomButton: UIButton {
+    var label: UIView
+    
+    static var horizontalInsets: CGFloat {
+        guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else {
+            return 24
         }
+        let insets = UIButton.Configuration.bordered().contentInsets
+        return insets.leading + insets.trailing
     }
-
-    static let horizontalPadding: CGFloat = 12
-    static let verticalPadding: CGFloat = 7
-
+    
+    static var verticalInsets: CGFloat {
+        guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else {
+            return 14
+        }
+        let insets = UIButton.Configuration.bordered().contentInsets
+        return insets.bottom + insets.top
+    }
+    
+    public var onTap: (() -> Void)?
+    
+    public var buttonStyle: ButtonStyle.Kind = .borderless
+    
     override public var isHighlighted: Bool {
         didSet {
             UIView.animate(
@@ -96,165 +109,75 @@ final class UICustomButton: UIControl {
             )
         }
     }
-
+    
     override public var isEnabled: Bool {
         didSet {
-            button.isEnabled = isEnabled
-            buttonStyle.applyModifications(self)
+            self.buttonStyle.applyModifications(self)
         }
     }
-
-    override public var canBecomeFocused: Bool { isEnabled }
-
-    init() {
+    
+    init(label: UIView) {
+        self.label = label
         super.init(frame: .zero)
-
-        button.isUserInteractionEnabled = false
-        button.translatesAutoresizingMaskIntoConstraints = false
-
-        self.isAccessibilityElement = true
-        self.accessibilityTraits = [.button]
-
-        addSubview(button)
-
-        if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
-            button.configuration = UIButton.Configuration.bordered()
-        }
-
+        addAndCenterChild(label)
         #if os(tvOS)
-            addTarget(self, action: #selector(handleTap), for: .primaryActionTriggered)
+            addTarget(self, action: #selector(buttonTapped), for: .primaryActionTriggered)
         #else
-            addTarget(self, action: #selector(handleTap), for: .touchUpInside)
+            addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
         #endif
     }
-
-    @objc private func handleTap() {
-        action?()
+    
+    required init?(coder: NSCoder) {
+        fatalError("NSCoder input is not supported on UICustomButton")
     }
-
-    override public func accessibilityActivate() -> Bool {
-        action?()
-        return true
+    
+    @objc
+    func buttonTapped() {
+        onTap?()
     }
-
-    override public func didUpdateFocus(
-        in _: UIFocusUpdateContext,
-        with _: UIFocusAnimationCoordinator
-    ) {
-        buttonStyle.updateBackground(self)
-    }
-
-    required init?(coder: NSCoder) { fatalError() }
-
-    func setupConstraints() {
-        guard
-            subviews.count == 2
-        else { return }
-        let background = subviews[0]
-        let child = subviews[1]
-
-        NSLayoutConstraint.activate([
-            background
-                .leadingAnchor
-                .constraint(
-                    equalTo: leadingAnchor
-                ),
-            background
-                .trailingAnchor
-                .constraint(
-                    equalTo: trailingAnchor
-                ),
-            background
-                .topAnchor
-                .constraint(
-                    equalTo: topAnchor
-                ),
-            background
-                .bottomAnchor
-                .constraint(
-                    equalTo: bottomAnchor
-                ),
-        ])
-
+    
+    func addAndCenterChild(_ child: UIView) {
+        addSubview(child)
+        child.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             child.centerXAnchor.constraint(equalTo: centerXAnchor),
-            child.centerYAnchor.constraint(equalTo: centerYAnchor),
+            child.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
-
-    // The primary action triggered didn't work out of the box on tvOS
-    #if os(tvOS)
-        override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-            guard presses.first?.type == .select else {
-                super.pressesBegan(presses, with: event)
-                return
-            }
-            isHighlighted = true
-        }
-
-        override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-            guard presses.first?.type == .select else {
-                super.pressesEnded(presses, with: event)
-                return
-            }
-            isHighlighted = false
-            sendActions(for: .primaryActionTriggered)
-        }
-
-        override func pressesCancelled(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-            guard presses.first?.type == .select else {
-                super.pressesCancelled(presses, with: event)
-                return
-            }
-            isHighlighted = false
-        }
-    #endif
 }
 
 extension ButtonStyle.Kind {
     fileprivate func updateBackground(_ button: UICustomButton) {
-        var hideButton = false
-        defer { button.button.isHidden = hideButton }
-
         // We don't support bordered button style on older versions.
         guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else {
-            hideButton = true
             return
         }
-
-        #if os(tvOS)
-            guard !button.isFocused else {
-                button.button.isHighlighted = true
-                button.button.configuration = .bordered()
-                return
-            }
-        #endif
-
-        button.button.isHighlighted = false
-
+        
         switch self {
             case .bordered:
-                button.button.configuration = .bordered()
+                button.configuration = .bordered()
             case .plain, .borderless:
-                hideButton = true
+                // The borderless special treatment is handled in environment.
+                button.configuration = .plain()
         }
     }
-
+    
     fileprivate func applyModifications(_ button: UICustomButton) {
         guard #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) else {
-            button.alpha = button.isHighlighted ? 0.8 : 1.0
+            button.label.alpha = button.isEnabled
+            ? button.isHighlighted ? 0.8: 1.0
+            : 0.5
             return
         }
         switch self {
             case .bordered:
-                button.button.isHighlighted = button.isHighlighted
-                button.alpha = button.isEnabled ? 1.0: 0.92
-            // 92% was the closest I found in combination
-            // with reducing the foregroundColor opacity to 80%.
+                button.label.alpha = button.isEnabled ? 1.0: 0.5
+                // 92% was the closest I found in combination
+                // with reducing the foregroundColor opacity to 80%.
             case .plain, .borderless:
-                button.alpha = button.isEnabled
-                    ? button.isHighlighted ? 0.80: 1.0
-                    : 0.5
+                button.label.alpha = button.isEnabled
+                ? button.isHighlighted ? 0.8: 1.0
+                : 0.5
                 // Why 50% disabled opacity was chosen:
                 // A disabled SwiftUI .plain button looks visually the same as
                 // an enabled one at 0.5 opacity.

@@ -16,8 +16,8 @@ public struct Button<Label: View> {
     public init(
         _ label: String,
         action: @escaping @MainActor @Sendable () -> Void = {}
-    ) where Label == Text {
-        self.label = { Text(label) }
+    ) where Label == TupleView1<Text> {
+        self.label = { TupleView1(Text(label)) }
         self.action = action
         self.stringLabel = label
     }
@@ -57,11 +57,7 @@ extension Button: TypeSafeView {
         _ children: Children,
         backend: Backend
     ) -> Backend.Widget {
-        if Label.self == Text.self {
-            backend.createSimpleButton()
-        } else {
-            backend.createButton(wrapping: children.child0.widget.into())
-        }
+        backend.createButton(wrapping: children.child0.widget.into())
     }
 
     func computeLayout<Backend: BaseAppBackend>(
@@ -71,19 +67,6 @@ extension Button: TypeSafeView {
         environment: EnvironmentValues,
         backend: Backend
     ) -> ViewLayoutResult {
-        guard Label.self != Text.self else {
-            backend.updateSimpleButton(
-                widget,
-                label: stringLabel!,
-                environment: environment,
-                action: action
-            )
-            
-            let size = backend.naturalSize(of: widget)
-            
-            return .leafView(size: ViewSize(Double(size.x), Double(size.y)))
-        }
-        
         var childEnvironment = environment
 
         let buttonStyle = environment.resolvedButtonStyle.kind

@@ -8,7 +8,7 @@ public struct AlertActionsBuilder {
         [.default]
     }
 
-    public static func buildPartialBlock(first: Button<Text>) -> [AlertAction] {
+    public static func buildPartialBlock(first: Button<TupleView1<Text>>) -> [AlertAction] {
         [
             AlertAction(
                 label: first.stringLabel!,
@@ -23,7 +23,7 @@ public struct AlertActionsBuilder {
 
     public static func buildPartialBlock(
         accumulated: [AlertAction],
-        next: Button<Text>
+        next: Button<TupleView1<Text>>
     ) -> [AlertAction] {
         accumulated + [
             AlertAction(

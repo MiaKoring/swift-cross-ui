@@ -67,19 +67,23 @@ struct ControlsApp: App {
                                     ],
                                     selection: $buttonStyle
                                 )
-                                Button {
-                                    count += 1
-                                } label: {
-                                    Text("Click me!")
+                                VStack(spacing: 0) {
+                                    Button {
+                                        count += 1
+                                    } label: {
+                                        Text("Click me!")
                                         .padding(.horizontal, 11)
-                                        .padding(.vertical, 4)
-                                        .background {
-                                            Color.purple.opacity(0.5)
-                                                .cornerRadius(5)
-                                        }
-                                        .foregroundColor(.adaptive(light: .black, dark: .white))
+                                         .padding(.vertical, 4)
+                                         .background {
+                                         Color.purple.opacity(0.5)
+                                         .cornerRadius(5)
+                                         }
+                                         .foregroundColor(.adaptive(light: .black, dark: .white))
+                                    }
+                                        .buttonStyle(buttonStyle)
+                                    Button("Click me!") { count += 1 }
+                                        .buttonStyle(buttonStyle)
                                 }
-                                .buttonStyle(buttonStyle)
                             } else {
                                 Button("Click me!") {
                                     count += 1

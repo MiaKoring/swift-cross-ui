@@ -307,14 +307,6 @@ extension UIKitBackend {
 
         setSimpleButtonTitle(buttonWidget, label, environment: environment)
         
-        if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
-            buttonWidget.child.configuration = switch environment.resolvedButtonStyle.kind {
-                case .bordered: .bordered()
-                case .borderless: .borderless()
-                case .plain: .plain()
-            }
-        }
-        
         buttonWidget.onTap = action
         buttonWidget.child.isEnabled = environment.isEnabled
     }
