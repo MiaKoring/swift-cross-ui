@@ -67,12 +67,6 @@ public struct FocusState<Value: Hashable>: ObservableProperty {
             }
         }
 
-        public var projectedValue: FocusState<Value>.Binding {
-            // Just a handy helper so that you can use `@Binding` properties like
-            // you would `@FocusState` properties.
-            self
-        }
-
         /// The stored getter.
         private let getValue: () -> Value
         /// The stored setter.
