@@ -10,20 +10,20 @@
 ///    the framework requests a focus change (e.g., via Tab or Shift-Tab).
 public protocol FocusChainManager {
     associatedtype Widget: FocusChainParticipant
-    
+
     /// Returns the  widget following a given widget in the focus chain, suggested by the UI framework.
     /// This widget will be validated for visibility and focusability by the caller.
     /// Used by the provided functions for easier ``View/focusable`` compatibility.
     func closestValidStop(following view: Widget) -> Widget?
-    
+
     /// Returns the widget preceding a given widget in the focus chain, suggested by the UI framework.
     /// This widget will be validated for visibility and focusability by the caller.
     /// Used by the provided functions for easier ``View/focusable`` compatibility.
     func closestValidStop(preceding view: Widget) -> Widget?
-    
+
     /// Makes a widget the "key view" or "first responder".
     func makeKey(_ widget: Widget)
-    
+
     /// Returns the immediate parent.
     func getParent(of widget: Widget) -> Widget?
 }
@@ -52,7 +52,7 @@ extension FocusChainManager {
     ) -> Widget? {
         var currentOption: Widget? = suggestion
         var visited: [Widget] = []
-        
+
         while let next = currentOption {
             // Exit to not get stuck in a loop
             // when arriving back an already visited widget.
@@ -60,29 +60,29 @@ extension FocusChainManager {
                 break
             }
             visited.append(next)
-            
+
             if
                 !isDescendantOfDisabledParent(next),
                 next.canBeTabStop,
                 !next.isHidden
             { return next }
-            
+
             if forward {
                 currentOption = closestValidStop(following: next)
             } else {
                 currentOption = closestValidStop(preceding: next)
             }
         }
-        
+
         return nil
     }
-    
+
     /// Traverses the view graph upwards until it finds a ``FocusabilityContainer`` with
     /// ``FocusabilityContainer/focusability`` set to ``Focusability.disabled`` or reaches the root.
     /// Returns `true` if the widget is contained by a disabled ``FocusabilityContainer``.
     private func isDescendantOfDisabledParent(_ widget: Widget) -> Bool {
         var current = getParent(of: widget)
-        
+
         while let next = current {
             if let next = next as? FocusabilityContainer,
                next.focusability == .disabled
@@ -91,10 +91,10 @@ extension FocusChainManager {
             }
             current = getParent(of: next)
         }
-        
+
         return false
     }
-    
+
     /// Moves focus to the closest focusable widget following the currently focused widget.
     /// The widget must be attached to a window.
     public func selectTabStop(following widget: Widget) {
@@ -102,10 +102,10 @@ extension FocusChainManager {
             let next = closestValidStop(following: widget),
             let result = findNextAllowedFocusTarget(suggestion: next)
         else { return }
-        
+
         makeKey(result)
     }
-    
+
     /// Moves focus to the closest focusable widget preceding the currently focused widget.
     /// The widget must be attached to a window.
     public func selectTabStop(preceding widget: Widget) {
@@ -116,7 +116,7 @@ extension FocusChainManager {
                 forward: false
             )
         else { return }
-        
+
         makeKey(result)
     }
 }

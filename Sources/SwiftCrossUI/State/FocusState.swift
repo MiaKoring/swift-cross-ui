@@ -8,23 +8,23 @@ public struct FocusState<Value: Hashable>: ObservableProperty {
         var value: Value
         var didChange = Publisher()
         var downstreamObservation: Cancellable?
-        
+
         init(_ value: Value) {
             self.value = value
         }
     }
-    
+
     private let implementation: StateImpl<Storage>
-    
+
     private var storage: Storage { implementation.storage }
-    
+
     public var didChange: Publisher { storage.didChange }
-    
+
     public var wrappedValue: Value {
         get { implementation.wrappedValue }
         nonmutating set { implementation.wrappedValue = newValue }
     }
-    
+
     public var projectedValue: FocusState.Binding {
         return FocusState.Binding(
             get: {
@@ -38,23 +38,23 @@ public struct FocusState<Value: Hashable>: ObservableProperty {
             }
         )
     }
-    
+
     let emptyState: Value
-    
+
     public init() where Value == Bool {
         emptyState = false
         implementation = StateImpl(initialStorage: Storage(false))
     }
-    
+
     public init<T>() where Value == T?, T: Hashable {
         emptyState = nil
         implementation = StateImpl(initialStorage: Storage(nil))
     }
-    
+
     public func update(with environment: EnvironmentValues, previousValue: FocusState<Value>?) {
         implementation.update(with: environment, previousValue: previousValue?.implementation)
     }
-    
+
     /// A property wrapper type that can read and write a value that indicates the current focus location.
     @propertyWrapper
     public class Binding {
@@ -66,20 +66,20 @@ public struct FocusState<Value: Hashable>: ObservableProperty {
                 setValue(newValue)
             }
         }
-        
+
         public var projectedValue: FocusState<Value>.Binding {
             // Just a handy helper so that you can use `@Binding` properties like
             // you would `@FocusState` properties.
             self
         }
-        
+
         /// The stored getter.
         private let getValue: () -> Value
         /// The stored setter.
         private let setValue: (Value) -> Void
         /// The stored resetter.
         private let resetValue: () -> Void
-        
+
         /// Creates a binding with a custom getter and setter. To create a binding from
         /// an `@FocusState` property use its projected value instead: e.g. `$myFocusStateProperty`
         /// will give you a binding for reading and writing `myFocusStateProperty` (assuming that
@@ -93,11 +93,11 @@ public struct FocusState<Value: Hashable>: ObservableProperty {
             self.setValue = set
             self.resetValue = reset
         }
-        
+
         func reset() {
             resetValue()
         }
-        
+
         /// Returns a new binding that will perform an action whenever it is used to set
         /// the source of truth's value.
         public func onChange(_ action: @escaping (Value) -> Void) -> FocusState.Binding {

@@ -6,14 +6,14 @@ extension View {
     public func focusable(_ focusability: Focusability = .unmodified) -> some View {
         FocusModifier(body: TupleView1(self), focusability: focusability)
     }
-    
+
     /// Conditionally disables the focus indicator.
     public func focusEffectDisabled(_ disabled: Bool = true) -> some View {
         EnvironmentModifier(self) { environment in
             environment.with(\.focusEffectDisabled, disabled)
         }
     }
-    
+
     /// Modifies this view by binding its focus state to the given state value.
     ///
     /// Supported by ``AppKitBackend``, ``GtkBackend`` and ``WinUIBackend``.
@@ -27,7 +27,7 @@ extension View {
         EnvironmentModifier(self) { environment in
             environment.with(
                 \.focusObservers,
-                 environment.focusObservers + [
+                environment.focusObservers + [
                     FocusData(
                         type: Value.self,
                         match: match,
@@ -40,11 +40,11 @@ extension View {
                         matches: focusBinding.wrappedValue == match,
                         shouldUnfocus: focusBinding.wrappedValue == nil
                     )
-                 ]
+                ]
             )
         }
     }
-    
+
     /// Modifies this view by binding its focus state to the given Boolean state value.
     ///
     /// Supported by ``AppKitBackend``, ``GtkBackend`` and ``WinUIBackend``.
@@ -57,7 +57,7 @@ extension View {
         EnvironmentModifier(self) { environment in
             environment.with(
                 \.focusObservers,
-                 environment.focusObservers + [
+                environment.focusObservers + [
                     FocusData(
                         type: Bool.self,
                         match: true,
@@ -70,7 +70,7 @@ extension View {
                         matches: focusBinding.wrappedValue == true,
                         shouldUnfocus: focusBinding.wrappedValue == false
                     )
-                 ]
+                ]
             )
         }
     }
@@ -78,10 +78,10 @@ extension View {
 
 struct FocusModifier<Content: View>: TypeSafeView {
     typealias Children = TupleView1<Content>.Children
-    
+
     var body: TupleView1<Content>
     var focusability: Focusability
-    
+
     func children<Backend: BaseAppBackend>(
         backend: Backend,
         snapshots: [ViewGraphSnapshotter.NodeSnapshot]?,
@@ -93,19 +93,19 @@ struct FocusModifier<Content: View>: TypeSafeView {
             environment: environment
         )
     }
-    
+
     @CastBackend<BackendFeatures.FocusDisabling>(backendGenericName: "NewBackend")
     func asWidget<Backend: BaseAppBackend>(
         _ children: Children,
         backend: Backend
     ) -> Backend.Widget {
         let container = backend.createFocusContainer()
-        
+
         backend.insert(children.child0.widget.into(), into: container, at: 0)
-        
+
         return container as! Backend.Widget
     }
-    
+
     func computeLayout<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
         children: Children,
@@ -120,7 +120,7 @@ struct FocusModifier<Content: View>: TypeSafeView {
         )
         .with(\.shouldSetFocusData, true)
     }
-    
+
     @CastBackend<BackendFeatures.FocusDisabling>(backendGenericName: "NewBackend")
     func commit<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
@@ -131,7 +131,7 @@ struct FocusModifier<Content: View>: TypeSafeView {
     ) {
         let size = children.child0.commit().size.vector
         backend.setSize(of: widget, to: size)
-        
+
         backend.updateFocusContainer(widget, focusability: focusability)
     }
 }

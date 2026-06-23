@@ -53,7 +53,7 @@ public struct ViewLayoutResult {
     public var participatesInStackLayouts: Bool {
         size != .zero || participateInStackLayoutsWhenEmpty
     }
-    
+
     /// Returns a copy of the result with the specified property set to the
     /// provided new value.
     public func with<T>(_ keyPath: WritableKeyPath<Self, T>, _ newValue: T) -> Self {

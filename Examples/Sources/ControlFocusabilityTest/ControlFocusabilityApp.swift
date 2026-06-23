@@ -283,7 +283,7 @@ struct ControlFocusabilityApp: App {
                             #endif
                         #endif
                     }.padding().disabled(!enabled)
-                    
+
                     ChildView(isFocused: $focused)
 
                     Toggle(enabled ? "Disable all" : "Enable all", isOn: $enabled)
@@ -313,7 +313,7 @@ extension View {
 struct ChildView: View {
     var isFocused: FocusState<Int?>.Binding
     @State var text = ""
-    
+
     var body: some View {
         Text("Test if FocusState.Binding works in subview")
         TextField(text: $text)

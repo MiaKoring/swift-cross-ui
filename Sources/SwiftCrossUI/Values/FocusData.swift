@@ -9,12 +9,12 @@ public struct FocusData: @unchecked Sendable {
     public let set: () -> Void
     /// A function to set the ``FocusState`` to unfocused.
     public let reset: () -> Void
-    
+
     /// Whether the backend should remove focus from the view.
     public let shouldUnfocus: Bool
     /// Wheter the the ``FocusState``'s value matches ``match``.
     public let matches: Bool
-    
+
     public init(
         type: any Hashable.Type,
         match: any Hashable,
@@ -35,9 +35,9 @@ public struct FocusData: @unchecked Sendable {
 extension FocusData: Hashable {
     public static func == (lhs: FocusData, rhs: FocusData) -> Bool {
         ObjectIdentifier(lhs.type) == ObjectIdentifier(rhs.type)
-        && lhs.match.hashValue == rhs.match.hashValue
+            && lhs.match.hashValue == rhs.match.hashValue
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(type))
         hasher.combine(match)

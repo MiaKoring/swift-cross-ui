@@ -13,16 +13,16 @@ extension AppKitBackend {
         on widget: NSView
     ) {
         guard widget.acceptsFirstResponder else { return }
-        
+
         focusManager.register(data, for: widget)
     }
-    
+
     public func createFocusContainer() -> NSView {
         let container = FocusabilityContainer()
         container.translatesAutoresizingMaskIntoConstraints = false
         return container
     }
-    
+
     public func updateFocusContainer(
         _ widget: NSView,
         focusability: Focusability
@@ -30,7 +30,7 @@ extension AppKitBackend {
         let container = widget as! FocusabilityContainer
         container.focusability = focusability
     }
-    
+
     public func setFocusEffectDisabled(on widget: NSView, disabled: Bool) {
         widget.focusRingType = disabled ? .none : .default
     }
@@ -45,10 +45,10 @@ class FocusStateManager: NSObject {
         var shouldSkip = false
     }
     private var windowFocusStates = [ObjectIdentifier: WindowFocusState]()
-    
+
     func register(_ data: [FocusData], for widget: NSView) {
         focusData[ObjectIdentifier(widget)] = Set(data)
-        
+
         if
             let window = widget.window,
             window.firstResponder == widget || textFieldsTextViewIsFocused(field: widget),
@@ -56,7 +56,7 @@ class FocusStateManager: NSObject {
         {
             window.makeFirstResponder(nil)
         }
-        
+
         if
             data.contains(where: \.matches),
             !widget.isHidden,
@@ -73,7 +73,7 @@ class FocusStateManager: NSObject {
             widget.window?.makeFirstResponder(widget)
         }
     }
-    
+
     private func textFieldsTextViewIsFocused(field: NSView) -> Bool {
         if let field = field as? NSTextField {
             return field.currentEditor() === field.window?.firstResponder
@@ -83,7 +83,7 @@ class FocusStateManager: NSObject {
         }
         return false
     }
-    
+
     override func observeValue(
         forKeyPath keyPath: String?,
         of object: Any?,
@@ -93,7 +93,7 @@ class FocusStateManager: NSObject {
         guard let window = object as? NSCustomWindow else { return }
         var windowFocusState = windowFocusStates[ObjectIdentifier(window)] ?? WindowFocusState()
         defer { windowFocusStates[ObjectIdentifier(window)] = windowFocusState }
-        
+
         // NSObservableTextField and NSObservableSecureTextField give focus
         // to a different view immediately after gaining focus.
         // If the inner View gaining focus isn't skipped, the FocusState would
@@ -101,7 +101,7 @@ class FocusStateManager: NSObject {
         //
         // Everytime a new view gains focused, the previous one needs its
         // FocusState set to false, because they could use different FocusStates.
-        
+
         if let responder = window.firstResponder, !(responder is NSCustomWindow) {
             if responder is NSObservableTextField || responder is NSObservableSecureTextField {
                 windowFocusState.shouldSkip = true
@@ -121,7 +121,7 @@ class FocusStateManager: NSObject {
                 windowFocusState.shouldSkip = false
                 return
             }
-            
+
             let identifier = ObjectIdentifier(responder)
             handleFocusChange(of: identifier, toState: true)
         } else if let lastFocused = windowFocusState.lastFocused {
@@ -129,10 +129,10 @@ class FocusStateManager: NSObject {
             windowFocusState.lastFocused = nil
         }
     }
-    
+
     private func handleFocusChange(of identifier: ObjectIdentifier, toState isFocused: Bool) {
         guard let data = focusData[identifier] else { return }
-        
+
         if isFocused {
             data.forEach { binding in
                 binding.set()

@@ -85,7 +85,7 @@ public final class AppKitBackend: FullAppBackend {
         // the *second* time `openWindow` is called. I have absolutely no idea
         // why.
         window.isReleasedWhenClosed = false
-        
+
         window.addObserver(
             focusManager,
             forKeyPath: "firstResponder",

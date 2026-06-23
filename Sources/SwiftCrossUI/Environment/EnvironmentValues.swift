@@ -448,10 +448,10 @@ extension EnvironmentValues {
     /// The device class of the current device.
     @MainActor
     public var deviceClass: DeviceClass { backend.deviceClass }
-    
+
     /// All observers set by ``View/focused(_:)`` in the environment.
     @Entry public var focusObservers: [FocusData] = []
-    
+
     /// Whether to highlight a focused widget.
     @Entry public var focusEffectDisabled: Bool = false
 }
