@@ -1,4 +1,4 @@
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import UIKit
 
 extension UIKitBackend {
@@ -104,6 +104,7 @@ final class LinearGradientView: BaseViewWidget {
     override func didMoveToWindow() {
         super.didMoveToWindow()
         self.layer.drawsAsynchronously = true
+        self.contentMode = .redraw
     }
 }
 
@@ -158,6 +159,7 @@ final class RadialGradientView: BaseViewWidget {
     override func didMoveToWindow() {
         super.didMoveToWindow()
         self.layer.drawsAsynchronously = true
+        self.contentMode = .redraw
     }
 }
 

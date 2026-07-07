@@ -1,7 +1,7 @@
 import Testing
 
 import DummyBackend
-@testable import SwiftCrossUI
+@testable @_spi(Backends) import SwiftCrossUI
 
 @Suite("Testing for stack layouts")
 struct StackLayoutTests {
@@ -12,7 +12,7 @@ struct StackLayoutTests {
     @MainActor
     init() {
         backend = DummyBackend()
-        window = backend.createWindow(withDefaultSize: nil)
+        window = backend.createWindow(withDefaultSize: nil, id: "window")
         environment = EnvironmentValues(backend: backend).with(\.window, window)
     }
 

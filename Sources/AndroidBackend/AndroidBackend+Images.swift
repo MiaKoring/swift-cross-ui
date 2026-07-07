@@ -1,4 +1,4 @@
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import AndroidKit
 import SwiftJava
 
@@ -22,7 +22,9 @@ extension AndroidKit.ImageView {
 }
 
 // swiftlint:disable force_try
-extension AndroidBackend: BackendFeatures.Images {
+
+// implements BackendFeatures.Images
+extension AndroidBackend {
     public var requiresImageUpdateOnScaleFactorChange: Bool { false }
 
     public func createImageView() -> Widget {

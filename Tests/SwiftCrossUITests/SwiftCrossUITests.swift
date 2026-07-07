@@ -2,7 +2,7 @@ import Testing
 import Foundation
 
 import DummyBackend
-@testable import SwiftCrossUI
+@testable @_spi(Backends) import SwiftCrossUI
 
 #if canImport(AppKitBackend)
     import AppKit
@@ -83,7 +83,7 @@ struct SwiftCrossUITests {
     @MainActor
     func testBasicScrollView() async throws {
         let backend = DummyBackend()
-        let window = backend.createWindow(withDefaultSize: nil)
+        let window = backend.createWindow(withDefaultSize: nil, id: "window")
         let environment = EnvironmentValues(backend: backend)
             .with(\.window, window)
 
@@ -170,7 +170,7 @@ struct SwiftCrossUITests {
         @MainActor
         func testBasicLayout() async throws {
             let backend = AppKitBackend()
-            let window = backend.createWindow(withDefaultSize: SIMD2(200, 200))
+            let window = backend.createWindow(withDefaultSize: SIMD2(200, 200), id: "window")
 
             // Idea taken from https://github.com/pointfreeco/swift-snapshot-testing/pull/533
             // and implemented in AppKitBackend.
