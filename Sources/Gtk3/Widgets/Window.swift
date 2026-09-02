@@ -15,6 +15,7 @@ open class Window: Bin {
     @GObjectProperty(named: "deletable") public var deletable: Bool
     @GObjectProperty(named: "modal") public var isModal: Bool
     @GObjectProperty(named: "decorated") public var isDecorated: Bool
+    @GObjectProperty(named: "destroy-with-parent") public var destroyWithParent: Bool
 
     public var isActive: Bool {
         gtk_window_is_active(castedPointer()).toBool()
@@ -112,4 +113,6 @@ open class Window: Bin {
             }
         }
     }
+
+    public var onDestroy: ((Window) -> Void)?
 }

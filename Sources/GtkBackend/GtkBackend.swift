@@ -55,11 +55,12 @@ public final class GtkBackend:
     public let requiresImageUpdateOnScaleFactorChange = false
     public let supportsMultipleWindows = true
     public let deviceClass = DeviceClass.desktop
-    public let defaultSheetCornerRadius = 10
     public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical]
     public let supportedPickerStyles: [BackendPickerStyle] = [.menu]
     public let canOverrideWindowColorScheme = false
     public let restoresWindowFrames = false
+
+    let defaultSheetCornerRadius = 10
 
     var gtkApp: Application
 
@@ -75,6 +76,8 @@ public final class GtkBackend:
     private var rootEnvironmentChangeHandler: (() -> Void)?
 
     private var measurementCustomLabel: CustomLabel!
+
+    var borderedButtonPadding: SIMD2<Int>?
 
     private struct LogLocation: Hashable, Equatable {
         let file: String
@@ -987,25 +990,6 @@ public final class GtkBackend:
 
     // MARK: Controls
 
-    public func createButton() -> Widget {
-        return Button()
-    }
-
-    public func updateButton(
-        _ button: Widget,
-        label: String,
-        environment: EnvironmentValues,
-        action: @escaping () -> Void
-    ) {
-        // TODO: Update button label color using environment
-        let button = button as! Gtk.Button
-        button.sensitive = environment.isEnabled
-        button.label = label
-        button.clicked = { _ in action() }
-        button.css.clear()
-        button.css.set(properties: Self.cssProperties(for: environment, isControl: true))
-    }
-
     public func createToggle() -> Widget {
         return ToggleButton()
     }
@@ -1853,7 +1837,7 @@ public final class GtkBackend:
         return container
     }
 
-    private static func cssProperties(
+    static func cssProperties(
         for environment: EnvironmentValues,
         isControl: Bool = false
     ) -> [CSSProperty] {
@@ -1906,12 +1890,7 @@ public final class GtkBackend:
         }
 
         if isControl {
-            switch environment.colorScheme {
-                case .light:
-                    properties.append(.backgroundColor(Color(0.9, 0.9, 0.9, 1)))
-                case .dark:
-                    properties.append(.backgroundColor(Color(1, 1, 1, 0.1)))
-            }
+            properties.append(.backgroundColor(controlBackgroundColor(for: environment)))
             properties.append(CSSProperty(key: "border", value: "none"))
             properties.append(CSSProperty(key: "box-shadow", value: "none"))
         }
@@ -1919,10 +1898,16 @@ public final class GtkBackend:
         return properties
     }
 
-    public func createSheet(content: Widget) -> Sheet {
-        // TODO: dismissing a sheet with nested sheets doesn't trigger the onDismiss handlers of the nested sheets
-        // TODO: dismissing a sheet with nested sheets causes the app to freeze/deadlock or something along those lines...
+    static func controlBackgroundColor(for environment: borrowing EnvironmentValues) -> Gtk.Color {
+        switch environment.colorScheme {
+            case .light:
+                Color(0.9, 0.9, 0.9, 1)
+            case .dark:
+                Color(1, 1, 1, 0.1)
+        }
+    }
 
+    public func createSheet(content: Widget) -> Sheet {
         let sheet = Sheet()
         sheet.setChild(content)
 
@@ -2005,6 +1990,7 @@ public final class GtkBackend:
 
     public func dismissSheet(_ sheet: Sheet, window: Window, parentSheet: Sheet?) {
         dismissSheet(sheet)
+        parentSheet?.nestedSheet = nil
     }
 
     private func dismissSheet(_ sheet: Sheet) {

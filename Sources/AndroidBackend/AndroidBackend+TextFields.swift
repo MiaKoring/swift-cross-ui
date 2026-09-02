@@ -1,5 +1,5 @@
 import AndroidKit
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import SwiftJava
 
 // implements BackendFeatures.TextFields & BackendFeatures.SecureFields & BackendFeatures.TextEditors
@@ -16,7 +16,7 @@ extension AndroidBackend {
         onSubmit: (() -> Void)?,
         isMultiline: Bool
     ) {
-        textField.setHint(charSequence(from: placeholder))
+        textField.setHint(Self.charSequence(from: placeholder))
         textField.setOnChange(
             SwiftAction(environment: Self.env) {
                 // Don't take textField as a weak reference, because otherwise it

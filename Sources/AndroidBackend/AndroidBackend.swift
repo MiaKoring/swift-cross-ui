@@ -301,14 +301,19 @@ public final class AndroidBackend: BaseAppBackend {
             .getConfiguration()
             .isScreenRound()
 
-        if let identifier = helpers.getTimeZoneIdentifier()?.toString(),
-           let timeZone = Foundation.TimeZone(identifier: identifier)
-        {
-            environment.timeZone = timeZone
-            environment.calendar = getCurrentCalendar(timeZone: timeZone)
-        } else {
-            environment.calendar = getCurrentCalendar(timeZone: nil)
+        var timeZone: Foundation.TimeZone?
+
+        if let identifier = helpers.getTimeZoneIdentifier()?.toString() {
+            timeZone = Foundation.TimeZone(identifier: identifier)
         }
+
+        if let timeZone {
+            environment.timeZone = timeZone
+        }
+
+        let (calendar, locale) = getCurrentCalendarAndLocale(timeZone: timeZone)
+        environment.calendar = calendar
+        environment.locale = locale
 
         environment
             .appStorageProvider = SharedPreferencesAppStorageProvider(activity: Self.activity)
@@ -441,27 +446,28 @@ public final class AndroidBackend: BaseAppBackend {
         widget.setLayoutParams(layoutParams)
     }
 
-    public func createButton() -> Widget {
+    public func createSimpleButton() -> Widget {
         AndroidKit.Button(Self.activity, environment: Self.env)
     }
 
     /// Converts a Swift String to a Java CharSequence.
-    func charSequence(from string: String) -> CharSequence {
+    static func charSequence(from string: String) -> CharSequence {
         let jstring = JavaString(string, environment: Self.env)
         return jstring.as(CharSequence.self)!
     }
 
-    public func updateButton(
+    public func updateSimpleButton(
         _ button: Widget,
         label: String,
         environment: EnvironmentValues,
         action: @escaping () -> Void
     ) {
-        // TODO(stackotter): Handle environment.
         let button = button.as(AndroidKit.Button.self)!
-        button.setText(charSequence(from: label))
+        button.setText(Self.charSequence(from: label))
+        button.setEnabled(environment.isEnabled)
         let listener = ViewOnClickListener(action: action, environment: Self.env)
         button.setOnClickListener(listener.as(AndroidView.View.OnClickListener.self))
+        button.setAllCaps(false)
 
         getTextStyle(from: environment).apply(to: button)
     }

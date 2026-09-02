@@ -7,8 +7,10 @@ public final class DummyBackend:
     BackendFeatures.CornerRadius,
     BackendFeatures.Tables,
     BackendFeatures.Colors,
-    BackendFeatures.Windowing
+    BackendFeatures.Windowing,
+    BackendFeatures.DatePickers
 {
+
     public class Window {
         static let defaultSize = SIMD2<Int>(400, 200)
 
@@ -74,10 +76,34 @@ public final class DummyBackend:
         }
     }
 
-    public class Button: Widget {
+    public class SimpleButton: Widget {
         public var label = ""
         public var font: Font.Resolved?
         public var action: (() -> Void)?
+
+        /// Menu sizes its button widget through `naturalSize(of:)`, so leaving
+        /// this at zero renders zero-sized menu buttons.
+        override public var naturalSize: SIMD2<Int> {
+            guard let font else { return .zero }
+            let labelSize = DummyBackend.textSize(
+                of: label,
+                displayedWith: font,
+                proposedWidth: nil,
+                proposedHeight: nil
+            )
+            let horizontalPadding = 10
+            let verticalPadding = 5
+            return SIMD2(
+                labelSize.x + horizontalPadding * 2,
+                labelSize.y + verticalPadding * 2
+            )
+        }
+    }
+
+    public class Button: Widget {
+        public var label: Widget?
+        public var action: (() -> Void)?
+        public var buttonStyle: ButtonStyle = .bordered
     }
 
     public class ToggleButton: Widget {
@@ -251,6 +277,28 @@ public final class DummyBackend:
         }
     }
 
+    public class DatePicker: Widget {
+        var style: DatePickerStyle = .automatic
+        var value = Date()
+        var range = Date.distantPast ... Date.distantFuture
+        var components: DatePickerComponents = .init(rawValue: 0)
+        var onChange: ((Date) -> Void)?
+        var enabled = true
+    }
+
+    public class Picker: Widget {
+        let style: BackendPickerStyle
+        var selectedIndex: Int?
+        var options: [String] = []
+        var onChange: ((Int?) -> Void)?
+        var enabled = true
+
+        init(style: BackendPickerStyle) {
+            self.style = style
+            super.init()
+        }
+    }
+
     public var defaultTableRowContentHeight = 10
     public var defaultTableCellVerticalPadding = 10
     public var defaultPaddingAmount = 10
@@ -259,9 +307,15 @@ public final class DummyBackend:
     public var requiresImageUpdateOnScaleFactorChange = false
     public var deviceClass = DeviceClass.desktop
     public var supportsMultipleWindows = true
-    public var supportedPickerStyles: [BackendPickerStyle] = []
+    public var supportedPickerStyles: [BackendPickerStyle] = [
+        .menu,
+        .radioGroup,
+        .segmented,
+        .wheel
+    ]
     public let canOverrideWindowColorScheme = true
     public let restoresWindowFrames = false
+    public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .compact, .graphical]
 
     public var incomingURLHandler: ((URL) -> Void)?
     public var appPhase = AppPhase.active
@@ -516,9 +570,23 @@ public final class DummyBackend:
         proposedHeight: Int?,
         environment: EnvironmentValues
     ) -> SIMD2<Int> {
-        let resolvedFont = environment.resolvedFont
-        let lineHeight = Int(resolvedFont.lineHeight)
-        let characterHeight = Int(resolvedFont.pointSize)
+        Self.textSize(
+            of: text,
+            displayedWith: environment.resolvedFont,
+            proposedWidth: proposedWidth,
+            proposedHeight: proposedHeight
+        )
+    }
+
+    /// Single source of truth for DummyBackend's character-metric text sizing.
+    private nonisolated static func textSize(
+        of text: String,
+        displayedWith font: Font.Resolved,
+        proposedWidth: Int?,
+        proposedHeight: Int?
+    ) -> SIMD2<Int> {
+        let lineHeight = Int(font.lineHeight)
+        let characterHeight = Int(font.pointSize)
         let characterWidth = characterHeight * 2 / 3
 
         guard let proposedWidth else {
@@ -601,19 +669,45 @@ public final class DummyBackend:
         table.rowHeights = rowHeights
     }
 
-    public func createButton() -> Widget {
-        Button()
+    public func createSimpleButton() -> Widget {
+        SimpleButton()
     }
 
-    public func updateButton(
+    public func updateSimpleButton(
         _ button: Widget,
         label: String,
         environment: EnvironmentValues,
         action: @escaping () -> Void
     ) {
-        let button = button as! Button
+        let button = button as! SimpleButton
         button.label = label
         button.action = action
+        button.font = environment.resolvedFont
+    }
+
+    public func createButton(wrapping widget: Widget) -> Widget {
+        let button = Button()
+        button.label = widget
+
+        return button
+    }
+
+    public func updateButton(
+        _ button: Widget,
+        environment: EnvironmentValues,
+        action: @escaping () -> Void
+    ) {
+        let button = button as! Button
+        button.buttonStyle = environment.resolvedButtonStyle
+        button.action = action
+    }
+
+    public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
+        SIMD2<Int>(0, 0)
+    }
+
+    public func defaultButtonStyle() -> ButtonStyle {
+        .bordered
     }
 
     public func createToggle() -> Widget {
@@ -745,29 +839,52 @@ public final class DummyBackend:
         getContent(ofTextField: secureField)
     }
 
-    // MARK: - Unimplemented Features
-    // FIXME: Implement them so we can test them
+    public func createDatePicker() -> Widget {
+        DatePicker()
+    }
 
-    public func createPicker(style: SwiftCrossUI.BackendPickerStyle) -> Widget {
-        fatalError("\(Self.self): \(#function) not implemented")
+    public func updateDatePicker(
+        _ datePicker: Widget,
+        environment: EnvironmentValues,
+        date: Date,
+        range: ClosedRange<Date>,
+        components: DatePickerComponents,
+        onChange: @escaping (Date) -> Void
+    ) {
+        let datePicker = datePicker as! DatePicker
+        datePicker.style = environment.datePickerStyle
+        datePicker.value = date
+        datePicker.range = range
+        datePicker.components = components
+        datePicker.onChange = onChange
+        datePicker.enabled = environment.isEnabled
+    }
+
+    public func createPicker(style: BackendPickerStyle) -> Widget {
+        Picker(style: style)
     }
 
     public func updatePicker(
         _ picker: Widget,
         options: [String],
-        environment: SwiftCrossUI.EnvironmentValues,
+        environment: EnvironmentValues,
         onChange: @escaping (Int?) -> Void
     ) {
-        fatalError("\(Self.self): \(#function) not implemented")
+        let picker = picker as! Picker
+        picker.options = options
+        picker.onChange = onChange
+        picker.enabled = environment.isEnabled
     }
 
     public func setSelectedOption(
         ofPicker picker: Widget,
         to selectedOption: Int?
     ) {
-        fatalError("\(Self.self): \(#function) not implemented")
+        (picker as! Picker).selectedIndex = selectedOption
     }
 
+    // MARK: - Unimplemented Features
+    // FIXME: Implement them so we can test them
     public func createProgressBar() -> Widget {
         fatalError("\(Self.self): \(#function) not implemented")
     }
