@@ -91,8 +91,9 @@ public struct _BuiltinPickerImplementation: TypeSafeView {
                 with: backend2
             )
         } else if
-            !environment.focusObservers.isEmpty ||
-            environment.focusEffectDisabled
+            !environment.widgetFocusObservers.isEmpty ||
+            environment.focusEffectDisabled ||
+            environment.focusOverride != nil
         {
             logger.warnOnce("\(Backend.self) doesn't support focus control/tracking.")
         }

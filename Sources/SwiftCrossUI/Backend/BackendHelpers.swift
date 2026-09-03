@@ -6,7 +6,7 @@ enum BackendHelpers {
         environment: EnvironmentValues
     ) {
         backend.registerFocusObservers(
-            environment.focusObservers,
+            environment.widgetFocusObservers,
             on: widget.into()
         )
         

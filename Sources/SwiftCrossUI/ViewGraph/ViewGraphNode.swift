@@ -266,8 +266,9 @@ public class ViewGraphNode<NodeView: View, Backend: BaseAppBackend>: Sendable {
                     with: backend2
                 )
             } else if
-                !parentEnvironment.focusObservers.isEmpty ||
-                parentEnvironment.focusEffectDisabled
+                !parentEnvironment.widgetFocusObservers.isEmpty ||
+                    parentEnvironment.focusEffectDisabled ||
+                    parentEnvironment.focusOverride != nil
             {
                 logger.warnOnce("\(Backend.self) doesn't support focus control/tracking.")
             }
