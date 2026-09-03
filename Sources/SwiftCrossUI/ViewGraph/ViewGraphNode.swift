@@ -253,7 +253,7 @@ public class ViewGraphNode<NodeView: View, Backend: BaseAppBackend>: Sendable {
     /// - Returns: The most recently computed layout. Guaranteed to match the
     ///   result of the last call to ``computeLayout(with:proposedSize:environment:)``.
     public func commit() -> ViewLayoutResult {
-        if currentLayout?.shouldSetFocusData == true {
+        if currentLayout?.isNeverFocusable == false {
             if let backend2 = backend as? any BackendFeatures.Focus {
                 BackendHelpers.setWidgetFocusObservers(
                     of: AnyWidget(widget),

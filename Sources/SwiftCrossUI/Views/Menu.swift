@@ -128,7 +128,7 @@ extension Menu: TypeSafeView {
         size.x = buttonWidth ?? size.x
         return ViewLayoutResult
             .leafView(size: ViewSize(size))
-            .with(\.shouldSetFocusData, true)
+            .with(\.isNeverFocusable, false)
     }
 
     @CastBackend<BackendFeatures.MenuButtons>(backendGenericName: "NewBackend")

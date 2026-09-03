@@ -103,7 +103,7 @@ struct FocusModifier<Content: View>: TypeSafeView {
             proposedSize: proposedSize,
             environment: environment
         )
-        .with(\.shouldSetFocusData, true)
+        .with(\.isNeverFocusable, false)
     }
 
     @CastBackend<BackendFeatures.FocusDisabling>(backendGenericName: "NewBackend")

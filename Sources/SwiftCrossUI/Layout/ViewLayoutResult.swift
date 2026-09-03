@@ -10,7 +10,7 @@ public struct ViewLayoutResult {
     public var preferences: PreferenceValues
     /// If a view can ever get focused out of the box, this needs to be set to true,
     /// to be compatible with `@FocusState`.
-    public var shouldSetFocusData = false
+    public var isNeverFocusable = true
 
     public init(
         size: ViewSize,

@@ -122,7 +122,7 @@ extension Button: TypeSafeView {
 
         return ViewLayoutResult
             .leafView(size: ViewSize(size))
-            .with(\.shouldSetFocusData, true)
+            .with(\.isNeverFocusable, false)
     }
 
     func commit<Backend: BaseAppBackend>(

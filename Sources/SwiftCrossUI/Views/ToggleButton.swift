@@ -36,7 +36,7 @@ struct ToggleButton: ElementaryView, View {
         }
         return ViewLayoutResult
             .leafView(size: ViewSize(backend.naturalSize(of: widget)))
-            .with(\.shouldSetFocusData, true)
+            .with(\.isNeverFocusable, false)
     }
 
     func commit<Backend: BaseAppBackend>(

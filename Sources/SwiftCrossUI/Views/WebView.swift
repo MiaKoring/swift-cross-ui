@@ -30,7 +30,7 @@ public struct WebView: ElementaryView {
         let size = proposedSize.replacingUnspecifiedDimensions(by: Self.idealSize)
         return ViewLayoutResult
             .leafView(size: size)
-            .with(\.shouldSetFocusData, true)
+            .with(\.isNeverFocusable, false)
     }
 
     @CastBackend<BackendFeatures.WebViews>

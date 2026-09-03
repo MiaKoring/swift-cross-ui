@@ -49,7 +49,7 @@ public struct TextEditor: ElementaryView {
 
         return ViewLayoutResult
             .leafView(size: size)
-            .with(\.shouldSetFocusData, true)
+            .with(\.isNeverFocusable, false)
     }
 
     func commit<Backend: BaseAppBackend>(

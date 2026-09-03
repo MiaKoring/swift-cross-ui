@@ -149,7 +149,7 @@ internal struct DatePickerImplementation: ElementaryView {
         let naturalSize = backend.naturalSize(of: widget)
         return ViewLayoutResult
             .leafView(size: ViewSize(naturalSize))
-            .with(\.shouldSetFocusData, true)
+            .with(\.isNeverFocusable, false)
     }
 
     func commit<Backend: BaseAppBackend>(
