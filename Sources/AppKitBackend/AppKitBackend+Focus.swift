@@ -36,8 +36,6 @@ extension AppKitBackend {
     }
 }
 
-// MARK: - FocusState
-
 class FocusStateManager: NSObject {
     private var focusData = [ObjectIdentifier: Set<FocusData>]()
     private struct WindowFocusState {
@@ -66,7 +64,7 @@ class FocusStateManager: NSObject {
             // This means when it looks to us like the NSTextField is focused,
             // the NSTextView is the actual first responder.
             // Giving focus back to the surrounding field leads to weird input bugs
-            // This makes sure first responder is only given to the widget if its
+            // This makes sure first responder is only given to the widget if it's
             // not the inner NSTextView having focus.
             !textFieldsTextViewIsFocused(field: widget)
         {
@@ -99,7 +97,7 @@ class FocusStateManager: NSObject {
         // If the inner View gaining focus isn't skipped, the FocusState would
         // reset to unfocused right after gaining, even though it is focused on screen.
         //
-        // Everytime a new view gains focused, the previous one needs its
+        // Everytime a new view gains focused, the previous one needs it'^s
         // FocusState set to false, because they could use different FocusStates.
 
         if let responder = window.firstResponder, !(responder is NSCustomWindow) {

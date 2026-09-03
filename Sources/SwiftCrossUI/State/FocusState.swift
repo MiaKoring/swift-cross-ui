@@ -75,7 +75,7 @@ public struct FocusState<Value: Hashable>: ObservableProperty {
         private let resetValue: () -> Void
 
         /// Creates a binding with a custom getter and setter. To create a binding from
-        /// an `@FocusState` property use its projected value instead: e.g. `$myFocusStateProperty`
+        /// a `@FocusState` property use its projected value instead: e.g. `$myFocusStateProperty`
         /// will give you a binding for reading and writing `myFocusStateProperty` (assuming that
         /// `myFocusStateProperty` is marked with `@FocusState` at its declaration site).
         public init(

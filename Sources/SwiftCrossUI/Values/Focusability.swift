@@ -1,4 +1,4 @@
-/// Enables finer-grained control of ``View/focusable`` than a Bool woul.
+/// Enables finer-grained control of ``View/focusable`` than a Bool would.
 ///
 /// ``Focusability/unmodified`` maintains the existing focusability
 /// of the view graph without adding or removing tab stops.
