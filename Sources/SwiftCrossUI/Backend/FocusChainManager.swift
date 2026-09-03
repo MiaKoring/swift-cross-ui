@@ -11,14 +11,14 @@
 public protocol FocusChainManager {
     associatedtype Widget: FocusChainParticipant
 
-    /// Returns the  widget following a given widget in the focus chain, suggested by the UI framework.
+    /// Returns the widget following a given widget in the focus chain, suggested by the UI framework.
     /// This widget will be validated for visibility and focusability by the caller.
-    /// Used by the provided functions for easier ``View/focusable`` compatibility.
+    /// Used by FocusChainManager's helper methods.
     func closestValidStop(following view: Widget) -> Widget?
 
     /// Returns the widget preceding a given widget in the focus chain, suggested by the UI framework.
     /// This widget will be validated for visibility and focusability by the caller.
-    /// Used by the provided functions for easier ``View/focusable`` compatibility.
+    /// Used by FocusChainManager's helper methods.
     func closestValidStop(preceding view: Widget) -> Widget?
 
     /// Makes a widget the "key view" or "first responder".
@@ -28,16 +28,16 @@ public protocol FocusChainManager {
     func getParent(of widget: Widget) -> Widget?
 }
 
-/// A protocol to mark a widget as a focusability flag.
-/// Consumed by ``FocusChainManager``.
+/// A protocol implemented by focus containers of backends that can't
+/// natively toggle focusability of views.
+/// Respected by ``FocusChainManager``.
 public protocol FocusabilityContainer {
     /// Whether the container and its children can gain focus by keyboard navigation.
     var focusability: Focusability { get }
 }
 
-/// Required by ``FocusChainManager``.
-/// Implement this protocol on widgets you want controlled by ``FocusChainManager``.
-/// Implementing it on the base Widget type of the Backend is recommended. e.g. `NSView`.
+/// A protocol which backend widgets must conform to in order for
+/// a backend to use them with a ``FocusChainManager``.
 public protocol FocusChainParticipant: Equatable {
     /// Whether a widget participates in the focus chain, i.e. if it can gain focus via keyboard navigation.
     var canBeTabStop: Bool { get }
@@ -50,10 +50,10 @@ extension FocusChainManager {
         suggestion: Widget,
         forward: Bool = true
     ) -> Widget? {
-        var currentOption: Widget? = suggestion
+        var currentCandidate: Widget? = suggestion
         var visited: [Widget] = []
 
-        while let next = currentOption {
+        while let next = currentCandidate {
             // Exit to not get stuck in a loop
             // when arriving back an already visited widget.
             guard !visited.contains(next) else {
@@ -68,9 +68,9 @@ extension FocusChainManager {
             { return next }
 
             if forward {
-                currentOption = closestValidStop(following: next)
+                currentCandidate = closestValidStop(following: next)
             } else {
-                currentOption = closestValidStop(preceding: next)
+                currentCandidate = closestValidStop(preceding: next)
             }
         }
 

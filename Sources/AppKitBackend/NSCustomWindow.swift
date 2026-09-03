@@ -1,7 +1,7 @@
 import AppKit
 import SwiftCrossUI
 
-public class NSCustomWindow: NSWindow, FocusChainManager {
+public class NSCustomWindow: NSWindow {
     public typealias Widget = AppKitBackend.Widget
 
     var customDelegate = Delegate()
@@ -44,24 +44,6 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
 
     override public func selectKeyView(preceding view: NSView) {
         selectTabStop(preceding: view)
-    }
-
-    // MARK: - FocusChainManager implementation -
-
-    public func closestValidStop(following view: Widget) -> Widget? {
-        view.nextValidKeyView
-    }
-
-    public func closestValidStop(preceding view: Widget) -> Widget? {
-        view.previousValidKeyView
-    }
-
-    public func makeKey(_ widget: Widget) {
-        makeFirstResponder(widget)
-    }
-
-    public func getParent(of widget: Widget) -> Widget? {
-        widget.superview
     }
 
     class Delegate: NSObject, NSWindowDelegate {
@@ -112,11 +94,5 @@ public class NSCustomWindow: NSWindow, FocusChainManager {
         func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? {
             (window as! NSCustomWindow).persistentUndoManager
         }
-    }
-}
-
-extension NSView: FocusChainParticipant {
-    public var canBeTabStop: Bool {
-        canBecomeKeyView
     }
 }

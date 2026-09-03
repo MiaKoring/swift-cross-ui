@@ -59,18 +59,18 @@ struct ControlFocusabilityApp: App {
     @State var isDatePickerStyleFocusable = true
     @State var isDatePickerFocusable = true
 
-    @FocusState var focused: Int?
+    @FocusState var focusState: Int?
 
     @Environment(\.supportedDatePickerStyles) var supportedDatePickerStyles
     @Environment(\.isPickerStyleSupported) var isPickerStyleSupported
 
     var body: some Scene {
-        WindowGroup("ControlsApp focused: \(focused ?? -1)") {
+        WindowGroup("ControlsApp focused: \(focusState ?? -1)") {
             #hotReloadable {
                 ScrollView {
                     VStack(spacing: 30) {
                         Button("randomize focus") {
-                            focused = Int.random(in: 1...13)
+                            focusState = Int.random(in: 1...13)
                         }
                         .padding(.bottom, 20)
 
@@ -81,7 +81,7 @@ struct ControlFocusabilityApp: App {
                                     count += 1
                                 }
                                 .focusableIfSupported(isButtonFocusable)
-                                .focused($focused, equals: 1)
+                                .focused($focusState, equals: 1)
                                 .focusEffectDisabled()
 
                                 Text("Count: \(count)")
@@ -105,7 +105,7 @@ struct ControlFocusabilityApp: App {
                                     }
                                 }
                                 .focusableIfSupported(isMenuFocusable)
-                                .focused($focused, equals: 2)
+                                .focused($focusState, equals: 2)
                             }
                             Toggle("focusable", isOn: $isMenuFocusable)
                                 .focusableIfSupported(false)
@@ -118,7 +118,7 @@ struct ControlFocusabilityApp: App {
                                     Toggle("Toggle me!", isOn: $exampleButtonState)
                                         .toggleStyle(.button)
                                         .focusableIfSupported(isToggleButtonFocusable)
-                                        .focused($focused, equals: 3)
+                                        .focused($focusState, equals: 3)
                                     Text("Currently enabled: \(exampleButtonState)")
                                 }
                                 Toggle("focusable", isOn: $isToggleButtonFocusable)
@@ -133,7 +133,7 @@ struct ControlFocusabilityApp: App {
                                 Toggle("Toggle me:", isOn: $exampleSwitchState)
                                     .toggleStyle(.switch)
                                     .focusableIfSupported(isToggleSwitchFocusable)
-                                    .focused($focused, equals: 4)
+                                    .focused($focusState, equals: 4)
                                 Text("Currently enabled: \(exampleSwitchState)")
                             }
                             Toggle("focusable", isOn: $isToggleSwitchFocusable)
@@ -146,7 +146,7 @@ struct ControlFocusabilityApp: App {
                                 Toggle("Toggle me:", isOn: $exampleCheckboxState)
                                     .toggleStyle(.checkbox)
                                     .focusableIfSupported(isCheckboxFocusable)
-                                    .focused($focused, equals: 5)
+                                    .focused($focusState, equals: 5)
                                 Text("Currently enabled: \(exampleCheckboxState)")
                             }
                             Toggle("focusable", isOn: $isCheckboxFocusable)
@@ -160,7 +160,7 @@ struct ControlFocusabilityApp: App {
                                     Slider(value: $sliderValue, in: 0...10)
                                         .frame(maxWidth: 200)
                                         .focusableIfSupported(isSliderFocusable)
-                                        .focused($focused, equals: 6)
+                                        .focused($focusState, equals: 6)
                                     Text("Value: \(String(format: "%.02f", sliderValue))")
                                 }
                                 Toggle("focusable", isOn: $isSliderFocusable)
@@ -173,7 +173,7 @@ struct ControlFocusabilityApp: App {
                                 Text("Text field")
                                 TextField("Text field", text: $text)
                                     .focusableIfSupported(isTextFieldFocusable)
-                                    .focused($focused, equals: 7)
+                                    .focused($focusState, equals: 7)
                                 Text("Value: \(text)")
                             }
                             Toggle("focusable", isOn: $isTextFieldFocusable)
@@ -185,7 +185,7 @@ struct ControlFocusabilityApp: App {
                                 Text("Secure text field")
                                 SecureField("Secure text field", text: $secureText)
                                     .focusableIfSupported(isSecureTextFieldFocusable)
-                                    .focused($focused, equals: 8)
+                                    .focused($focusState, equals: 8)
                                 Text("Value: \(secureText)")
                             }
                             Toggle("focusable", isOn: $isSecureTextFieldFocusable)
@@ -202,7 +202,7 @@ struct ControlFocusabilityApp: App {
                                     .focusableIfSupported(false)
                                     Slider(value: $progressViewSize, in: 10...100)
                                         .focusableIfSupported(isProgressSliderFocusable)
-                                        .focused($focused, equals: 9)
+                                        .focused($focusState, equals: 9)
                                     ProgressView()
                                         .resizable(isProgressViewResizable)
                                         .frame(
@@ -228,7 +228,7 @@ struct ControlFocusabilityApp: App {
                                         selection: $pickerStyle
                                     )
                                     .focusableIfSupported(isPickerStyleFocusable)
-                                    .focused($focused, equals: 10)
+                                    .focused($focusState, equals: 10)
                                     Toggle("focusable", isOn: $isPickerStyleFocusable)
                                         .focusableIfSupported(false)
                                 }
@@ -243,7 +243,7 @@ struct ControlFocusabilityApp: App {
                                         pickerStyle?.asPickerStyle ?? DefaultPickerStyle()
                                     )
                                     .focusableIfSupported(isFlavorPickerFocusable)
-                                    .focused($focused, equals: 11)
+                                    .focused($focusState, equals: 11)
                                     Toggle("focusable", isOn: $isFlavorPickerFocusable)
                                         .focusableIfSupported(false)
                                 }
@@ -261,7 +261,7 @@ struct ControlFocusabilityApp: App {
                                             selection: $datePickerStyle
                                         )
                                         .focusableIfSupported(isDatePickerStyleFocusable)
-                                        .focused($focused, equals: 12)
+                                        .focused($focusState, equals: 12)
                                         Toggle("focusable", isOn: $isDatePickerStyleFocusable)
                                             .focusableIfSupported(false)
                                     }
@@ -270,7 +270,7 @@ struct ControlFocusabilityApp: App {
                                         DatePicker(selection: $date) {}
                                             .datePickerStyle(datePickerStyle ?? .automatic)
                                             .focusableIfSupported(isDatePickerFocusable)
-                                            .focused($focused, equals: 13)
+                                            .focused($focusState, equals: 13)
                                         Toggle("focusable", isOn: $isDatePickerFocusable)
                                             .focusableIfSupported(false)
                                     }
@@ -284,7 +284,7 @@ struct ControlFocusabilityApp: App {
                         #endif
                     }.padding().disabled(!enabled)
 
-                    ChildView(isFocused: $focused)
+                    ChildView(focusState: $focusState)
 
                     Toggle(enabled ? "Disable all" : "Enable all", isOn: $enabled)
                         .padding()
@@ -311,12 +311,13 @@ extension View {
 }
 
 struct ChildView: View {
-    var isFocused: FocusState<Int?>.Binding
+    @FocusState<Int?>.Binding
+    var focusState: Int?
     @State var text = ""
 
     var body: some View {
         Text("Test if FocusState.Binding works in subview")
         TextField(text: $text)
-            .focused(isFocused, equals: 1000)
+            .focused($focusState, equals: 1000)
     }
 }

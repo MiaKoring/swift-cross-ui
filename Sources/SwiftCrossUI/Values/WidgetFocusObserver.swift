@@ -5,7 +5,7 @@ public struct WidgetFocusObserver: Sendable {
     public let didGainFocus: () -> Void
     /// A function to set the ``FocusState`` to unfocused.
     public let didLoseFocus: () -> Void
-
+    
     public init(
         didGainFocus: @escaping () -> Void,
         didLoseFocus: @escaping () -> Void

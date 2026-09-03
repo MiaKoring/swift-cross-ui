@@ -73,76 +73,26 @@ extension AppKitBackend {
     }
 }
 
-@MainActor
-class FocusStateManager: NSObject {
-    private var focusData = [ObjectIdentifier: [WidgetFocusObserver]]()
-    private struct WindowFocusState {
-        var lastFocused: NSResponder?
-        var shouldSkip = false
+extension NSCustomWindow: FocusChainManager {
+    public func closestValidStop(following view: Widget) -> Widget? {
+        view.nextValidKeyView
     }
-    private var windowFocusStates = [ObjectIdentifier: WindowFocusState]()
-
-    func register(_ data: [WidgetFocusObserver], for widget: NSView) {
-        focusData[ObjectIdentifier(widget)] = data
+    
+    public func closestValidStop(preceding view: Widget) -> Widget? {
+        view.previousValidKeyView
     }
-
-    override func observeValue(
-        forKeyPath keyPath: String?,
-        of object: Any?,
-        change: [NSKeyValueChangeKey: Any]?,
-        context: UnsafeMutableRawPointer?
-    ) {
-        guard let window = object as? NSCustomWindow else { return }
-        var windowFocusState = windowFocusStates[ObjectIdentifier(window)] ?? WindowFocusState()
-        defer { windowFocusStates[ObjectIdentifier(window)] = windowFocusState }
-
-        // NSObservableTextField and NSObservableSecureTextField give focus
-        // to a different view immediately after gaining focus.
-        // If the inner View gaining focus isn't skipped, the FocusState would
-        // reset to unfocused right after gaining, even though it is focused on screen.
-        //
-        // Everytime a new view gains focused, the previous one needs it'^s
-        // FocusState set to false, because they could use different FocusStates.
-
-        if let responder = window.firstResponder, !(responder is NSCustomWindow) {
-            if responder is NSObservableTextField || responder is NSObservableSecureTextField {
-                windowFocusState.shouldSkip = true
-                if let lastFocused = windowFocusState.lastFocused {
-                    handleFocusChange(of: ObjectIdentifier(lastFocused), toState: false)
-                }
-                windowFocusState.lastFocused = responder
-            } else if !windowFocusState.shouldSkip {
-                if let lastFocused = windowFocusState.lastFocused {
-                    handleFocusChange(of: ObjectIdentifier(lastFocused), toState: false)
-                }
-                windowFocusState.lastFocused = responder
-            } else if windowFocusState.shouldSkip {
-                // Exit early to swallow call by the inner target of a FooTextField,
-                // that automatically gains focus after the outer widget,
-                // which we know, gains focus.
-                windowFocusState.shouldSkip = false
-                return
-            }
-
-            let identifier = ObjectIdentifier(responder)
-            handleFocusChange(of: identifier, toState: true)
-        } else if let lastFocused = windowFocusState.lastFocused {
-            handleFocusChange(of: ObjectIdentifier(lastFocused), toState: false)
-            windowFocusState.lastFocused = nil
-        }
+    
+    public func makeKey(_ widget: Widget) {
+        makeFirstResponder(widget)
     }
+    
+    public func getParent(of widget: Widget) -> Widget? {
+        widget.superview
+    }
+}
 
-    private func handleFocusChange(of identifier: ObjectIdentifier, toState isFocused: Bool) {
-        guard let data = focusData[identifier] else { return }
-
-        if isFocused {
-            data.forEach { binding in
-                binding.didGainFocus()
-            }
-        } else {
-            data.forEach { binding in
-                binding.didLoseFocus()
-            }
-        }
+extension NSView: FocusChainParticipant {
+    public var canBeTabStop: Bool {
+        canBecomeKeyView
     }
 }

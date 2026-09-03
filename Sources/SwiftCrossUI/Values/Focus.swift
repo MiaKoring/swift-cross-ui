@@ -1,6 +1,6 @@
 /// An enum, stored in ``EnvironmentValues``, indicating
 /// whether a widget should programmatically gain or lose focus.
-public enum Focus {
+public enum Focus: Sendable {
     case focused
     case unfocused
 }
