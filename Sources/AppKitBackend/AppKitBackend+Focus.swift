@@ -9,7 +9,7 @@ final class FocusabilityContainer: NSView, SwiftCrossUI.FocusabilityContainer {
 
 extension AppKitBackend {
     public func registerFocusObservers(
-        _ data: [FocusData],
+        _ data: [WidgetFocusObserver],
         on widget: NSView
     ) {
         guard widget.acceptsFirstResponder else { return }
@@ -23,40 +23,9 @@ extension AppKitBackend {
         return container
     }
 
-    public func updateFocusContainer(
-        _ widget: NSView,
-        focusability: Focusability
-    ) {
-        let container = widget as! FocusabilityContainer
-        container.focusability = focusability
-    }
-
-    public func setFocusEffectDisabled(on widget: NSView, disabled: Bool) {
-        widget.focusRingType = disabled ? .none : .default
-    }
-}
-
-class FocusStateManager: NSObject {
-    private var focusData = [ObjectIdentifier: Set<FocusData>]()
-    private struct WindowFocusState {
-        var lastFocused: NSResponder?
-        var shouldSkip = false
-    }
-    private var windowFocusStates = [ObjectIdentifier: WindowFocusState]()
-
-    func register(_ data: [FocusData], for widget: NSView) {
-        focusData[ObjectIdentifier(widget)] = Set(data)
-
+    public func setFocus(of widget: NSView, to focus: Focus) {
         if
-            let window = widget.window,
-            window.firstResponder == widget || textFieldsTextViewIsFocused(field: widget),
-            data.contains(where: \.shouldUnfocus)
-        {
-            window.makeFirstResponder(nil)
-        }
-
-        if
-            data.contains(where: \.matches),
+            focus == .focused,
             !widget.isHidden,
             widget.acceptsFirstResponder,
             // AppKit passes first responder from NSTextField/NSSecureTextField to an
@@ -70,8 +39,17 @@ class FocusStateManager: NSObject {
         {
             widget.window?.makeFirstResponder(widget)
         }
+        
+        if
+            focus == .unfocused,
+            let window = widget.window,
+            window.firstResponder == widget || textFieldsTextViewIsFocused(field: widget)
+        {
+            _ = window.makeFirstResponder(nil)
+            return
+        }
     }
-
+    
     private func textFieldsTextViewIsFocused(field: NSView) -> Bool {
         if let field = field as? NSTextField {
             return field.currentEditor() === field.window?.firstResponder
@@ -80,6 +58,32 @@ class FocusStateManager: NSObject {
             return field.currentEditor() === field.window?.firstResponder
         }
         return false
+    }
+    
+    public func updateFocusContainer(
+        _ widget: NSView,
+        focusability: Focusability
+    ) {
+        let container = widget as! FocusabilityContainer
+        container.focusability = focusability
+    }
+
+    public func setFocusEffectDisabled(on widget: NSView, disabled: Bool) {
+        widget.focusRingType = disabled ? .none : .default
+    }
+}
+
+@MainActor
+class FocusStateManager: NSObject {
+    private var focusData = [ObjectIdentifier: [WidgetFocusObserver]]()
+    private struct WindowFocusState {
+        var lastFocused: NSResponder?
+        var shouldSkip = false
+    }
+    private var windowFocusStates = [ObjectIdentifier: WindowFocusState]()
+
+    func register(_ data: [WidgetFocusObserver], for widget: NSView) {
+        focusData[ObjectIdentifier(widget)] = data
     }
 
     override func observeValue(
@@ -133,11 +137,11 @@ class FocusStateManager: NSObject {
 
         if isFocused {
             data.forEach { binding in
-                binding.set()
+                binding.didGainFocus()
             }
         } else {
             data.forEach { binding in
-                binding.reset()
+                binding.didLoseFocus()
             }
         }
     }

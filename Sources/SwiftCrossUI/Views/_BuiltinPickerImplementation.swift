@@ -85,6 +85,11 @@ public struct _BuiltinPickerImplementation: TypeSafeView {
                 with: backend2,
                 environment: environment
             )
+            BackendHelpers.setFocus(
+                of: AnyWidget(widget),
+                to: environment.focusOverride,
+                with: backend2
+            )
         } else if
             !environment.focusObservers.isEmpty ||
             environment.focusEffectDisabled

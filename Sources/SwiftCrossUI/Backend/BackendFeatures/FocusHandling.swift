@@ -13,7 +13,7 @@ extension BackendFeatures {
         ///
         /// Called by ``ViewGraphNode/commit()`` and `_BuiltinPickerImplementation/commit`.
         func registerFocusObservers(
-            _ data: [FocusData],
+            _ data: [WidgetFocusObserver],
             on widget: Widget
         )
 
@@ -21,6 +21,9 @@ extension BackendFeatures {
         ///
         /// Used by ``View/focusable(_:)``.
         func setFocusEffectDisabled(on widget: Widget, disabled: Bool)
+        
+        /// Makes a widget gain or lose focus.
+        func setFocus(of widget: Widget, to focus: SwiftCrossUI.Focus)
     }
 
     /// Backend methods for disabling focusability of a subtree.

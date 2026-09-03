@@ -260,6 +260,11 @@ public class ViewGraphNode<NodeView: View, Backend: BaseAppBackend>: Sendable {
                     with: backend2,
                     environment: parentEnvironment
                 )
+                BackendHelpers.setFocus(
+                    of: AnyWidget(widget),
+                    to: parentEnvironment.focusOverride,
+                    with: backend2
+                )
             } else if
                 !parentEnvironment.focusObservers.isEmpty ||
                 parentEnvironment.focusEffectDisabled

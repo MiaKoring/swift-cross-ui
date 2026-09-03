@@ -13,19 +13,22 @@ extension View {
             environment.with(
                 \.focusObservers,
                 environment.focusObservers + [
-                    FocusData(
-                        type: Value.self,
-                        match: match,
-                        set: {
+                    WidgetFocusObserver(
+                        didGainFocus: {
                             focusBinding.wrappedValue = match
                         },
-                        reset: {
+                        didLoseFocus: {
                             focusBinding.reset()
-                        },
-                        matches: focusBinding.wrappedValue == match,
-                        shouldUnfocus: focusBinding.wrappedValue == nil
+                        }
                     )
                 ]
+            )
+            .with(
+                \.focusOverride,
+                 environment.focusOverride.modify(
+                    with: focusBinding.wrappedValue,
+                    match: match
+                 )
             )
         }
     }
@@ -43,19 +46,21 @@ extension View {
             environment.with(
                 \.focusObservers,
                 environment.focusObservers + [
-                    FocusData(
-                        type: Bool.self,
-                        match: true,
-                        set: {
+                    WidgetFocusObserver(
+                        didGainFocus: {
                             focusBinding.wrappedValue = true
                         },
-                        reset: {
+                        didLoseFocus: {
                             focusBinding.reset()
-                        },
-                        matches: focusBinding.wrappedValue == true,
-                        shouldUnfocus: focusBinding.wrappedValue == false
+                        }
                     )
                 ]
+            )
+            .with(
+                \.focusOverride,
+                 environment.focusOverride != .focused
+                 ? focusBinding.wrappedValue ? .focused : .unfocused
+                 :.focused
             )
         }
     }
