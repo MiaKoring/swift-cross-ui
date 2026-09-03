@@ -255,24 +255,16 @@ public class ViewGraphNode<NodeView: View, Backend: BaseAppBackend>: Sendable {
     public func commit() -> ViewLayoutResult {
         if currentLayout?.shouldSetFocusData == true {
             if let backend2 = backend as? any BackendFeatures.Focus {
-                setFocusData(on: backend2)
+                BackendHelpers.setWidgetFocusObservers(
+                    of: AnyWidget(widget),
+                    with: backend2,
+                    environment: parentEnvironment
+                )
             } else if
                 !parentEnvironment.focusObservers.isEmpty ||
                 parentEnvironment.focusEffectDisabled
             {
                 logger.warnOnce("\(Backend.self) doesn't support focus control/tracking.")
-            }
-
-            func setFocusData<Backend2: BackendFeatures.Focus>(on backend: Backend2) {
-                backend.registerFocusObservers(
-                    parentEnvironment.focusObservers,
-                    on: widget as! Backend2.Widget
-                )
-
-                backend.setFocusEffectDisabled(
-                    on: widget as! Backend2.Widget,
-                    disabled: parentEnvironment.focusEffectDisabled
-                )
             }
         }
 

@@ -1,3 +1,5 @@
+/// The focusability of a ``View``.
+///
 /// Enables finer-grained control of ``View/focusable`` than a Bool would.
 ///
 /// ``Focusability/unmodified`` maintains the existing focusability

@@ -27,12 +27,12 @@ extension BackendFeatures {
     ///
     /// Used by ``View/focusable(_:)``.
     public protocol FocusDisabling: Core {
-        /// Create a container controlling the focusability of the widgets below it.
+        /// Create a container controlling the focusability of the widget's children.
         ///
         /// Used by ``View/focusable(_:)``.
         func createFocusContainer() -> Widget
 
-        /// Update a container controlling the focusability of the widgets below it.
+        /// Update a container controlling the focusability of the widget's children.
         ///
         /// Used by ``View/focusable(_:)``.
         func updateFocusContainer(
