@@ -8,7 +8,7 @@ public enum Focus: Sendable {
 extension Optional where Wrapped == Focus {
     func modify<Value: Hashable>(with state: Value?, match: Value) -> Self {
         guard self != .focused else { return self }
-        
+
         if state == match { return .focused }
         if state != nil { return .unfocused }
         return nil

@@ -9,10 +9,10 @@ extension View {
 
 struct FocusableModifier<Content: View>: TypeSafeView {
     typealias Children = TupleView1<Content>.Children
-    
+
     var body: TupleView1<Content>
     var focusability: Focusability
-    
+
     func children<Backend: BaseAppBackend>(
         backend: Backend,
         snapshots: [ViewGraphSnapshotter.NodeSnapshot]?,
@@ -24,19 +24,19 @@ struct FocusableModifier<Content: View>: TypeSafeView {
             environment: environment
         )
     }
-    
+
     @CastBackend<BackendFeatures.FocusDisabling>(backendGenericName: "NewBackend")
     func asWidget<Backend: BaseAppBackend>(
         _ children: Children,
         backend: Backend
     ) -> Backend.Widget {
         let container = backend.createFocusContainer()
-        
+
         backend.insert(children.child0.widget.into(), into: container, at: 0)
-        
+
         return container as! Backend.Widget
     }
-    
+
     func computeLayout<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
         children: Children,
@@ -51,7 +51,7 @@ struct FocusableModifier<Content: View>: TypeSafeView {
         )
         .with(\.isNeverFocusable, false)
     }
-    
+
     @CastBackend<BackendFeatures.FocusDisabling>(backendGenericName: "NewBackend")
     func commit<Backend: BaseAppBackend>(
         _ widget: Backend.Widget,
@@ -62,7 +62,7 @@ struct FocusableModifier<Content: View>: TypeSafeView {
     ) {
         let size = children.child0.commit().size.vector
         backend.setSize(of: widget, to: size)
-        
+
         backend.updateFocusContainer(widget, focusability: focusability)
     }
 }

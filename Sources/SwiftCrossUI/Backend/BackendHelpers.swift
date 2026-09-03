@@ -9,13 +9,13 @@ enum BackendHelpers {
             environment.widgetFocusObservers,
             on: widget.into()
         )
-        
+
         backend.setFocusEffectDisabled(
             on: widget.into(),
             disabled: environment.focusEffectDisabled
         )
     }
-    
+
     /// Makes a widget gain or lose focus.
     static func setFocus<Backend: BackendFeatures.Focus>(
         of widget: AnyWidget,

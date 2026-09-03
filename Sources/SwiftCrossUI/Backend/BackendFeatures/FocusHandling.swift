@@ -21,7 +21,7 @@ extension BackendFeatures {
         ///
         /// Used by ``View/focusable(_:)``.
         func setFocusEffectDisabled(on widget: Widget, disabled: Bool)
-        
+
         /// Makes a widget gain or lose focus.
         func setFocus(of widget: Widget, to focus: SwiftCrossUI.Focus)
     }

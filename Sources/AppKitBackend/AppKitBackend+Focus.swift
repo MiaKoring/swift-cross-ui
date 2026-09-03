@@ -39,7 +39,7 @@ extension AppKitBackend {
         {
             widget.window?.makeFirstResponder(widget)
         }
-        
+
         if
             focus == .unfocused,
             let window = widget.window,
@@ -49,7 +49,7 @@ extension AppKitBackend {
             return
         }
     }
-    
+
     private func textFieldsTextViewIsFocused(field: NSView) -> Bool {
         if let field = field as? NSTextField {
             return field.currentEditor() === field.window?.firstResponder
@@ -59,7 +59,7 @@ extension AppKitBackend {
         }
         return false
     }
-    
+
     public func updateFocusContainer(
         _ widget: NSView,
         focusability: Focusability
@@ -77,15 +77,15 @@ extension NSCustomWindow: FocusChainManager {
     public func closestValidStop(following view: Widget) -> Widget? {
         view.nextValidKeyView
     }
-    
+
     public func closestValidStop(preceding view: Widget) -> Widget? {
         view.previousValidKeyView
     }
-    
+
     public func makeKey(_ widget: Widget) {
         makeFirstResponder(widget)
     }
-    
+
     public func getParent(of widget: Widget) -> Widget? {
         widget.superview
     }

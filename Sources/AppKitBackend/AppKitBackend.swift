@@ -90,7 +90,7 @@ public final class AppKitBackend: FullAppBackend {
         // why.
         window.isReleasedWhenClosed = false
 
-		window.addObserver(
+        window.addObserver(
             focusManager,
             forKeyPath: "firstResponder",
             context: nil

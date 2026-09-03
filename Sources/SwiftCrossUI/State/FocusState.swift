@@ -91,7 +91,7 @@ public struct FocusState<Value: Hashable>: ObservableProperty {
         func reset() {
             resetValue()
         }
-        
+
         public var projectedValue: FocusState.Binding {
             return self
         }
