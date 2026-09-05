@@ -83,3 +83,32 @@ public struct Gradient: Sendable, Hashable {
         public var location: Double
     }
 }
+
+extension Gradient {
+    /// Stops adjusted to accomodate locations outside the 0...1 range for backends without native support.
+    @_spi(Backends) public var adjustedStops: [Gradient.Stop] {
+        guard
+            let firstStop = stops.first?.location,
+            !(0...1).contains(firstStop),
+            let lastStop = stops.last?.location,
+            !(0...1).contains(lastStop)
+        else { return stops }
+        
+        var stops = stops
+        
+        let currentRange = lastStop - firstStop
+        
+        if currentRange < 0 {
+            logger.warning("Gradient stops must be sorted by location in ascending order.")
+        }
+        
+        stops = stops.map {
+            Gradient.Stop(
+                color: $0.color,
+                location: ($0.location - firstStop) / currentRange
+            )
+        }
+        
+        return stops.sorted(by: { $0.location < $1.location })
+    }
+}
