@@ -21,7 +21,7 @@ extension GtkBackend {
             y: Double(size.y) * gradient.startPoint.y
         )
 
-        var endPoint = UnitPoint(
+        let endPoint = UnitPoint(
             x: Double(size.x) * gradient.endPoint.x,
             y: Double(size.y) * gradient.endPoint.y
         )
