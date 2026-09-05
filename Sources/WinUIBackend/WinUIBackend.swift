@@ -1,6 +1,6 @@
 import CWinRT
 import Foundation
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import UWP
 import WinAppSDK
 import WinSDK
@@ -17,21 +17,72 @@ extension App {
     public typealias Backend = WinUIBackend
 
     public var backend: WinUIBackend {
-        WinUIBackend()
+        WinUIBackend(urlSchemes: Self.metadata?.urlSchemes?.map(\.scheme))
     }
 }
 
 class WinUIApplication: SwiftApplication, @unchecked Sendable {
-    static let callback = Mutex<(@MainActor (WinUIApplication) -> Void)?>(nil)
+    static let callback = Mutex<(@MainActor (WinUIApplication, AppInstance) -> Void)?>(nil)
+    static let urlSchemes = Mutex<[String]>([])
 
     override func onLaunched(_ args: WinUI.LaunchActivatedEventArgs) {
+        // Register the schemes on each launch. Windows ignores duplicate URL
+        // scheme registrations so this is safe.
+        let schemes = Self.urlSchemes.withLock { $0 }
+        var processName = ProcessInfo.processInfo.processName
+        if processName.hasSuffix(".exe") {
+            processName = String(processName.dropLast(".exe".count))
+        }
+        for scheme in schemes {
+            ActivationRegistrationManager.registerForProtocolActivation(
+                scheme,
+                "",
+                processName,
+                ""
+            )
+        }
+
+        // Adapted from https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/applifecycle/applifecycle-single-instance
+        let args = try! AppInstance.getCurrent().getActivatedEventArgs()!
+        let keyInstance = AppInstance.findOrRegisterForKey(processName)!
+        guard keyInstance.isCurrent else {
+            Self.redirectActivation(args, to: keyInstance)
+        }
+
         Self.callback.withLock { callback in
             // We can't explicitly hop to the main actor because we haven't set up
             // our WinUI MainActor fix yet.
             MainActor.assumeIsolated {
-                callback?(self)
+                callback?(self, keyInstance)
             }
         }
+    }
+
+    // Adapted from https://learn.microsoft.com/en-us/windows/apps/windows-app-sdk/applifecycle/applifecycle-single-instance
+    static func redirectActivation(
+        _ args: AppActivationArguments,
+        to keyInstance: AppInstance
+    ) -> Never {
+        let semaphore = DispatchSemaphore(value: 0)
+        let promise = try! keyInstance.redirectActivationToAsync(args)!
+        promise.completed = { _, _ in
+            semaphore.signal()
+        }
+
+        semaphore.wait()
+
+        // Bring key instance to the foreground
+        do {
+            try InstancingHelpers.activateProcess(withId: Int(keyInstance.processId))
+        } catch {
+            print(
+                """
+                Failed to bring key instance (pid=\(keyInstance.processId)) to \
+                foreground: \(error.localizedDescription)
+                """
+            )
+        }
+        Foundation.exit(0)
     }
 }
 
@@ -41,7 +92,6 @@ public final class WinUIBackend:
     BackendFeatures.ExternalURLs,
     BackendFeatures.IncomingURLs,
     BackendFeatures.FileDialogs,
-    BackendFeatures.Alerts,
     BackendFeatures.CornerRadius,
     BackendFeatures.Gestures,
     BackendFeatures.AttachedMenus,
@@ -79,7 +129,6 @@ public final class WinUIBackend:
     public typealias Window = CustomWindow
     public typealias Widget = WinUI.FrameworkElement
     public typealias Menu = WinUI.MenuFlyout
-    public typealias Alert = WinUI.ContentDialog
     public typealias Path = GeometryGroupHolder
 
     public let defaultTableRowContentHeight = 20
@@ -97,10 +146,13 @@ public final class WinUIBackend:
     ]
     public let supportedPickerStyles: [BackendPickerStyle] = [.menu, .radioGroup]
     public let canOverrideWindowColorScheme = true
+    public let restoresWindowFrames = false
 
     public var scrollBarWidth: Int {
         12
     }
+
+    var borderedButtonPadding: SIMD2<Int>?
 
     class InternalState {
         var buttonClickActions: [ObjectIdentifier: () -> Void] = [:]
@@ -114,16 +166,20 @@ public final class WinUIBackend:
 
     var internalState: InternalState
     nonisolated(unsafe) private var dispatcherQueue: WinAppSDK.DispatcherQueue?
-    /// WinUI only allows one dialog at a time (subsequent dialogs throw
-    /// exceptions), so we limit ourselves.
-    private var dialogSemaphore = DispatchSemaphore(value: 1)
 
-    private var windows: [Window] = []
+    var windows: [Window] = []
 
     private var measurementTextBlock: TextBlock!
 
-    public init() {
+    public convenience init() {
+        self.init(urlSchemes: nil)
+    }
+
+    public init(urlSchemes: [String]?) {
         internalState = InternalState()
+        WinUIApplication.urlSchemes.withLock { schemes in
+            schemes = urlSchemes ?? []
+        }
     }
 
     struct Error: LocalizedError {
@@ -131,6 +187,22 @@ public final class WinUIBackend:
 
         var errorDescription: String? {
             message
+        }
+    }
+
+    public static func earlySetup() {
+        do {
+            try Self.attachToParentConsole()
+        } catch {
+            // We essentially just ignore if this fails because it's just a QoL
+            // debugging feature, and if it fails then any warning we print likely
+            // won't get seen anyway. But I don't trust my Windows knowledge enough
+            // to assert that it's impossible to view logs on failure, so let's
+            // print a warning anyway.
+            logger.warning(
+                "failed to attach to parent console",
+                metadata: ["error": "\(error)"]
+            )
         }
     }
 
@@ -153,7 +225,7 @@ public final class WinUIBackend:
         SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
 
         WinUIApplication.callback.withLock { launchCallback in
-            launchCallback = { application in
+            launchCallback = { application, instance in
                 // Toggle Switch has annoying default 'internal margins' (not Control
                 // margins that we can set directly) that we can luckily get rid of by
                 // overriding the relevant resource values.
@@ -178,13 +250,21 @@ public final class WinUIBackend:
 
                 self.measurementTextBlock = (self.createTextView() as! TextBlock)
 
+                instance.activated.addHandler { (_, args: AppActivationArguments?) in
+                    guard let args else {
+                        logger.warning("Received activation with no activation arguments?")
+                        return
+                    }
+                    self.processActivationArguments(args)
+                }
+
                 callback()
             }
         }
         WinUIApplication.main()
     }
 
-    public func createWindow(withDefaultSize size: SIMD2<Int>?) -> Window {
+    public func createWindow(withDefaultSize size: SIMD2<Int>?, id: String) -> Window {
         let window = CustomWindow()
         windows.append(window)
         window.closed.addHandler { _, _ in
@@ -327,15 +407,23 @@ public final class WinUIBackend:
     }
 
     public func show(window: Window) {
-        try! window.activate()
+        activate(window: window)
     }
 
     public func activate(window: Window) {
-        try! window.activate()
+        do {
+            try window.activate()
+        } catch {
+            logger.warning("Failed to activate window: \(error)")
+        }
     }
 
     public func close(window: Window) {
-        try! window.close()
+        do {
+            try window.close()
+        } catch {
+            logger.warning("Failed to close window: \(error)")
+        }
     }
 
     public func setCloseHandler(
@@ -348,7 +436,18 @@ public final class WinUIBackend:
     }
 
     public func openExternalURL(_ url: URL) throws {
-        _ = UWP.Launcher.launchUriAsync(WindowsFoundation.Uri(url.absoluteString))
+        let promise = UWP.Launcher.launchUriAsync(WindowsFoundation.Uri(url.absoluteString))!
+        let semaphore = DispatchSemaphore(value: 0)
+        promise.completed = { _, status in
+            semaphore.signal()
+
+            if status != .completed {
+                logger.warning("Failed to open external URL \(url)")
+            }
+        }
+
+        // Block until the URL has been launched
+        semaphore.wait()
     }
 
     public func runInMainThread(action: @escaping @MainActor () -> Void) {
@@ -434,10 +533,14 @@ public final class WinUIBackend:
         let blue = Int(backgroundColor.b)
         let isLight = 5 * green + 2 * red + blue > 8 * 128
 
+        let locale = Foundation.Locale.windowsCurrent
+
         return
             defaultEnvironment
                 .with(\.colorScheme, isLight ? .light : .dark)
                 .with(\.appPhase, windows.contains(where: \.isActive) ? .active : .inactive)
+                .with(\.locale, locale)
+                .with(\.calendar, locale.calendar)
     }
 
     public func setRootEnvironmentChangeHandler(
@@ -474,9 +577,33 @@ public final class WinUIBackend:
         }
     }
 
+    var incomingURLHandler: ((URL) -> Void)?
+
     public func setIncomingURLHandler(to action: @escaping (URL) -> Void) {
-        // TODO: Implement WinUIBackend setIncomingURLHandler
-        logger.warning("\(#function) not implemented")
+        let isFirstCall = incomingURLHandler == nil
+        self.incomingURLHandler = action
+
+        if isFirstCall {
+            // Check if this app instance was launched by a URL activation. If it
+            // was a URL activation, then handle it now.
+            let args = try! AppInstance.getCurrent().getActivatedEventArgs()!
+            processActivationArguments(args)
+        }
+    }
+
+    private func processActivationArguments(_ args: AppActivationArguments) {
+        if args.kind == .protocol {
+            if let data = args.data as? IProtocolActivatedEventArgs {
+                let urlString = data.uri.absoluteUri
+                if let url = URL(string: urlString) {
+                    self.incomingURLHandler?(url)
+                } else {
+                    logger.warning("Failed to parse activation URL: \(urlString)")
+                }
+            } else {
+                logger.warning("Failed to get activation URL")
+            }
+        }
     }
 
     public func createContainer() -> Widget {
@@ -535,6 +662,10 @@ public final class WinUIBackend:
         let brush = WinUI.SolidColorBrush()
         brush.color = color.uwpColor
         canvas.background = brush
+    }
+
+    public func createCornerRadiusContainer(wrapping child: Widget) -> Widget {
+        child
     }
 
     public func setCornerRadius(of widget: Widget, to radius: Int) {
@@ -816,8 +947,8 @@ public final class WinUIBackend:
         environment.apply(to: block)
     }
 
-    public func createButton() -> Widget {
-        let button = Button()
+    public func createSimpleButton() -> Widget {
+        let button = WinUI.Button()
         button.click.addHandler { [weak internalState] _, _ in
             guard let internalState else { return }
             internalState.buttonClickActions[ObjectIdentifier(button)]?()
@@ -825,7 +956,7 @@ public final class WinUIBackend:
         return button
     }
 
-    public func updateButton(
+    public func updateSimpleButton(
         _ button: Widget,
         label: String,
         environment: EnvironmentValues,
@@ -1473,75 +1604,6 @@ public final class WinUIBackend:
         if checkboxWidget.isChecked != state {
             checkboxWidget.isChecked = state
         }
-    }
-
-    public func createAlert() -> Alert {
-        ContentDialog()
-    }
-
-    public func updateAlert(
-        _ alert: Alert,
-        title: String,
-        actionLabels: [String],
-        environment: EnvironmentValues
-    ) {
-        alert.title = title
-        if actionLabels.count >= 1 {
-            alert.primaryButtonText = actionLabels[0]
-        }
-        if actionLabels.count >= 2 {
-            alert.secondaryButtonText = actionLabels[1]
-        }
-        if actionLabels.count >= 3 {
-            alert.closeButtonText = actionLabels[2]
-        }
-
-        switch environment.colorScheme {
-            case .light:
-                alert.requestedTheme = .light
-            case .dark:
-                alert.requestedTheme = .dark
-        }
-    }
-
-    public func showAlert(
-        _ alert: Alert,
-        window: Window?,
-        responseHandler handleResponse: @escaping (Int) -> Void
-    ) {
-        // WinUI only allows one dialog at a time so we limit ourselves using
-        // a semaphore.
-        guard let window = window ?? windows.first else {
-            logger.warning("WinUI can't show alert without window")
-            return
-        }
-
-        alert.xamlRoot = window.content.xamlRoot
-        dialogSemaphore.wait()
-        let promise = try! alert.showAsync()!
-        promise.completed = { operation, status in
-            self.dialogSemaphore.signal()
-            guard
-                status == .completed,
-                let operation,
-                let result = try? operation.getResults()
-            else {
-                return
-            }
-            let index =
-                switch result {
-                    case .primary: 0
-                    case .secondary: 1
-                    case .none: 2
-                    default:
-                        fatalError("WinUIBackend: Invalid dialog response")
-                }
-            handleResponse(index)
-        }
-    }
-
-    public func dismissAlert(_ alert: Alert, window: Window?) {
-        try! alert.hide()
     }
 
     public func showOpenDialog(
@@ -2259,6 +2321,7 @@ public class CustomWindow: WinUI.Window {
     var grid: WinUI.Grid
     var cachedAppWindow: WinAppSDK.AppWindow!
     var isActive = false
+    var currentAlert: WinUIBackend.Alert?
 
     private(set) var menuBarIsVisible = false
 

@@ -1,10 +1,10 @@
 import AndroidKit
 import Foundation
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 
 extension AndroidBackend: BackendFeatures.WebViews {
     public func createWebView() -> Widget {
-        CustomWebView(Self.activity, environment: Self.env).as(AndroidKit.View.self)!
+        CustomWebView(Self.activity, environment: Self.env)
     }
 
     public func updateWebView(
@@ -14,9 +14,11 @@ extension AndroidBackend: BackendFeatures.WebViews {
     ) {
         let webView = webView.as(CustomWebView.self)!
         webView.setOnNavigate(SwiftAction(environment: Self.env) {
-            if let javaString = webView.getLoadingUrl(),
-               let url = URL(string: javaString.toString())
-            {
+            if let javaString = webView.getLoadingUrl() {
+                guard let url = URL(string: javaString.toString()) else {
+                    log("Failed to convert Uri to Foundation.URL: \(javaString)")
+                    return
+                }
                 onNavigate(url)
             }
         })

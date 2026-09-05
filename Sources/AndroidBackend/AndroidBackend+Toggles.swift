@@ -1,9 +1,8 @@
 import AndroidKit
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 
-extension AndroidBackend: BackendFeatures.ToggleButtons, BackendFeatures.Checkboxes,
-    BackendFeatures.Switches
-{
+// implements BackendFeatures.ToggleButtons & BackendFeatures.Checkboxes & BackendFeatures.Switches
+extension AndroidBackend {
     public var requiresToggleSwitchSpacer: Bool { false }
 
     public func createToggle() -> Widget {
@@ -54,7 +53,8 @@ extension AndroidBackend: BackendFeatures.ToggleButtons, BackendFeatures.Checkbo
         let toggle = toggle.as(AndroidKit.ToggleButton.self)!
         updateCompoundButton(toggle, environment: environment, onChange: onChange)
 
-        let charSequence = charSequence(from: label)
+        let charSequence = Self.charSequence(from: label)
+        toggle.setAllCaps(false)
         toggle.setTextOn(charSequence)
         toggle.setTextOff(charSequence)
 

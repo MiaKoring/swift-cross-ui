@@ -41,12 +41,14 @@ struct ControlsApp: App {
     @State var date = Date()
     @State var datePickerStyle: DatePickerStyle? = .automatic
     @State var menuToggleState = false
-    @State var progressViewSize: Int = 10
+    @State var progressViewSize: Double = 10
     @State var isProgressViewResizable = true
     @State var pickerStyle: BuiltInPickerStyle? = .automatic
+    @State var buttonStyle: ButtonStyle? = nil
 
     @Environment(\.supportedDatePickerStyles) var supportedDatePickerStyles
     @Environment(\.isPickerStyleSupported) var isPickerStyleSupported
+    @Environment(\.defaultButtonStyle) var defaultButtonStyle
 
     var body: some Scene {
         WindowGroup("ControlsApp") {
@@ -55,27 +57,44 @@ struct ControlsApp: App {
                     VStack(spacing: 30) {
                         VStack {
                             Text("Button (persisted)")
-                            Button("Click me!") {
-                                count += 1
+                            if #available(iOS 15.0, tvOS 15.0, macCatalyst 15.0, *) {
+                                Text("Default ButtonStyle: \(defaultButtonStyle)")
+                                #if !canImport(Gtk3Backend)
+                                    Picker(
+                                        of: [
+                                            ButtonStyle.bordered,
+                                            ButtonStyle.plain,
+                                            ButtonStyle.borderless
+                                        ],
+                                        selection: $buttonStyle
+                                    )
+                                #endif
+                                Button("Click me!") {
+                                    count += 1
+                                }
+                                .buttonStyle(buttonStyle)
+                            } else {
+                                Button("Click me!") {
+                                    count += 1
+                                }
                             }
                             Text("Count: \(count)")
                         }
 
-                        #if !canImport(AndroidBackend)
-                            VStack {
-                                Text("Menu button")
-                                Menu("Menu") {
-                                    Button("Button item") {
-                                        print("Button item clicked")
-                                    }
-                                    Toggle("Toggle item", isOn: $menuToggleState)
-                                    Menu("Submenu") {
-                                        Text("Text item 1")
-                                        Text("Text item 2")
-                                    }
+                        VStack {
+                            Text("Menu button")
+                            Menu("Menu") {
+                                Button("Button item") {
+                                    print("Button item clicked")
+                                }
+                                Divider()
+                                Toggle("Toggle item", isOn: $menuToggleState)
+                                Menu("Submenu") {
+                                    Text("Text item 1")
+                                    Text("Text item 2")
                                 }
                             }
-                        #endif
+                        }
 
                         #if !canImport(UIKitBackend)
                             VStack {
@@ -100,28 +119,26 @@ struct ControlsApp: App {
                             Text("Currently enabled: \(exampleCheckboxState)")
                         }
 
-                        #if !canImport(AndroidBackend)
-                            #if !os(tvOS)
-                                VStack {
-                                    Text("Slider")
-                                    Slider(value: $sliderValue, in: 0...10)
-                                        .frame(maxWidth: 200)
-                                    Text("Value: \(String(format: "%.02f", sliderValue))")
-                                }
-                            #endif
-
+                        #if !os(tvOS)
                             VStack {
-                                Text("Text field")
-                                TextField("Text field", text: $text)
-                                Text("Value: \(text)")
-                            }
-
-                            VStack {
-                                Text("Secure text field")
-                                SecureField("Secure text field", text: $secureText)
-                                Text("Value: \(secureText)")
+                                Text("Slider")
+                                Slider(value: $sliderValue, in: 0...10)
+                                    .frame(maxWidth: 200)
+                                Text("Value: \(String(format: "%.02f", sliderValue))")
                             }
                         #endif
+
+                        VStack {
+                            Text("Text field")
+                            TextField("Text field", text: $text)
+                            Text("Value: \(text)")
+                        }
+
+                        VStack {
+                            Text("Secure text field")
+                            SecureField("Secure text field", text: $secureText)
+                            Text("Value: \(secureText)")
+                        }
 
                         #if !os(tvOS)
                             VStack {
@@ -129,15 +146,12 @@ struct ControlsApp: App {
                                     "Enable ProgressView resizability",
                                     isOn: $isProgressViewResizable
                                 )
-                                #if !canImport(AndroidBackend)
-                                    Slider(value: $progressViewSize, in: 10...100)
-                                #endif
+                                Slider(value: $progressViewSize, in: 10...100)
                                 ProgressView()
                                     .resizable(isProgressViewResizable)
                                     .frame(width: progressViewSize, height: progressViewSize)
                             }
                         #endif
-
                         #if !canImport(Gtk3Backend)
                             VStack {
                                 Text("Picker")
@@ -166,7 +180,7 @@ struct ControlsApp: App {
                                 Text("You chose: \(flavor ?? "Nothing yet!")")
                             }
 
-                            #if !os(tvOS) && !canImport(AndroidBackend)
+                            #if !os(tvOS)
                                 VStack {
                                     Text("Selected date: \(date)")
 

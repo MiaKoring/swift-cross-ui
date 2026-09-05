@@ -1,4 +1,4 @@
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import UIKit
 
 /// An item which can be displayed in a keyboard toolbar. Implementers of this do not have
@@ -64,7 +64,7 @@ public enum ToolbarBuilder {
 
 @available(tvOS, unavailable)
 @available(visionOS, unavailable)
-extension Button: ToolbarItem {
+extension Button: ToolbarItem where Label == TupleView1<Text> {
     public final class ItemType: UIBarButtonItem {
         var callback: @MainActor @Sendable () -> Void
 
@@ -89,12 +89,12 @@ extension Button: ToolbarItem {
     }
 
     public func createBarButtonItem(in environment: EnvironmentValues) -> ItemType {
-        ItemType(title: label, callback: action)
+        ItemType(title: body.view0.view0.string, callback: action)
     }
 
     public func updateBarButtonItem(_ item: inout ItemType, in environment: EnvironmentValues) {
         item.callback = action
-        item.title = label
+        item.title = body.view0.view0.string
     }
 }
 
@@ -190,6 +190,7 @@ extension ToolbarItem {
     ///
     /// If `width` is positive, the item will have that exact width. If `width` is zero or
     /// nil, the item will have its natural size.
+    @_disfavoredOverload
     public func frame(width: Double?) -> any ToolbarItem {
         if #available(iOS 14, macCatalyst 14, *),
            self is Spacer || self is FixedWidthSpacerItem
@@ -327,11 +328,9 @@ extension View {
         animateChanges: Bool = true,
         @ToolbarBuilder body: @escaping @Sendable @MainActor () -> ToolbarBuilder.FinalResult
     ) -> some View {
-        EnvironmentModifier(self) { environment in
-            environment.with(\.updateToolbar) { toolbar, environment in
-                toolbar.setItems(body(), animated: animateChanges, in: environment)
-                toolbar.sizeToFit()
-            }
+        environment(\.updateToolbar) { toolbar, environment in
+            toolbar.setItems(body(), animated: animateChanges, in: environment)
+            toolbar.sizeToFit()
         }
     }
 }

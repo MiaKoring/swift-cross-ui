@@ -1,9 +1,11 @@
 import Android
 import Foundation
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import AndroidKit
 import AndroidGraphics
 import AndroidBackendShim
+import Mutex
+import DequeModule
 
 // Many force tries are required for the Android backend but we don't really want them
 // anywhere else so just disable the lint rule at a file level.
@@ -73,9 +75,12 @@ extension App {
     }
 }
 
-// TODO: Implement the rest of `BaseAppBackend` so we can move off of `BaseStubs`
+extension EnvironmentValues {
+    @Entry public var androidActivity: AndroidKit.Activity! = nil
+    @Entry public var jniEnv: UnsafeMutablePointer<JNIEnv?>? = nil
+}
 
-public final class AndroidBackend: BackendFeatures.BaseStubs {
+public final class AndroidBackend: BaseAppBackend {
     public final class Window {
         var content: Widget?
     }
@@ -85,20 +90,22 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
     static let stdoutPipe = Pipe()
     static let stderrPipe = Pipe()
 
-    public lazy var deviceClass: DeviceClass =
-        switch helpers.getDeviceClass(Self.activity) {
-            case 0: .desktop
-            case 1: .phone
-            case 2: .tablet
-            case 3: .tv
-            case 4: .watch
-            case let x: fatalError("helpers.getDeviceClass returned unexpected value \(x)")
-        }
+    private let _supportedDatePickerStyles = Mutex<[DatePickerStyle]>([.automatic, .compact])
+
+    public nonisolated var supportedDatePickerStyles: [DatePickerStyle] {
+        _supportedDatePickerStyles.withLock { copy $0 }
+    }
+
+    // .phone is a placeholder value -- the real value is set in `computeRootEnvironment`.
+    public private(set) var deviceClass = DeviceClass.phone
 
     public let defaultPaddingAmount = 10
-    public let requiresImageUpdateOnScaleFactorChange = false
     public let supportsMultipleWindows = false
     public let canOverrideWindowColorScheme = false
+    public let restoresWindowFrames = false
+
+    static var fileDialogCallback: (([Foundation.URL]) -> Void)?
+    static var folderDialogCallback: ((Foundation.URL?) -> Void)?
 
     /// A reference used to keep the tickler alive.
     var tickler: MainRunLoopTickler?
@@ -110,8 +117,54 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
 
     var helpers: AndroidBackendHelpers
 
+    static let maxLocaleCacheSize = 25
+    var localeCache = Deque<(Foundation.Locale, AndroidKit.Locale)>()
+
     public init() {
         helpers = AndroidBackendHelpers(environment: Self.env)
+
+        let fragmentActivity = Self.activity.as(FragmentActivity.self)!
+
+        let filesCallback = FilesActivityCallback(environment: Self.env)
+        let filesAction = SwiftAction(environment: Self.env) {
+            let urls = filesCallback.getUrlStrings()
+            AndroidBackend.fileDialogCallback?(urls.map {
+                guard let url = Foundation.URL(string: $0) else {
+                    fatalError("Failed to convert Uri to Foundation.URL: \($0)")
+                }
+                return url
+            })
+            AndroidBackend.fileDialogCallback = nil
+        }
+        filesCallback.setAction(filesAction)
+
+        let folderCallback = FolderActivityCallback(environment: Self.env)
+        let folderAction = SwiftAction(environment: Self.env) {
+            let url = folderCallback.getUrlString()?.toString()
+            AndroidBackend.folderDialogCallback?(url.map {
+                guard let url = Foundation.URL(string: $0) else {
+                    fatalError("Failed to convert Uri to Foundation.URL: \($0)")
+                }
+                return url
+            })
+            AndroidBackend.folderDialogCallback = nil
+        }
+        folderCallback.setAction(folderAction)
+
+        helpers.registerActivityResults(fragmentActivity, filesCallback, folderCallback)
+    }
+
+    public convenience init(delegate: any ActivityDelegate) {
+        self.init()
+
+        let delegateObject = SwiftObject(delegate, environment: Self.env)
+        let castedActivity = Self.activity.as(FragmentActivity.self)!
+
+        // ActivityListener.init connects it to the Activity, which keeps it alive without Swift
+        // needing to keep any references to it.
+        _ = ActivityListener(castedActivity, delegateObject, environment: Self.env)
+
+        delegate.onCreate(of: castedActivity, env: Self.env)
     }
 
     public func runMainLoop(
@@ -126,7 +179,7 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         callback()
     }
 
-    public func createWindow(withDefaultSize defaultSize: SIMD2<Int>?) -> Window {
+    public func createWindow(withDefaultSize defaultSize: SIMD2<Int>?, id: String) -> Window {
         // TODO(stackotter): Properly support multiple calls to createWindow
         return Window()
     }
@@ -168,12 +221,11 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
             return
         }
 
+        let matchParent = try! JavaClass<AndroidKit.ViewGroup.LayoutParams>().MATCH_PARENT
+
         let leftInset = Int(helpers.getSafeAreaLeftInset(Self.activity))
         let topInset = Int(helpers.getSafeAreaTopInset(Self.activity))
-        let fullWindowSize = SIMD2(
-            Int(helpers.getFullWindowWidth(Self.activity)),
-            Int(helpers.getFullWindowHeight(Self.activity))
-        )
+        let fullWindowSize = SIMD2(Int(matchParent), Int(matchParent))
         setSize(of: container, to: fullWindowSize)
         setPosition(ofChildAt: 0, in: container, to: SIMD2(leftInset, topInset))
 
@@ -239,6 +291,9 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
     public func computeRootEnvironment(defaultEnvironment: EnvironmentValues) -> EnvironmentValues {
         var environment = defaultEnvironment
 
+        environment.androidActivity = Self.activity
+        environment.jniEnv = Self.env
+
         if helpers.isNightMode(Self.activity) {
             environment.colorScheme = .dark
         } else {
@@ -250,8 +305,48 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
             .getConfiguration()
             .isScreenRound()
 
-        // TODO(bbrk24): Properly detect time zone and calendar, since
-        // `.current` is broken on Android.
+        var timeZone: Foundation.TimeZone?
+
+        if let identifier = helpers.getTimeZoneIdentifier()?.toString() {
+            timeZone = Foundation.TimeZone(identifier: identifier)
+        }
+
+        if let timeZone {
+            environment.timeZone = timeZone
+        }
+
+        let (calendar, locale) = getCurrentCalendarAndLocale(timeZone: timeZone)
+        environment.calendar = calendar
+        environment.locale = locale
+
+        environment
+            .appStorageProvider = SharedPreferencesAppStorageProvider(activity: Self.activity)
+
+        // The graphical DatePicker style is ginormous -- the clock and calendar individually are
+        // ~350dp wide each, so when stacked next to each other they don't fit on all tablets, and
+        // even just one of them doesn't fit by itself on some phones. Watch renders them a bit
+        // smaller so they almost fit, but again they don't both fit at the same time.
+        _supportedDatePickerStyles.withLock { supportedDatePickerStyles in
+            switch helpers.getDeviceClass(Self.activity) {
+                case 0:
+                    deviceClass = .desktop
+                    supportedDatePickerStyles = [.automatic, .compact, .graphical]
+                case 1:
+                    deviceClass = .phone
+                    supportedDatePickerStyles = [.automatic, .compact]
+                case 2:
+                    deviceClass = .tablet
+                    supportedDatePickerStyles = [.automatic, .compact]
+                case 3:
+                    deviceClass = .tv
+                    supportedDatePickerStyles = [.automatic, .compact, .graphical]
+                case 4:
+                    deviceClass = .watch
+                    supportedDatePickerStyles = [.automatic, .compact]
+                case let x:
+                    fatalError("helpers.getDeviceClass returned unexpected value \(x)")
+            }
+        }
 
         return environment
     }
@@ -355,74 +450,34 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         widget.setLayoutParams(layoutParams)
     }
 
-    public func createButton() -> Widget {
+    public func createSimpleButton() -> Widget {
         AndroidKit.Button(Self.activity, environment: Self.env)
-            .as(AndroidKit.View.self)!
     }
 
     /// Converts a Swift String to a Java CharSequence.
-    func charSequence(from string: String) -> CharSequence {
+    static func charSequence(from string: String) -> CharSequence {
         let jstring = JavaString(string, environment: Self.env)
         return jstring.as(CharSequence.self)!
     }
 
-    public func updateButton(
+    public func updateSimpleButton(
         _ button: Widget,
         label: String,
         environment: EnvironmentValues,
         action: @escaping () -> Void
     ) {
-        // TODO(stackotter): Handle environment.
         let button = button.as(AndroidKit.Button.self)!
-        button.setText(charSequence(from: label))
+        button.setText(Self.charSequence(from: label))
+        button.setEnabled(environment.isEnabled)
         let listener = ViewOnClickListener(action: action, environment: Self.env)
         button.setOnClickListener(listener.as(AndroidView.View.OnClickListener.self))
+        button.setAllCaps(false)
 
         getTextStyle(from: environment).apply(to: button)
     }
 
-    public func createTextField() -> Widget {
-        CustomEditText(activity: Self.activity, environment: Self.env)
-            .as(AndroidKit.View.self)!
-    }
-
-    public func updateTextField(
-        _ textField: Widget,
-        placeholder: String,
-        environment: EnvironmentValues,
-        onChange: @escaping (String) -> Void,
-        onSubmit: @escaping () -> Void
-    ) {
-        // TODO(stackotter): Handle environment
-        let textField = textField.as(CustomEditText.self)!
-        textField.as(AndroidKit.TextView.self)!.setHint(charSequence(from: placeholder))
-        textField.setOnChange(
-            SwiftAction(environment: Self.env) {
-                // Don't take textField as a weak reference, because otherwise it
-                // gets dropped immediately (it's not actually held anywhere; it's
-                // just a wrapper around a Java class instance). This doesn't cause
-                // a reference cycle because textField doesn't hold the SwiftAction,
-                // (Java does).
-                let content = textField.as(AndroidKit.TextView.self)!.getText().toString()
-                onChange(content)
-            }
-        )
-        textField.setOnSubmit(SwiftAction(environment: Self.env, action: onSubmit))
-    }
-
-    public func setContent(ofTextField textField: Widget, to content: String) {
-        let textField = textField.as(AndroidKit.TextView.self)!
-        textField.setText(charSequence(from: content))
-    }
-
-    public func getContent(ofTextField textField: Widget) -> String {
-        let textField = textField.as(AndroidKit.TextView.self)!
-        return textField.getText().toString()
-    }
-
     public func createTextView() -> Widget {
         AndroidKit.TextView(Self.activity, environment: Self.env)
-            .as(AndroidKit.View.self)!
     }
 
     public func updateTextView(
@@ -466,5 +521,28 @@ public final class AndroidBackend: BackendFeatures.BaseStubs {
         let width = Double(widget.getMeasuredWidth()) / environment.windowScaleFactor
         let height = Double(widget.getMeasuredHeight()) / environment.windowScaleFactor
         return SIMD2(Int(width.rounded(.up)), Int(height.rounded(.up)))
+    }
+
+    public func createSplitView(leadingChild: Widget, trailingChild: Widget) -> Widget {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func setResizeHandler(
+        ofSplitView splitView: Widget,
+        to action: @escaping () -> Void
+    ) {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func sidebarWidth(ofSplitView splitView: Widget) -> Int {
+        fatalError("\(Self.self): \(#function) not implemented")
+    }
+
+    public func setSidebarWidthBounds(
+        ofSplitView splitView: Widget,
+        minimum minimumWidth: Int,
+        maximum maximumWidth: Int
+    ) {
+        fatalError("\(Self.self): \(#function) not implemented")
     }
 }

@@ -1,7 +1,7 @@
 import CGtk
 import Foundation
 import Gtk
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import GtkCHelpers
 
 extension App {
@@ -55,10 +55,12 @@ public final class GtkBackend:
     public let requiresImageUpdateOnScaleFactorChange = false
     public let supportsMultipleWindows = true
     public let deviceClass = DeviceClass.desktop
-    public let defaultSheetCornerRadius = 10
     public let supportedDatePickerStyles: [DatePickerStyle] = [.automatic, .graphical]
     public let supportedPickerStyles: [BackendPickerStyle] = [.menu]
     public let canOverrideWindowColorScheme = false
+    public let restoresWindowFrames = false
+
+    let defaultSheetCornerRadius = 10
 
     var gtkApp: Application
 
@@ -74,6 +76,8 @@ public final class GtkBackend:
     private var rootEnvironmentChangeHandler: (() -> Void)?
 
     private var measurementCustomLabel: CustomLabel!
+
+    var borderedButtonPadding: SIMD2<Int>?
 
     private struct LogLocation: Hashable, Equatable {
         let file: String
@@ -167,7 +171,7 @@ public final class GtkBackend:
         }
     }
 
-    public func createWindow(withDefaultSize defaultSize: SIMD2<Int>?) -> Window {
+    public func createWindow(withDefaultSize defaultSize: SIMD2<Int>?, id: String) -> Window {
         let window: Gtk.ApplicationWindow
         if let precreatedWindow {
             self.precreatedWindow = nil
@@ -611,6 +615,10 @@ public final class GtkBackend:
         widget.css.set(property: .backgroundColor(color.gtkColor))
     }
 
+    public func createCornerRadiusContainer(wrapping child: Widget) -> Widget {
+        child
+    }
+
     public func setCornerRadius(of widget: Widget, to radius: Int) {
         widget.css.set(property: .cornerRadius(radius))
     }
@@ -719,10 +727,25 @@ public final class GtkBackend:
         to items: [Widget],
         withRowHeights rowHeights: [Int]
     ) {
+        // NOTE: This implementation works under the same assumptions as
+        //   AppKitBackend's implementation. Read the comment in
+        //   AppKitBackend.setItems for more details. In short, we assume
+        //   that modifications made to `items` between `setItems` calls
+        //   are either all pops, or all appends (not a mix).
+
         let listView = listView as! CustomListBox
-        listView.removeAll()
-        for item in items {
-            listView.append(item)
+
+        let previousRowCount = listView.cachedRowCount
+        listView.cachedRowCount = items.count
+
+        if items.count > previousRowCount {
+            for item in items[previousRowCount...] {
+                listView.append(item)
+            }
+        } else if items.count < previousRowCount {
+            for _ in 0..<(previousRowCount - items.count) {
+                listView.removeRow(at: items.count)
+            }
         }
     }
 
@@ -745,15 +768,13 @@ public final class GtkBackend:
     }
 
     public func setSelectedItem(ofSelectableListView listView: Widget, toItemAt index: Int?) {
-        let listView = listView as! ListBox
-        let handler = listView.rowSelected
-        listView.rowSelected = nil
+        let listView = listView as! CustomListBox
+        listView.cachedSelection = index
         if let index {
             listView.selectRow(at: index)
         } else {
             listView.unselectAll()
         }
-        listView.rowSelected = handler
     }
 
     public func createTooltipContainer(wrapping child: Widget) -> Widget {
@@ -809,7 +830,7 @@ public final class GtkBackend:
         let ellipsize: EllipsizeMode
         if let widget = widget as? CustomLabel {
             ellipsize = widget.ellipsize
-        } else if let widget = widget as? TextView {
+        } else if widget as? TextView != nil {
             // We don't ellipsize multi-line text editors
             ellipsize = .none
         } else {
@@ -968,25 +989,6 @@ public final class GtkBackend:
     // }
 
     // MARK: Controls
-
-    public func createButton() -> Widget {
-        return Button()
-    }
-
-    public func updateButton(
-        _ button: Widget,
-        label: String,
-        environment: EnvironmentValues,
-        action: @escaping () -> Void
-    ) {
-        // TODO: Update button label color using environment
-        let button = button as! Gtk.Button
-        button.sensitive = environment.isEnabled
-        button.label = label
-        button.clicked = { _ in action() }
-        button.css.clear()
-        button.css.set(properties: Self.cssProperties(for: environment, isControl: true))
-    }
 
     public func createToggle() -> Widget {
         return ToggleButton()
@@ -1835,7 +1837,7 @@ public final class GtkBackend:
         return container
     }
 
-    private static func cssProperties(
+    static func cssProperties(
         for environment: EnvironmentValues,
         isControl: Bool = false
     ) -> [CSSProperty] {
@@ -1888,12 +1890,7 @@ public final class GtkBackend:
         }
 
         if isControl {
-            switch environment.colorScheme {
-                case .light:
-                    properties.append(.backgroundColor(Color(0.9, 0.9, 0.9, 1)))
-                case .dark:
-                    properties.append(.backgroundColor(Color(1, 1, 1, 0.1)))
-            }
+            properties.append(.backgroundColor(controlBackgroundColor(for: environment)))
             properties.append(CSSProperty(key: "border", value: "none"))
             properties.append(CSSProperty(key: "box-shadow", value: "none"))
         }
@@ -1901,10 +1898,16 @@ public final class GtkBackend:
         return properties
     }
 
-    public func createSheet(content: Widget) -> Sheet {
-        // TODO: dismissing a sheet with nested sheets doesn't trigger the onDismiss handlers of the nested sheets
-        // TODO: dismissing a sheet with nested sheets causes the app to freeze/deadlock or something along those lines...
+    static func controlBackgroundColor(for environment: borrowing EnvironmentValues) -> Gtk.Color {
+        switch environment.colorScheme {
+            case .light:
+                Color(0.9, 0.9, 0.9, 1)
+            case .dark:
+                Color(1, 1, 1, 0.1)
+        }
+    }
 
+    public func createSheet(content: Widget) -> Sheet {
         let sheet = Sheet()
         sheet.setChild(content)
 
@@ -1987,6 +1990,7 @@ public final class GtkBackend:
 
     public func dismissSheet(_ sheet: Sheet, window: Window, parentSheet: Sheet?) {
         dismissSheet(sheet)
+        parentSheet?.nestedSheet = nil
     }
 
     private func dismissSheet(_ sheet: Sheet) {
@@ -2021,6 +2025,7 @@ extension UnsafeMutablePointer {
 
 class CustomListBox: ListBox {
     var cachedSelection: Int? = nil
+    var cachedRowCount = 0
 }
 
 /// A custom label subclass that supports ellipsizing multi-line text. Regular

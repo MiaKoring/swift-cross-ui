@@ -1,5 +1,5 @@
 import Benchmark
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import DummyBackend
 import Foundation
 
@@ -29,7 +29,7 @@ struct Benchmarks {
         let backend = DummyBackend()
         let defaultEnvironment = EnvironmentValues(backend: backend)
         let environment = backend.computeRootEnvironment(defaultEnvironment: defaultEnvironment)
-            .with(\.window, backend.createWindow(withDefaultSize: nil))
+            .with(\.window, backend.createWindow(withDefaultSize: nil, id: "window"))
 
         @MainActor
         func makeNode<V: View>(_ view: V) -> ViewGraphNode<V, DummyBackend> {
@@ -77,6 +77,11 @@ struct Benchmarks {
             of: ScrollableMessageListView.self,
             ProposedViewSize(800, 800),
             "message list"
+        )
+        benchmarkLayout(
+            of: EnvironmentHeavyView.self,
+            ProposedViewSize(800, 800),
+            "environment-heavy view"
         )
 
         #if BENCHMARK_VIZ

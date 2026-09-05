@@ -46,6 +46,8 @@ struct CounterApp: App {
                                     text.selectable = true
                                 #elseif canImport(Gtk3Backend)
                                     text.selectable = true
+                                #elseif canImport(AndroidBackend)
+                                    text.setTextIsSelectable(true)
                                 #endif
                             }
 
@@ -68,6 +70,8 @@ struct CounterApp: App {
                                 button.css.set(property: .backgroundColor(.init(1, 0, 0)))
                             #elseif canImport(Gtk3Backend)
                                 button.css.set(property: .backgroundColor(.init(1, 0, 0)))
+                            #elseif canImport(AndroidBackend)
+                                button.setBackgroundColor(Int32(bitPattern: 0xffff0000))
                             #endif
                         }
                     }
@@ -137,6 +141,8 @@ struct CounterApp: App {
                             #elseif canImport(Gtk3Backend)
                                 textField.hasFrame = false
                                 textField.css.set(property: .backgroundColor(.init(0, 0, 1)))
+                            #elseif canImport(AndroidBackend)
+                                textField.setBackgroundColor(Int32(bitPattern: 0xff0000ff))
                             #endif
                         }
 
@@ -187,28 +193,43 @@ struct CounterApp: App {
                             table.showSeparators = true
                         #elseif canImport(Gtk3Backend)
                             table.selectionMode = .multiple
+                        #elseif canImport(AndroidBackend)
+                            table.setDividerHeight(2)
                         #endif
                     }
 
-                    Image(Bundle.module.bundleURL.appendingPathComponent("Banner.png"))
-                        .resizable()
-                        .inspect(.afterUpdate) { image in
-                            #if canImport(AppKitBackend)
-                                image.isEditable = true
-                            #elseif canImport(UIKitBackend)
-                                image.layer.borderWidth = 1
-                                image.layer.borderColor = .init(red: 0, green: 1, blue: 0, alpha: 1)
-                            #elseif canImport(WinUIBackend)
-                            // Couldn't find anything visually interesting
-                            // to do to the WinUI.Image, but the point is
-                            // that you could do something if you wanted to.
-                            #elseif canImport(GtkBackend)
-                                image.css.set(property: .border(color: .init(0, 1, 0), width: 2))
-                            #elseif canImport(Gtk3Backend)
-                                image.css.set(property: .border(color: .init(0, 1, 0), width: 2))
-                            #endif
-                        }
-                        .aspectRatio(contentMode: .fit)
+                    #if !canImport(AndroidBackend)
+                        Image(Bundle.module.bundleURL.appendingPathComponent("Banner.png"))
+                            .resizable()
+                            .inspect(.afterUpdate) { image in
+                                #if canImport(AppKitBackend)
+                                    image.isEditable = true
+                                #elseif canImport(UIKitBackend)
+                                    image.layer.borderWidth = 1
+                                    image.layer.borderColor = .init(
+                                        red: 0,
+                                        green: 1,
+                                        blue: 0,
+                                        alpha: 1
+                                    )
+                                #elseif canImport(WinUIBackend)
+                                // Couldn't find anything visually interesting
+                                // to do to the WinUI.Image, but the point is
+                                // that you could do something if you wanted to.
+                                #elseif canImport(GtkBackend)
+                                    image.css.set(property: .border(
+                                        color: .init(0, 1, 0),
+                                        width: 2
+                                    ))
+                                #elseif canImport(Gtk3Backend)
+                                    image.css.set(property: .border(
+                                        color: .init(0, 1, 0),
+                                        width: 2
+                                    ))
+                                #endif
+                            }
+                            .aspectRatio(contentMode: .fit)
+                    #endif
                 }
                 .padding()
                 .inspectWindow { window in

@@ -1,4 +1,4 @@
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import UIKit
 
 final class RootViewController: UIViewController {
@@ -67,7 +67,7 @@ final class RootViewController: UIViewController {
 extension UIKitBackend: BackendFeatures.WindowBehaviors {
     public typealias Window = UIWindow
 
-    public func createWindow(withDefaultSize _: SIMD2<Int>?) -> Window {
+    public func createWindow(withDefaultSize _: SIMD2<Int>?, id: String) -> Window {
         let window: UIWindow
 
         if !Self.hasReturnedAWindow {

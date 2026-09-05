@@ -1,4 +1,4 @@
-import SwiftCrossUI
+@_spi(Backends) import SwiftCrossUI
 import UIKit
 
 final class ScrollWidget: ContainerWidget {
@@ -186,6 +186,10 @@ extension UIKitBackend {
 
     public func setColor(ofColorableRectangle widget: Widget, to color: Color.Resolved) {
         widget.view.backgroundColor = color.uiColor
+    }
+
+    public func createCornerRadiusContainer(wrapping child: Widget) -> Widget {
+        child
     }
 
     public func setCornerRadius(of widget: Widget, to radius: Int) {
