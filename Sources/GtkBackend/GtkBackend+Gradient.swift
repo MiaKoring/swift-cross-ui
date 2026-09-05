@@ -88,16 +88,19 @@ extension GtkBackend {
             $0.color.resolve(in: environment)
         }
         
+        let startRadius = min(gradient.startRadius, gradient.endRadius)
+        let endRadius = max(gradient.startRadius, gradient.endRadius)
+        
         drawingArea.setDrawFunc { [weak self] cairo, _, _ in
             guard let self else { return }
             
             let pattern = cairo_pattern_create_radial(
                 centerX,
                 centerY,
-                gradient.startRadius,
+                startRadius,
                 centerX,
                 centerY,
-                gradient.endRadius
+                endRadius
             )
             
             for (index, stop) in stops.enumerated() {
