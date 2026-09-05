@@ -16,9 +16,6 @@ extension GtkBackend {
     ) {
         let drawingArea = widget as! DrawingArea
 
-        let firstStop = gradient.gradient.stops.first!
-        let lastStop = gradient.gradient.stops.last!
-
         let startPoint = UnitPoint(
             x: Double(size.x) * gradient.startPoint.x,
             y: Double(size.y) * gradient.startPoint.y
@@ -82,13 +79,13 @@ extension GtkBackend {
 
         let centerX = gradient.center.x * Double(size.x)
         let centerY = gradient.center.y * Double(size.y)
+        
+        let startRadius = min(gradient.startRadius, gradient.endRadius)
+        let endRadius = max(gradient.startRadius, gradient.endRadius)
 
         let colors = stops.map {
             $0.color.resolve(in: environment)
         }
-
-        let startRadius = min(gradient.startRadius, gradient.endRadius)
-        let endRadius = max(gradient.startRadius, gradient.endRadius)
 
         drawingArea.setDrawFunc { [weak self] cairo, _, _ in
             guard let self else { return }
@@ -127,22 +124,6 @@ extension GtkBackend {
                 color: stop.color,
                 location: 1.0 - stop.location
             )
-        }
-    }
-
-    private func cssStops(stops: [Gradient.Stop], environment: EnvironmentValues) -> [String] {
-        return stops.map { stop in
-            let resolved = stop.color.resolve(in: environment)
-            let red = resolved.red * 255
-            let green = resolved.green * 255
-            let blue = resolved.blue * 255
-            let location = stop.location * 100
-
-            return
-                """
-                rgba(\(red), \(green), \(blue), \
-                \(resolved.opacity)) \(location)%
-                """
         }
     }
 }
