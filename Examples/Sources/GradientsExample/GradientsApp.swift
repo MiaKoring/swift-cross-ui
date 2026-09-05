@@ -96,13 +96,13 @@ struct LinearGradientView: View {
                 )
 
                 LinearGradient(
-                    stops: stops,
+                    colors: colors,
                     startPoint: .top,
                     endPoint: .bottom
                 )
 
                 LinearGradient(
-                    stops: stops,
+                    colors: colors,
                     startPoint: .topTrailing,
                     endPoint: .bottomLeading
                 )

@@ -19,7 +19,6 @@ extension GtkBackend {
         let firstStop = gradient.gradient.stops.first!
         let lastStop = gradient.gradient.stops.last!
 
-        // Start and end point based on size and relative coordinates
         let startPoint = UnitPoint(
             x: Double(size.x) * gradient.startPoint.x,
             y: Double(size.y) * gradient.startPoint.y
@@ -30,9 +29,9 @@ extension GtkBackend {
             y: Double(size.y) * gradient.endPoint.y
         )
 
-        let adjustedStops = gradient.gradient.adjustedStops
+        let stops = gradient.gradient.stops
 
-        let colors = adjustedStops.map {
+        let colors = stops.map {
             $0.color.resolve(in: environment)
         }
 
@@ -46,7 +45,7 @@ extension GtkBackend {
                 endPoint.y
             )
 
-            for (index, stop) in adjustedStops.enumerated() {
+            for (index, stop) in stops.enumerated() {
                 let color = colors[index]
                 cairo_pattern_add_color_stop_rgba(
                     pattern,
@@ -78,8 +77,8 @@ extension GtkBackend {
         let drawingArea = widget as! DrawingArea
 
         let stops = gradient.startRadius < gradient.endRadius
-            ? gradient.gradient.adjustedStops
-            : invertedStops(stops: gradient.gradient.adjustedStops)
+            ? gradient.gradient.stops
+            : invertedStops(stops: gradient.gradient.stops)
 
         let centerX = gradient.center.x * Double(size.x)
         let centerY = gradient.center.y * Double(size.y)
