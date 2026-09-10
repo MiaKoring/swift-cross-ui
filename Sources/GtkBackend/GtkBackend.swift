@@ -58,6 +58,7 @@ public final class GtkBackend:
     public let supportedPickerStyles: [BackendPickerStyle] = [.menu]
     public let canOverrideWindowColorScheme = false
     public let restoresWindowFrames = false
+    let focusManager = FocusStateManager()
 
     let defaultSheetCornerRadius = 10
 

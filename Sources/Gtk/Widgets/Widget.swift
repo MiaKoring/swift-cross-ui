@@ -35,7 +35,19 @@ open class Widget: GObject {
     public lazy var css: CSSBlock = CSSBlock(forClass: customCSSClass) {
         didSet {
             guard oldValue != css else { return }
-            cssProvider.loadCss(from: css.stringRepresentation)
+            cssProvider.loadCss(
+                from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)"
+            )
+        }
+    }
+    
+    /// The focus related CSS rules applied directly to this widget.
+    public lazy var focusCSS: CSSBlock = CSSBlock(forClass: "\(customCSSClass):focus") {
+        didSet {
+            guard oldValue != focusCSS else { return }
+            cssProvider.loadCss(
+                from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)"
+            )
         }
     }
 
@@ -127,6 +139,36 @@ open class Widget: GObject {
         eventControllers.append(controller)
         controller.registerSignals()
     }
+    
+    public var root: Gtk.CustomRootWidget? {
+        guard let ptr = gtk_widget_get_root(widgetPointer) else { return nil }
+        return CustomRootWidget(ptr)
+    }
+    
+    /// Makes the widget the key view in the window it belongs to.
+    /// Equivalent to `NSWindow/makeFirstResponder(_)`.
+    public func makeKey() {
+        /// Wrap in g idle to make sure it runs after the update.
+        /// Otherwise it just doesn't work.
+        g_idle_add(
+            { (data) -> Int32 in
+                gtk_widget_grab_focus(data?.assumingMemoryBound(to: GtkWidget.self))
+                
+                if let window = gtk_widget_get_root(
+                    data?.assumingMemoryBound(to: GtkWidget.self)
+                ) {
+                    let windowPtr = UnsafeMutablePointer<GtkWindow>(window)
+                    gtk_window_set_focus_visible(windowPtr, true.toGBoolean())
+                }
+                return 0
+            },
+            widgetPointer
+        )
+    }
+    
+    public var isFocusable: Bool {
+        gtk_widget_get_focusable(widgetPointer).toBool()
+    }
 
     @GObjectProperty(named: "name") public var name: String?
 
@@ -165,7 +207,10 @@ open class Widget: GObject {
 
     /// Set to -1 for no min height request
     @GObjectProperty(named: "height-request") public var minHeight: Int
-
+    
+    /// Whether the widget or any of its descendents can accept the input focus.
+    @GObjectProperty(named: "can-focus") public var canFocus: Bool
+    
     /// Sets the name of the Gtk view for useful debugging in inspector (Ctrl+Shift+D)
     public func tag(as tag: String) {
         name = tag
