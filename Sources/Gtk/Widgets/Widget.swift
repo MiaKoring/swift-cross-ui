@@ -164,26 +164,23 @@ open class Widget: GObject {
     /// Makes the widget the key view in the window it belongs to.
     /// Equivalent to `NSWindow/makeFirstResponder(_)`.
     public func makeKey() {
-        /// Wrap in g idle to make sure it runs after the update.
-        /// Otherwise it just doesn't work.
+        /// Wrap in g idle to make sure focus runs when free so we can know for sure it will get focused.
         g_idle_add(
             { (data) -> Int32 in
-                gtk_widget_grab_focus(data?.assumingMemoryBound(to: GtkWidget.self))
+                guard let dataPointer = data else { return 0 }
+                let widget = dataPointer.assumingMemoryBound(to: GtkWidget.self)
+                gtk_widget_grab_focus(widget)
                 
-                if let window = gtk_widget_get_root(
-                    data?.assumingMemoryBound(to: GtkWidget.self)
-                ) {
-                    let windowPtr = UnsafeMutablePointer<GtkWindow>(window)
+                // We need to tell gtk to display the focus ring for consistency.
+                // For programmatic focus changes it doesn't show the ring by default.
+                if let root = gtk_widget_get_root(widget) {
+                    let windowPtr = UnsafeMutablePointer<GtkWindow>(root)
                     gtk_window_set_focus_visible(windowPtr, true.toGBoolean())
                 }
                 return 0
             },
             widgetPointer
         )
-    }
-    
-    public var isFocusable: Bool {
-        gtk_widget_get_focusable(widgetPointer).toBool()
     }
 
     @GObjectProperty(named: "name") public var name: String?

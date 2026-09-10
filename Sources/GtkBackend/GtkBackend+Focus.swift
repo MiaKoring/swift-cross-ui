@@ -78,8 +78,6 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
             return
         }
         
-        guard widget.isFocusable else { return }
-        
         focusManager.register(observers, for: widget)
         
         if !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) {
