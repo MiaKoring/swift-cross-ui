@@ -1,5 +1,6 @@
 import SwiftCrossUI
 import Gtk
+import CGtk
 
 @MainActor
 class FocusStateManager {
@@ -105,10 +106,23 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
     }
     
     public func setFocusEffectDisabled(on widget: Gtk.Widget, disabled: Bool) {
+        guard !(widget is GtkCustomButton) else {
+            if disabled {
+                gtk_widget_add_css_class(widget.widgetPointer, "focusEffectDisabled")
+            } else {
+                gtk_widget_remove_css_class(widget.widgetPointer, "focusEffectDisabled")
+            }
+            return
+        }
+        let cssProperty = CSSProperty(key: "outline", value: "none")
         if disabled {
-            widget.focusCSS.set(property: CSSProperty(key: "outline", value: "none"))
+            if widget is Entry {
+                widget.focusWithinCSS.set(property: cssProperty)
+            }
+            widget.focusCSS.set(property: cssProperty)
             return
         }
         widget.focusCSS = CSSBlock(forClass: widget.focusCSS.cssClass)
+        widget.focusWithinCSS = CSSBlock(forClass: widget.focusWithinCSS.cssClass)
     }
 }

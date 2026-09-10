@@ -35,9 +35,11 @@ open class Widget: GObject {
     public lazy var css: CSSBlock = CSSBlock(forClass: customCSSClass) {
         didSet {
             guard oldValue != css else { return }
-            cssProvider.loadCss(
-                from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)"
-            )
+            cssProvider.loadCss(from: """
+                \(focusWithinCSS.stringRepresentation)
+                \(focusCSS.stringRepresentation)
+                \(css.stringRepresentation)
+            """)
         }
     }
     
@@ -45,9 +47,23 @@ open class Widget: GObject {
     public lazy var focusCSS: CSSBlock = CSSBlock(forClass: "\(customCSSClass):focus") {
         didSet {
             guard oldValue != focusCSS else { return }
-            cssProvider.loadCss(
-                from: "\(focusCSS.stringRepresentation)\n\(css.stringRepresentation)"
-            )
+            cssProvider.loadCss(from: """
+                \(focusWithinCSS.stringRepresentation)
+                \(focusCSS.stringRepresentation)
+                \(css.stringRepresentation)
+            """)
+        }
+    }
+    
+    /// The focus related CSS rules applied directly to this widget.
+    public lazy var focusWithinCSS: CSSBlock = CSSBlock(forClass: "\(customCSSClass):focus-within") {
+        didSet {
+            guard oldValue != focusCSS else { return }
+            cssProvider.loadCss(from: """
+                \(focusWithinCSS.stringRepresentation)
+                \(focusCSS.stringRepresentation)
+                \(css.stringRepresentation)
+            """)
         }
     }
 

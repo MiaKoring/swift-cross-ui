@@ -95,7 +95,7 @@ extension GtkBackend {
     }
 }
 
-fileprivate final class GtkCustomButton: Gtk.Button {
+final class GtkCustomButton: Gtk.Button {
     fileprivate var buttonStyle: ButtonStyle.Kind = .bordered {
         willSet {
             buttonStyle.removeClass(from: self)
@@ -139,6 +139,10 @@ fileprivate final class GtkCustomButton: Gtk.Button {
 
                 button.customButton.flat:disabled {
                     opacity: 0.5;
+                }
+            
+                button.focusEffectDisabled {
+                    outline: none;
                 }
             """)
         // Why 50% disabled opacity was chosen:
