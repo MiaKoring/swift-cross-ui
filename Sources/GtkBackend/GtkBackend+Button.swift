@@ -140,7 +140,7 @@ final class GtkCustomButton: Gtk.Button {
                 button.customButton.flat:disabled {
                     opacity: 0.5;
                 }
-            
+
                 button.focusEffectDisabled {
                     outline: none;
                 }

@@ -6,11 +6,11 @@ import CGtk
 class FocusStateManager {
     private var focusObservers = [ObjectIdentifier: [WidgetFocusObserver]]()
     private var lastFocused: ObjectIdentifier? = nil
-    
+
     func register(_ observers: [WidgetFocusObserver], for widget: Gtk.Widget) {
         focusObservers[ObjectIdentifier(widget)] = observers
     }
-    
+
     func handleFocusChange(of identifier: ObjectIdentifier, toState isFocused: Bool) {
         guard let observers = focusObservers[identifier] else { return }
         if isFocused {
@@ -25,7 +25,7 @@ class FocusStateManager {
             }
         }
     }
-    
+
     func setFocus(of widget: Gtk.Widget, to focus: SwiftCrossUI.Focus) {
         guard ObjectIdentifier(widget) != lastFocused else {
             if focus == .unfocused {
@@ -33,7 +33,7 @@ class FocusStateManager {
             }
             return
         }
-        
+
         if focus == .focused {
             widget.makeKey()
         }
@@ -44,7 +44,7 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
     public func setFocus(of widget: Gtk.Widget, to focus: SwiftCrossUI.Focus) {
         focusManager.setFocus(of: widget, to: focus)
     }
-    
+
     public func registerFocusObservers(
         _ observers: [WidgetFocusObserver],
         on widget: Gtk.Widget
@@ -60,7 +60,7 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
             guard !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) else {
                 return
             }
-            
+
             let focusController = EventControllerFocus()
             focusController.enter = { _ in
                 self.focusManager.handleFocusChange(
@@ -77,9 +77,9 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
             widget.addEventController(focusController)
             return
         }
-        
+
         focusManager.register(observers, for: widget)
-        
+
         if !widget.eventControllers.contains(where: { $0 is EventControllerFocus }) {
             let focusController = EventControllerFocus()
             focusController.notifyIsFocus = { _, _ in
@@ -91,18 +91,18 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
             widget.addEventController(focusController)
         }
     }
-    
+
     public func createFocusContainer() -> Gtk.Widget {
         return Fixed()
     }
-    
+
     public func updateFocusContainer(
         _ widget: Gtk.Widget,
         focusability: Focusability
     ) {
         widget.canFocus = focusability != .disabled
     }
-    
+
     public func setFocusEffectDisabled(on widget: Gtk.Widget, disabled: Bool) {
         guard !(widget is GtkCustomButton) else {
             if disabled {

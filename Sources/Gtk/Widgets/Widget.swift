@@ -36,34 +36,36 @@ open class Widget: GObject {
         didSet {
             guard oldValue != css else { return }
             cssProvider.loadCss(from: """
-                \(focusWithinCSS.stringRepresentation)
-                \(focusCSS.stringRepresentation)
-                \(css.stringRepresentation)
-            """)
+                    \(focusWithinCSS.stringRepresentation)
+                    \(focusCSS.stringRepresentation)
+                    \(css.stringRepresentation)
+                """)
         }
     }
-    
+
     /// The focus related CSS rules applied directly to this widget.
     public lazy var focusCSS: CSSBlock = CSSBlock(forClass: "\(customCSSClass):focus") {
         didSet {
             guard oldValue != focusCSS else { return }
             cssProvider.loadCss(from: """
-                \(focusWithinCSS.stringRepresentation)
-                \(focusCSS.stringRepresentation)
-                \(css.stringRepresentation)
-            """)
+                    \(focusWithinCSS.stringRepresentation)
+                    \(focusCSS.stringRepresentation)
+                    \(css.stringRepresentation)
+                """)
         }
     }
-    
+
     /// The focus related CSS rules applied directly to this widget.
-    public lazy var focusWithinCSS: CSSBlock = CSSBlock(forClass: "\(customCSSClass):focus-within") {
+    public lazy var focusWithinCSS: CSSBlock =
+        CSSBlock(forClass: "\(customCSSClass):focus-within")
+    {
         didSet {
             guard oldValue != focusCSS else { return }
             cssProvider.loadCss(from: """
-                \(focusWithinCSS.stringRepresentation)
-                \(focusCSS.stringRepresentation)
-                \(css.stringRepresentation)
-            """)
+                    \(focusWithinCSS.stringRepresentation)
+                    \(focusCSS.stringRepresentation)
+                    \(css.stringRepresentation)
+                """)
         }
     }
 
@@ -155,12 +157,12 @@ open class Widget: GObject {
         eventControllers.append(controller)
         controller.registerSignals()
     }
-    
+
     public var root: Gtk.CustomRootWidget? {
         guard let ptr = gtk_widget_get_root(widgetPointer) else { return nil }
         return CustomRootWidget(ptr)
     }
-    
+
     /// Makes the widget the key view in the window it belongs to.
     /// Equivalent to `NSWindow/makeFirstResponder(_)`.
     public func makeKey() {
@@ -170,7 +172,7 @@ open class Widget: GObject {
                 guard let dataPointer = data else { return 0 }
                 let widget = dataPointer.assumingMemoryBound(to: GtkWidget.self)
                 gtk_widget_grab_focus(widget)
-                
+
                 // We need to tell gtk to display the focus ring for consistency.
                 // For programmatic focus changes it doesn't show the ring by default.
                 if let root = gtk_widget_get_root(widget) {
@@ -220,10 +222,10 @@ open class Widget: GObject {
 
     /// Set to -1 for no min height request
     @GObjectProperty(named: "height-request") public var minHeight: Int
-    
+
     /// Whether the widget or any of its descendents can accept the input focus.
     @GObjectProperty(named: "can-focus") public var canFocus: Bool
-    
+
     /// Sets the name of the Gtk view for useful debugging in inspector (Ctrl+Shift+D)
     public func tag(as tag: String) {
         name = tag

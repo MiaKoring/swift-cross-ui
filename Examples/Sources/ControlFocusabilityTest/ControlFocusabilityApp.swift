@@ -76,7 +76,7 @@ struct ControlFocusabilityApp: App {
                         }
                         .padding(.bottom, 20)
                         .focused($focusState, equals: 0)
-                        
+
                         Toggle("Disable all focuseffects", isOn: $allFocusEffectDisabled)
                             .focusableIfSupported(false)
 
