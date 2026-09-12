@@ -125,5 +125,9 @@ let package = Package(
             name: "ControlFocusabilityTest",
             dependencies: exampleDependencies
         ),
+        .executableTarget(
+            name: "ObservableExample",
+            dependencies: exampleDependencies
+        ),
     ]
 )
