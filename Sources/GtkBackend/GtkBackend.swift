@@ -31,7 +31,8 @@ public final class GtkBackend {
 
     var borderedButtonPadding: SIMD2<Int>?
 
-    let focusManager = FocusStateManager()
+    /// A protection against focusing an already focused widget again, used by FocusHandling.
+    var lastFocusedWidget: ObjectIdentifier?
 
     // A separate initializer to satisfy `BackendFeatures.Core`'s requirements.
     public convenience init() {
