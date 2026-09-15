@@ -62,16 +62,18 @@ extension AppKitBackend: BackendFeatures.TextViews {
 
     static func attributedString(
         for text: String,
-        in environment: EnvironmentValues
+        in environment: EnvironmentValues,
+        useTextColor: Bool = false
     ) -> NSAttributedString {
         NSAttributedString(
             string: text,
-            attributes: attributes(forTextIn: environment)
+            attributes: attributes(forTextIn: environment, useTextColor: useTextColor)
         )
     }
 
     private static func attributes(
-        forTextIn environment: EnvironmentValues
+        forTextIn environment: EnvironmentValues,
+        useTextColor: Bool = false
     ) -> [NSAttributedString.Key: Any] {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment =
@@ -92,7 +94,9 @@ extension AppKitBackend: BackendFeatures.TextViews {
         paragraphStyle.lineSpacing = 0
 
         return [
-            .foregroundColor: environment.suggestedForegroundColor.resolve(in: environment).nsColor,
+            .foregroundColor: useTextColor
+                ? NSColor.textColor
+                : environment.suggestedForegroundColor.resolve(in: environment).nsColor,
             .font: font(for: resolvedFont),
             .paragraphStyle: paragraphStyle,
         ]
