@@ -93,10 +93,20 @@ extension AppKitBackend: BackendFeatures.TextViews {
         paragraphStyle.maximumLineHeight = CGFloat(resolvedFont.lineHeight)
         paragraphStyle.lineSpacing = 0
 
+        let foregroundColor: NSColor
+        if useTextColor,
+           environment.suggestedForegroundColor
+           == environment.colorScheme.defaultForegroundColor
+        {
+            foregroundColor = NSColor.textColor
+        } else {
+            foregroundColor = NSColor.overridingVibrancy(
+                with: environment.suggestedForegroundColor.resolve(in: environment).nsColor
+            )
+        }
+
         return [
-            .foregroundColor: useTextColor
-                ? NSColor.textColor
-                : environment.suggestedForegroundColor.resolve(in: environment).nsColor,
+            .foregroundColor: foregroundColor,
             .font: font(for: resolvedFont),
             .paragraphStyle: paragraphStyle,
         ]
@@ -144,6 +154,15 @@ extension AppKitBackend: BackendFeatures.TextViews {
                 .black
             case .heavy:
                 .heavy
+        }
+    }
+}
+
+extension NSColor {
+    /// Makes AppKit not apply vibrancy changes to the given color.
+    static func overridingVibrancy(with color: NSColor) -> NSColor {
+        NSColor(name: nil) { _ in
+            color
         }
     }
 }
