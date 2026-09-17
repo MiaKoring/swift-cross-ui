@@ -38,6 +38,17 @@ enum ViewGraphHelpers {
         _ = node.commit()
         return node
     }
+    
+    @MainActor
+    static func computeAndCommitExisting<V: View>(
+        node: ViewGraphNode<V, DummyBackend>,
+        with view: V,
+        proposedSize: ProposedViewSize = .unspecified
+    ) -> ViewGraphNode<V, DummyBackend> {
+        _ = node.computeLayout(with: view, proposedSize: proposedSize, environment: environment)
+        _ = node.commit()
+        return node
+    }
 }
 
 extension DummyBackend.Widget {
