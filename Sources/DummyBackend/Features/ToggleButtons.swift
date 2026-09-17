@@ -4,7 +4,7 @@ extension DummyBackend: BackendFeatures.ToggleButtons {
     public func createToggle() -> Widget {
         ToggleButton()
     }
-    
+
     public func updateToggle(
         _ toggle: Widget,
         label: String,
@@ -16,7 +16,7 @@ extension DummyBackend: BackendFeatures.ToggleButtons {
         toggle.toggleHandler = onChange
         toggle.font = environment.resolvedFont
     }
-    
+
     public func setState(ofToggle toggle: Widget, to state: Bool) {
         (toggle as! ToggleButton).state = state
     }

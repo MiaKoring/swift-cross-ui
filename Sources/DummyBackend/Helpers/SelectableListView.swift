@@ -4,7 +4,7 @@ extension DummyBackend {
         public var rowHeights: [Int] = []
         public var selectionHandler: ((Int) -> Void)?
         public var selectedIndex: Int?
-        
+
         public override func getChildren() -> [Widget] {
             items
         }

@@ -4,10 +4,10 @@ extension DummyBackend: BackendFeatures.ViewLabelButtons {
     public func createButton(wrapping widget: Widget) -> Widget {
         let button = Button()
         button.label = widget
-        
+
         return button
     }
-    
+
     public func updateButton(
         _ button: Widget,
         environment: EnvironmentValues,
@@ -17,11 +17,11 @@ extension DummyBackend: BackendFeatures.ViewLabelButtons {
         button.buttonStyle = environment.resolvedButtonStyle
         button.action = action
     }
-    
+
     public func buttonPadding(in environment: EnvironmentValues) -> SIMD2<Int> {
         SIMD2<Int>(0, 0)
     }
-    
+
     public func defaultButtonStyle() -> ButtonStyle {
         .bordered
     }

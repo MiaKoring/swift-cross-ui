@@ -2,11 +2,11 @@
 
 extension DummyBackend: BackendFeatures.Images {
     public var requiresImageUpdateOnScaleFactorChange: Bool { false }
-    
+
     public func createImageView() -> Widget {
         ImageView()
     }
-    
+
     public func updateImageView(
         _ imageView: Widget,
         rgbaData: [UInt8],

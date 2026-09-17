@@ -9,11 +9,11 @@ extension DummyBackend: BackendFeatures.Pickers {
             .wheel
         ]
     }
-    
+
     public func createPicker(style: BackendPickerStyle) -> Widget {
         Picker(style: style)
     }
-    
+
     public func updatePicker(
         _ picker: Widget,
         options: [String],
@@ -25,7 +25,7 @@ extension DummyBackend: BackendFeatures.Pickers {
         picker.onChange = onChange
         picker.enabled = environment.isEnabled
     }
-    
+
     public func setSelectedOption(
         ofPicker picker: Widget,
         to selectedOption: Int?

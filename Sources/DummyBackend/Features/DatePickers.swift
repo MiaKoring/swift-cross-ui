@@ -5,11 +5,11 @@ extension DummyBackend: BackendFeatures.DatePickers {
     public var supportedDatePickerStyles: [DatePickerStyle] {
         [.automatic, .compact, .graphical]
     }
-    
+
     public func createDatePicker() -> Widget {
         DatePicker()
     }
-    
+
     public func updateDatePicker(
         _ datePicker: Widget,
         environment: EnvironmentValues,

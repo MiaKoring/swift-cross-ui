@@ -3,15 +3,15 @@
 extension DummyBackend: BackendFeatures.Tables {
     public var defaultTableRowContentHeight: Int { 10 }
     public var defaultTableCellVerticalPadding: Int { 10 }
-    
+
     public func createTable() -> Widget {
         Table()
     }
-    
+
     public func setRowCount(ofTable table: Widget, to rows: Int) {
         (table as! Table).rowCount = rows
     }
-    
+
     public func setColumnLabels(
         ofTable table: Widget,
         to labels: [String],
@@ -19,7 +19,7 @@ extension DummyBackend: BackendFeatures.Tables {
     ) {
         (table as! Table).columnLabels = labels
     }
-    
+
     public func setCells(
         ofTable table: Widget,
         to cells: [Widget],

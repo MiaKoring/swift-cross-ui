@@ -5,11 +5,11 @@ extension DummyBackend {
         public var hasHorizontalScrollBar = false
         public var bouncesVertically = false
         public var bouncesHorizontally = false
-        
+
         public init(child: Widget) {
             self.child = child
         }
-        
+
         public override func getChildren() -> [Widget] {
             [child]
         }

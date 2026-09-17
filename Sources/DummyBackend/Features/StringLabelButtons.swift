@@ -4,7 +4,7 @@ extension DummyBackend: BackendFeatures.StringLabelButtons {
     public func createSimpleButton() -> Widget {
         SimpleButton()
     }
-    
+
     public func updateSimpleButton(
         _ button: Widget,
         label: String,

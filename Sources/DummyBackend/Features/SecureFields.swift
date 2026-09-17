@@ -4,7 +4,7 @@ extension DummyBackend: BackendFeatures.SecureFields {
     public func createSecureField() -> Widget {
         TextField(isSecure: true)
     }
-    
+
     public func updateSecureField(
         _ secureField: Widget,
         placeholder: String,
@@ -20,11 +20,11 @@ extension DummyBackend: BackendFeatures.SecureFields {
             onSubmit: onSubmit
         )
     }
-    
+
     public func setContent(ofSecureField secureField: Widget, to content: String) {
         setContent(ofTextField: secureField, to: content)
     }
-    
+
     public func getContent(ofSecureField secureField: Widget) -> String {
         getContent(ofTextField: secureField)
     }

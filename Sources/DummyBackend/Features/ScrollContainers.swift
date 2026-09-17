@@ -2,11 +2,11 @@
 
 extension DummyBackend: BackendFeatures.ScrollContainers {
     public var scrollBarWidth: Int { 8 }
-    
+
     public func createScrollContainer(for child: Widget) -> Widget {
         ScrollContainer(child: child)
     }
-    
+
     public func updateScrollContainer(
         _ scrollView: Widget,
         environment: EnvironmentValues,

@@ -4,7 +4,7 @@ extension DummyBackend: BackendFeatures.Sliders {
     public func createSlider() -> Widget {
         Slider()
     }
-    
+
     public func updateSlider(
         _ slider: Widget,
         minimum: Double,
@@ -19,7 +19,7 @@ extension DummyBackend: BackendFeatures.Sliders {
         slider.decimalPlaces = decimalPlaces
         slider.changeHandler = onChange
     }
-    
+
     public func setValue(ofSlider slider: Widget, to value: Double) {
         (slider as! Slider).value = value
     }

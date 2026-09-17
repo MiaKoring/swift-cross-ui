@@ -2,11 +2,11 @@ extension DummyBackend {
     public class SplitView: Widget {
         public var leadingChild: Widget
         public var trailingChild: Widget
-        
+
         public var sidebarResizeHandler: (() -> Void)?
-        
+
         private var _sidebarWidth = 100
-        
+
         public var sidebarWidth: Int {
             get {
                 _sidebarWidth
@@ -23,7 +23,7 @@ extension DummyBackend {
                 _sidebarWidth = width
             }
         }
-        
+
         public var minimumSidebarWidth: Int? {
             didSet {
                 if let minimumSidebarWidth {
@@ -31,7 +31,7 @@ extension DummyBackend {
                 }
             }
         }
-        
+
         public var maximumSidebarWidth: Int? {
             didSet {
                 if let maximumSidebarWidth {
@@ -39,7 +39,7 @@ extension DummyBackend {
                 }
             }
         }
-        
+
         override public var size: SIMD2<Int> {
             didSet {
                 if sidebarWidth > size.x {
@@ -47,12 +47,12 @@ extension DummyBackend {
                 }
             }
         }
-        
+
         public init(leadingChild: Widget, trailingChild: Widget) {
             self.leadingChild = leadingChild
             self.trailingChild = trailingChild
         }
-        
+
         public override func getChildren() -> [Widget] {
             [leadingChild, trailingChild]
         }

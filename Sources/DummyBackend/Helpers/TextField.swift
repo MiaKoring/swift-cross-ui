@@ -8,7 +8,7 @@ extension DummyBackend {
         public var font: Font.Resolved?
         public var changeHandler: ((String) -> Void)?
         public var submitHandler: (() -> Void)?
-        
+
         init(isSecure: Bool) {
             self.isSecure = isSecure
         }

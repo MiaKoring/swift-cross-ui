@@ -16,7 +16,7 @@ extension DummyBackend: BackendFeatures.TextViews {
             lineLimit: environment.lineLimitSettings
         )
     }
-    
+
     /// Single source of truth for DummyBackend's character-metric text sizing.
     nonisolated static func textSize(
         of text: String,
@@ -28,37 +28,37 @@ extension DummyBackend: BackendFeatures.TextViews {
         let lineHeight = Int(font.lineHeight)
         let characterHeight = Int(font.pointSize)
         let characterWidth = characterHeight * 2 / 3
-        
+
         guard let proposedWidth else {
             return SIMD2(
                 characterWidth * text.count,
                 lineHeight
             )
         }
-        
+
         let charactersPerLine = max(1, proposedWidth / characterWidth)
         var lineCount = (text.count + charactersPerLine - 1) / charactersPerLine
         if let proposedHeight {
             lineCount = min(max(1, proposedHeight / lineHeight), lineCount)
         }
-        
+
         if let lineLimit {
             lineCount = min(lineCount, lineLimit.limit)
             if lineLimit.reservesSpace {
                 lineCount = max(lineCount, lineLimit.limit)
             }
         }
-        
+
         return SIMD2(
             characterWidth * min(charactersPerLine, text.count),
             lineHeight * lineCount
         )
     }
-    
+
     public func createTextView() -> Widget {
         TextView()
     }
-    
+
     public func updateTextView(
         _ textView: Widget,
         content: String,

@@ -6,11 +6,11 @@ extension DummyBackend {
         public var naturalSize: SIMD2<Int> {
             SIMD2<Int>.zero
         }
-        
+
         public func getChildren() -> [Widget] {
             []
         }
-        
+
         /// Finds the first widget of type `T` in the hierarchy defined by this
         /// widget (including the widget itself).
         public func firstWidget<T: Widget>(ofType type: T.Type) -> T? {

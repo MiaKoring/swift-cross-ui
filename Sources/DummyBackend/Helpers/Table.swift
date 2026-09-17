@@ -4,7 +4,7 @@ extension DummyBackend {
         public var columnLabels: [String] = []
         public var cells: [Widget] = []
         public var rowHeights: [Int] = []
-        
+
         public override func getChildren() -> [Widget] {
             cells
         }
