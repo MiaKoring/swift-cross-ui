@@ -27,6 +27,21 @@ enum ViewGraphHelpers {
             environment: environment
         )
     }
+    
+    @MainActor
+    static func computeLayoutAndNode<V: View>(
+        of view: V,
+        proposedSize: ProposedViewSize = .unspecified
+    ) -> (ViewLayoutResult, ViewGraphNode<V, DummyBackend>) {
+        let node = ViewGraphNode(for: view, backend: backend, environment: environment)
+        return (
+            node.computeLayout(
+                proposedSize: proposedSize,
+                environment: environment
+            ),
+            node
+        )
+    }
 
     @MainActor
     static func committedNode<V: View>(
