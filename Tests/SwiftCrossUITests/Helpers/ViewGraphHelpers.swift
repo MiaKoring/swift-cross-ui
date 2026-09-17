@@ -42,7 +42,7 @@ enum ViewGraphHelpers {
 
 extension DummyBackend.Widget {
     /// Returns the first widget in the hierarchy matching a filter depth first or nil if no widget was found.
-    func first<T: DummyBackend.Widget>(where filter: (DummyBackend.Widget) -> Bool) -> T? {
+    func first<T: DummyBackend.Widget>(where filter: (T) -> Bool) -> T? {
         if let self = self as? T, filter(self) {
             return self
         }
@@ -60,7 +60,7 @@ extension DummyBackend.Widget {
     /// Returns the first widget in the hierarchy matching a filter depth first.
     ///
     /// Throws if no widget was found.
-    func locateDescendant<T: DummyBackend.Widget>(where filter: (DummyBackend.Widget) -> Bool) throws -> T {
+    func locateDescendant<T: DummyBackend.Widget>(where filter: (T) -> Bool) throws -> T {
         let first: T? = first(where: filter)
         guard let first else {
             throw ViewGraphHelpers.Error.failedToFindDescendant
@@ -69,10 +69,10 @@ extension DummyBackend.Widget {
     }
     
     /// Returns all widgets in the hierarchy matching a filter recursively.
-    func filter( _ isIncluded: (DummyBackend.Widget) -> Bool) -> [DummyBackend.Widget] {
-        var matches: [DummyBackend.Widget] = []
+    func filter<T: DummyBackend.Widget>( _ isIncluded: (T) -> Bool) -> [T] {
+        var matches = [T]()
         
-        if isIncluded(self) {
+        if let self = self as? T, isIncluded(self) {
             matches.append(self)
         }
         

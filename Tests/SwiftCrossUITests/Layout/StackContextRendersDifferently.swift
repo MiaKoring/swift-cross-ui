@@ -51,8 +51,8 @@ struct StackContextRendersDifferently {
     ) throws {
         let widget = ViewGraphHelpers.committedNode(for: view).widget
         
-        let container: DummyBackend.Container = try widget.locateDescendant { widget in
-            let children = widget.getChildren()
+        let container: DummyBackend.Container = try widget.locateDescendant { container in
+            let children = container.getChildren()
             
             return children.count == 2
                 && children as? [DummyBackend.TextView] != nil
