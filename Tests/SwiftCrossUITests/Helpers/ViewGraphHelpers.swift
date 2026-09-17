@@ -1,7 +1,12 @@
 import DummyBackend
+import Testing
 @testable @_spi(Backends) import SwiftCrossUI
 
 enum ViewGraphHelpers {
+    enum Error: Swift.Error {
+        case failedToFindDescendant
+    }
+    
     @MainActor
     static let backend = DummyBackend()
 
@@ -32,5 +37,49 @@ enum ViewGraphHelpers {
         _ = node.computeLayout(proposedSize: proposedSize, environment: environment)
         _ = node.commit()
         return node
+    }
+}
+
+extension DummyBackend.Widget {
+    /// Returns the first widget in the hierarchy matching a filter depth first or nil if no widget was found.
+    func first<T: DummyBackend.Widget>(where filter: (DummyBackend.Widget) -> Bool) -> T? {
+        if let self = self as? T, filter(self) {
+            return self
+        }
+        
+        for child in getChildren() {
+            let match: T? = child.first(where: filter)
+            if let match {
+                return match
+            }
+        }
+        
+        return nil
+    }
+    
+    /// Returns the first widget in the hierarchy matching a filter depth first.
+    ///
+    /// Throws if no widget was found.
+    func locateDescendant<T: DummyBackend.Widget>(where filter: (DummyBackend.Widget) -> Bool) throws -> T {
+        let first: T? = first(where: filter)
+        guard let first else {
+            throw ViewGraphHelpers.Error.failedToFindDescendant
+        }
+        return first
+    }
+    
+    /// Returns all widgets in the hierarchy matching a filter recursively.
+    func filter( _ isIncluded: (DummyBackend.Widget) -> Bool) -> [DummyBackend.Widget] {
+        var matches: [DummyBackend.Widget] = []
+        
+        if isIncluded(self) {
+            matches.append(self)
+        }
+        
+        for child in getChildren() {
+            matches.append(contentsOf: child.filter(isIncluded))
+        }
+        
+        return matches
     }
 }
