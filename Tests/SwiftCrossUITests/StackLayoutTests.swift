@@ -75,7 +75,7 @@ struct StackLayoutTests {
         #expect(result.size.height == ViewGraphHelpers.environment.resolvedFont.lineHeight)
         #expect(result.size.vector.x == minimumWidthWithoutWrapping)
     }
-    
+
     @MainActor
     @Test(
         "Layout HStack with one axis unspecified",
@@ -88,22 +88,21 @@ struct StackLayoutTests {
             Spacer(minLength: 0)
             Text(string)
         }
-        
+
         let (result, node) = ViewGraphHelpers.computeLayoutAndNode(
             of: view,
             proposedSize: proposedSize
         )
-        
+
         let size = result.size
         let textWidth = TextRenderingHelpers.sizeOfText(string, textWidget: node.widget).x
         let lineHeight = TextRenderingHelpers.defaultFont.lineHeight
-        
         let unspecifiedWidth = Double(textWidth * 2) + Spacer.idealLength
-        
-        #expect(result.size.height == lineHeight)
-        #expect(result.size.width == proposedSize.width ?? unspecifiedWidth)
+
+        #expect(size.height == lineHeight)
+        #expect(size.width == proposedSize.width ?? unspecifiedWidth)
     }
-    
+
     @MainActor
     @Test(
         "Layout VStack with one axis unspecified",
@@ -116,19 +115,18 @@ struct StackLayoutTests {
             Spacer(minLength: 0)
             Text(string)
         }
-        
+
         let (result, node) = ViewGraphHelpers.computeLayoutAndNode(
             of: view,
             proposedSize: proposedSize
         )
-        
+
         let size = result.size
         let textWidth = TextRenderingHelpers.sizeOfText(string, textWidget: node.widget).x
         let lineHeight = TextRenderingHelpers.defaultFont.lineHeight
-        
         let unspecifiedHeight = lineHeight * 2 + Spacer.idealLength
-        
-        #expect(result.size.height == proposedSize.height ?? unspecifiedHeight)
-        #expect(result.size.width == Double(textWidth))
+
+        #expect(size.height == proposedSize.height ?? unspecifiedHeight)
+        #expect(size.width == Double(textWidth))
     }
 }

@@ -50,10 +50,10 @@ struct StackContextRendersDifferently {
         check: (SIMD2<Int>, SIMD2<Int>) -> Bool
     ) throws {
         let widget = ViewGraphHelpers.committedNode(for: view).widget
-        
+
         let container: DummyBackend.Container = try widget.locateDescendant { container in
             let children = container.getChildren()
-            
+
             return children.count == 2
                 && children as? [DummyBackend.TextView] != nil
         }

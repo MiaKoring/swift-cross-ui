@@ -6,7 +6,7 @@ enum ViewGraphHelpers {
     enum Error: Swift.Error {
         case failedToFindDescendant
     }
-    
+
     @MainActor
     static let backend = DummyBackend()
 
@@ -27,7 +27,7 @@ enum ViewGraphHelpers {
             environment: environment
         )
     }
-    
+
     @MainActor
     static func computeLayoutAndNode<V: View>(
         of view: V,
@@ -53,7 +53,7 @@ enum ViewGraphHelpers {
         _ = node.commit()
         return node
     }
-    
+
     @MainActor
     static func computeAndCommitExisting<V: View>(
         node: ViewGraphNode<V, DummyBackend>,
@@ -72,17 +72,17 @@ extension DummyBackend.Widget {
         if let self = self as? T, filter(self) {
             return self
         }
-        
+
         for child in getChildren() {
             let match: T? = child.first(where: filter)
             if let match {
                 return match
             }
         }
-        
+
         return nil
     }
-    
+
     /// Returns the first widget in the hierarchy matching a filter depth first.
     ///
     /// Throws if no widget was found.
@@ -93,19 +93,19 @@ extension DummyBackend.Widget {
         }
         return first
     }
-    
+
     /// Returns all widgets in the hierarchy matching a filter recursively.
     func filter<T: DummyBackend.Widget>( _ isIncluded: (T) -> Bool) -> [T] {
         var matches = [T]()
-        
+
         if let self = self as? T, isIncluded(self) {
             matches.append(self)
         }
-        
+
         for child in getChildren() {
             matches.append(contentsOf: child.filter(isIncluded))
         }
-        
+
         return matches
     }
 }
