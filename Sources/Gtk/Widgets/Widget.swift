@@ -35,11 +35,7 @@ open class Widget: GObject {
     public lazy var css: CSSBlock = CSSBlock(forClass: customCSSClass) {
         didSet {
             guard oldValue != css else { return }
-            cssProvider.loadCss(from: """
-                    \(focusWithinCSS.stringRepresentation)
-                    \(focusCSS.stringRepresentation)
-                    \(css.stringRepresentation)
-                """)
+            reloadCSS()
         }
     }
 
@@ -47,11 +43,7 @@ open class Widget: GObject {
     public lazy var focusCSS: CSSBlock = CSSBlock(forClass: "\(customCSSClass):focus") {
         didSet {
             guard oldValue != focusCSS else { return }
-            cssProvider.loadCss(from: """
-                    \(focusWithinCSS.stringRepresentation)
-                    \(focusCSS.stringRepresentation)
-                    \(css.stringRepresentation)
-                """)
+            reloadCSS()
         }
     }
 
@@ -60,13 +52,17 @@ open class Widget: GObject {
         CSSBlock(forClass: "\(customCSSClass):focus-within")
     {
         didSet {
-            guard oldValue != focusCSS else { return }
-            cssProvider.loadCss(from: """
-                    \(focusWithinCSS.stringRepresentation)
-                    \(focusCSS.stringRepresentation)
-                    \(css.stringRepresentation)
-                """)
+            guard oldValue != focusWithinCSS else { return }
+            reloadCSS()
         }
+    }
+
+    private func reloadCSS() {
+        cssProvider.loadCss(from: """
+                \(focusWithinCSS.stringRepresentation)
+                \(focusCSS.stringRepresentation)
+                \(css.stringRepresentation)
+            """)
     }
 
     /// A unique CSS class for this widget. The class is lazily added to the
@@ -158,15 +154,20 @@ open class Widget: GObject {
         controller.registerSignals()
     }
 
-    public var root: Gtk.CustomRootWidget? {
+    public var root: Gtk.Window? {
         guard let ptr = gtk_widget_get_root(widgetPointer) else { return nil }
-        return CustomRootWidget(ptr)
+        return Window(ptr)
     }
 
     /// Makes the widget the key view in the window it belongs to.
     /// Equivalent to `NSWindow/makeFirstResponder(_)`.
     public func makeKey() {
-        /// Wrap in g idle to make sure focus runs when free so we can know for sure it will get focused.
+        // Wrap in g idle to make sure focus runs after gtk is done doing it's things
+        // and drawing so we can know for sure it will get focused correctly.
+        //
+        // I wrapped it in g_idle_add during my initial implementation after noticing
+        // that it sometimes wouldn't get focused correctly. A google search suggested
+        // g_idle_add and I never saw it again since.
         g_idle_add(
             { (data) -> Int32 in
                 guard let dataPointer = data else { return 0 }

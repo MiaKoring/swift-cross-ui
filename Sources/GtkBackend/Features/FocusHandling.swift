@@ -13,6 +13,8 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
 
         if focus == .focused {
             widget.makeKey()
+        } else if focus == .unfocused {
+            widget.root?.setFocus(to: nil)
         }
     }
 
@@ -33,44 +35,22 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
             widget.addEventController(focusController)
         }
 
-        // Some widgets focus is managed by descendants.
-        //
-        // In the case of Calendar there are multiple points inside it that can
-        // be focused in addition to itself, so enter and leave is the best
-        // approach here as well.
-        if widget is Gtk.Entry || widget is Gtk.Calendar || widget is Gtk.DropDown {
-            focusController.enter = { [weak self] _ in
-                guard let self else { return }
-
-                self.lastFocusedWidget = objectIdentifier
-                observers.forEach { observer in
-                    observer.didGainFocus()
-                }
-            }
-            focusController.leave = { [weak self] _ in
-                guard let self else { return }
-
-                self.lastFocusedWidget = nil
-                observers.forEach { observer in
-                    observer.didLoseFocus()
-                }
-            }
-            return
-        }
-
-        focusController.notifyIsFocus = { [weak self] focusController, _ in
+        // Some widgets have focusable children.
+        // For that reason we use enter/leave over notifyIsFocus.
+        focusController.enter = { [weak self] _ in
             guard let self else { return }
 
-            if focusController.isFocus {
-                self.lastFocusedWidget = objectIdentifier
-                observers.forEach { observer in
-                    observer.didGainFocus()
-                }
-            } else {
-                self.lastFocusedWidget = nil
-                observers.forEach { observer in
-                    observer.didLoseFocus()
-                }
+            self.lastFocusedWidget = objectIdentifier
+            observers.forEach { observer in
+                observer.didGainFocus()
+            }
+        }
+        focusController.leave = { [weak self] _ in
+            guard let self else { return }
+
+            self.lastFocusedWidget = nil
+            observers.forEach { observer in
+                observer.didLoseFocus()
             }
         }
     }
@@ -87,7 +67,7 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
     }
 
     public func setFocusEffectDisabled(on widget: Gtk.Widget, disabled: Bool) {
-        guard !(widget is GtkCustomButton) else {
+        if widget is GtkCustomButton {
             if disabled {
                 gtk_widget_add_css_class(widget.widgetPointer, "focusEffectDisabled")
             } else {
@@ -95,8 +75,11 @@ extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabl
             }
             return
         }
+
         let cssProperty = CSSProperty(key: "outline", value: "none")
         if disabled {
+            // Entry is one of the many widgets not working with the focus pseudo-class.
+            // Currently some Widgets don't support this modifier yet.
             if widget is Entry {
                 widget.focusWithinCSS.set(property: cssProperty)
             }
