@@ -4,14 +4,7 @@ import CGtk
 
 extension GtkBackend: BackendFeatures.FocusHandling, BackendFeatures.FocusDisabling {
     public func setFocus(of widget: Gtk.Widget, to focus: SwiftCrossUI.Focus) {
-        guard ObjectIdentifier(widget) != lastFocusedWidget else {
-            if focus == .unfocused {
-                widget.root?.setFocus(to: nil)
-            }
-            return
-        }
-
-        if focus == .focused {
+        if focus == .focused && ObjectIdentifier(widget) != lastFocusedWidget {
             widget.makeKey()
         } else if focus == .unfocused {
             widget.root?.setFocus(to: nil)
