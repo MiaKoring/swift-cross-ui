@@ -17,10 +17,7 @@ struct ForEachTests {
 
         // Re-layout the view, because the nature of the duplicate handling bug changed
         // depending on the existing set of nodes before the update
-        _ = ViewGraphHelpers.computeAndCommitExisting(
-            node: node,
-            with: view
-        )
+        _ = ViewGraphHelpers.computeAndCommitExistingNode(node, with: view)
     }
 
     @MainActor
@@ -49,10 +46,7 @@ struct ForEachTests {
         let newValues = [11, 1, 5, 6, 2, 4, 3]
 
         forEach = makeView(newValues)
-        _ = ViewGraphHelpers.computeAndCommitExisting(
-            node: node,
-            with: forEach
-        )
+        _ = ViewGraphHelpers.computeAndCommitExistingNode(node, with: forEach)
 
         let newErasedNodes = node.children.erasedNodes
         let newNodes = newErasedNodes.map(\.node)

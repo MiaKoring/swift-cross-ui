@@ -95,7 +95,7 @@ struct StackLayoutTests {
         )
 
         let size = result.size
-        let textWidth = TextRenderingHelpers.sizeOfText(string, textWidget: node.widget).x
+        let textWidth = TextRenderingHelpers.sizeOfText(string).x
         let lineHeight = TextRenderingHelpers.defaultFont.lineHeight
         let unspecifiedWidth = Double(textWidth * 2) + Spacer.idealLength
 
@@ -122,7 +122,7 @@ struct StackLayoutTests {
         )
 
         let size = result.size
-        let textWidth = TextRenderingHelpers.sizeOfText(string, textWidget: node.widget).x
+        let textWidth = TextRenderingHelpers.sizeOfText(string).x
         let lineHeight = TextRenderingHelpers.defaultFont.lineHeight
         let unspecifiedHeight = lineHeight * 2 + Spacer.idealLength
 

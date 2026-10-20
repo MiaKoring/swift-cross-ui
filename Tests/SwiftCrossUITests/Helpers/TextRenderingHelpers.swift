@@ -10,22 +10,14 @@ enum TextRenderingHelpers {
     @MainActor
     static func sizeOfText(
         _ text: String,
-        textWidget: DummyBackend.Widget,
         proposedSize: ProposedViewSize = .unspecified
     ) -> SIMD2<Int> {
-        var proposedWidth: Int?
-        var proposedHeight: Int?
-
-        if let width = proposedSize.width {
-            proposedWidth = Int(width)
-        }
-        if let height = proposedSize.height {
-            proposedHeight = Int(height)
-        }
+        let proposedWidth: Int? = proposedSize.width.map(Int.init)
+        let proposedHeight: Int? = proposedSize.height.map(Int.init)
 
         return ViewGraphHelpers.backend.size(
             of: text,
-            whenDisplayedIn: textWidget,
+            whenDisplayedIn: DummyBackend.TextView(),
             proposedWidth: proposedWidth,
             proposedHeight: proposedHeight,
             environment: ViewGraphHelpers.environment

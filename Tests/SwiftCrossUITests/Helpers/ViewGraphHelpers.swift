@@ -1,5 +1,4 @@
 import DummyBackend
-import Testing
 @testable @_spi(Backends) import SwiftCrossUI
 
 enum ViewGraphHelpers {
@@ -21,7 +20,7 @@ enum ViewGraphHelpers {
         of view: V,
         proposedSize: ProposedViewSize = .unspecified
     ) -> ViewLayoutResult {
-        let node = ViewGraphNode(for: view, backend: backend, environment: environment)
+        let node = makeNode(for: view)
         return node.computeLayout(
             proposedSize: proposedSize,
             environment: environment
@@ -33,7 +32,7 @@ enum ViewGraphHelpers {
         of view: V,
         proposedSize: ProposedViewSize = .unspecified
     ) -> (ViewLayoutResult, ViewGraphNode<V, DummyBackend>) {
-        let node = ViewGraphNode(for: view, backend: backend, environment: environment)
+        let node = makeNode(for: view)
         return (
             node.computeLayout(
                 proposedSize: proposedSize,
@@ -48,64 +47,25 @@ enum ViewGraphHelpers {
         for view: V,
         proposedSize: ProposedViewSize = .unspecified
     ) -> ViewGraphNode<V, DummyBackend> {
-        let node = ViewGraphNode(for: view, backend: backend, environment: environment)
+        let node = makeNode(for: view)
         _ = node.computeLayout(proposedSize: proposedSize, environment: environment)
         _ = node.commit()
         return node
     }
 
     @MainActor
-    static func computeAndCommitExisting<V: View>(
-        node: ViewGraphNode<V, DummyBackend>,
+    static func computeAndCommitExistingNode<V: View>(
+        _ node: ViewGraphNode<V, DummyBackend>,
         with view: V,
         proposedSize: ProposedViewSize = .unspecified
-    ) -> ViewGraphNode<V, DummyBackend> {
-        _ = node.computeLayout(with: view, proposedSize: proposedSize, environment: environment)
+    ) -> ViewLayoutResult {
+        let result = node.computeLayout(with: view, proposedSize: proposedSize, environment: environment)
         _ = node.commit()
-        return node
+        return result
     }
-}
-
-extension DummyBackend.Widget {
-    /// Returns the first widget in the hierarchy matching a filter depth first or nil if no widget was found.
-    func first<T: DummyBackend.Widget>(where filter: (T) -> Bool) -> T? {
-        if let self = self as? T, filter(self) {
-            return self
-        }
-
-        for child in getChildren() {
-            let match: T? = child.first(where: filter)
-            if let match {
-                return match
-            }
-        }
-
-        return nil
-    }
-
-    /// Returns the first widget in the hierarchy matching a filter depth first.
-    ///
-    /// Throws if no widget was found.
-    func locateDescendant<T: DummyBackend.Widget>(where filter: (T) -> Bool) throws -> T {
-        let first: T? = first(where: filter)
-        guard let first else {
-            throw ViewGraphHelpers.Error.failedToFindDescendant
-        }
-        return first
-    }
-
-    /// Returns all widgets in the hierarchy matching a filter recursively.
-    func filter<T: DummyBackend.Widget>( _ isIncluded: (T) -> Bool) -> [T] {
-        var matches = [T]()
-
-        if let self = self as? T, isIncluded(self) {
-            matches.append(self)
-        }
-
-        for child in getChildren() {
-            matches.append(contentsOf: child.filter(isIncluded))
-        }
-
-        return matches
+    
+    @MainActor
+    static func makeNode<V: View>(for view: V) -> ViewGraphNode<V, DummyBackend> {
+        ViewGraphNode(for: view, backend: backend, environment: environment)
     }
 }
