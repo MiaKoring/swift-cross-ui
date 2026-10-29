@@ -104,7 +104,10 @@ extension Button: TypeSafeView {
         backend: Backend
     ) -> ViewLayoutResult {
         let buttonPadding = backend.buttonPadding(in: environment)
-        let childEnvironment = backend.computeButtonLabelEnvironment(from: environment)
+        let childEnvironment = backend.computeButtonLabelEnvironment(
+            from: environment,
+            withPressedState: isPressed
+        )
 
         var childProposal = proposedSize
         if let proposedWidth = proposedSize.width {
