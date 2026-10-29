@@ -3,8 +3,9 @@ import SwiftCrossUI
 
 public final class NSCustomButton: NSView {
     var action: (() -> Void)?
+    var onPressStateChange: ((Bool) -> Void)?
     var button: NSButtonBackground?
-    var buttonStyle: ButtonStyle.Kind = .bordered {
+    var buttonStyle: BaseButtonStyle.Kind = .bordered {
         didSet { updateButtonAppearance() }
     }
 
@@ -88,15 +89,17 @@ public final class NSCustomButton: NSView {
             super.keyDown(with: event)
             return
         }
-
+        
         highlightResetWorkItem?.cancel()
         isHighlighted = true
+        onPressStateChange?(true)
         action?()
 
         // Task with Task.sleep could be used in the future,
         // it has a min version requirement of macOS 13.
         let workItem = DispatchWorkItem { [weak self] in
             self?.isHighlighted = false
+            self?.onPressStateChange?(false)
         }
         highlightResetWorkItem = workItem
 
@@ -117,6 +120,8 @@ public final class NSCustomButton: NSView {
         guard isEnabled else { return }
 
         isPressed = true
+        onPressStateChange?(true)
+        print("mouseDown")
         isHighlighted = true
     }
 
@@ -127,8 +132,12 @@ public final class NSCustomButton: NSView {
 
         if isPressed && bounds.contains(pointInView) {
             isHighlighted = true
+            onPressStateChange?(true)
+            print("mouseDown")
         } else {
             isHighlighted = false
+            onPressStateChange?(false)
+            print("mouseUp")
         }
     }
 
@@ -142,6 +151,8 @@ public final class NSCustomButton: NSView {
         }
 
         isPressed = false
+        print("mouseUp")
+        onPressStateChange?(false)
         isHighlighted = false
     }
 

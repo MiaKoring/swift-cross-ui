@@ -1,5 +1,5 @@
 /// A type that applies standard interaction behavior and a custom appearance to all buttons within a view hierarchy.
-public struct ButtonStyle: Hashable, Sendable {
+public struct BaseButtonStyle: Hashable, Sendable {
     package enum Kind {
         case bordered
         case plain
@@ -22,8 +22,83 @@ public struct ButtonStyle: Hashable, Sendable {
     public static let borderless = Self(kind: .borderless)
 }
 
-extension ButtonStyle: CustomStringConvertible {
-    public var description: String {
-        "\(self.kind)"
+@MainActor
+public protocol _InternalButtonStyle {
+    var baseButtonStyle: BaseButtonStyle { get }
+}
+
+extension _InternalButtonStyle {
+    public var baseButtonStyle: BaseButtonStyle { .plain }
+}
+
+@MainActor
+public protocol ButtonStyle: _InternalButtonStyle {
+    associatedtype Body: View
+    @ViewBuilder
+    func makeBody(configuration: Self.Configuration) -> Self.Body
+}
+
+extension ButtonStyle {
+    public typealias Configuration = ButtonStyleConfiguration
+}
+
+extension ButtonStyle where Self == PlainButtonStyle {
+    public static var plain: PlainButtonStyle { PlainButtonStyle() }
+}
+
+extension ButtonStyle where Self == BorderedButtonStyle {
+    public static var bordered: BorderedButtonStyle { BorderedButtonStyle() }
+}
+
+extension ButtonStyle where Self == BorderlessButtonStyle {
+    public static var borderless: BorderlessButtonStyle { BorderlessButtonStyle() }
+}
+
+public struct ButtonStyleConfiguration {
+    public let isPressed: Bool
+    public let label: Label
+    // TODO: Add button role support (ie .destructive, .cancel,...)
+    // public let role: ButtonRole
+    
+    public struct Label: View {
+        init<V: View>(body: V) {
+            self.body = AnyView(body)
+        }
+        public let body: AnyView
     }
+}
+
+public struct BorderedButtonStyle: ButtonStyle {
+    public init() {}
+    public func makeBody(configuration: Configuration) -> some View {
+        if configuration.isPressed {
+            // change environment where necessary
+            configuration.label
+        } else {
+            configuration.label
+        }
+    }
+}
+
+public struct BorderlessButtonStyle: ButtonStyle {
+    public init() {}
+    public func makeBody(configuration: Configuration) -> some View {
+        if configuration.isPressed {
+            // change environment where necessary
+            configuration.label
+        } else {
+            configuration.label
+        }
+    }
+}
+
+public struct PlainButtonStyle: ButtonStyle {
+    public init() {}
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label.background(configuration.isPressed ? Color.red: Color.blue)
+    }
+}
+
+extension BorderedButtonStyle: _InternalButtonStyle {
+    public var baseButtonStyle: BaseButtonStyle { .bordered }
 }

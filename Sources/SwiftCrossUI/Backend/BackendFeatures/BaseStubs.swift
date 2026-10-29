@@ -228,6 +228,7 @@ extension BackendFeatures.BaseStubs {
     public func updateButton(
         _ button: Widget,
         environment: EnvironmentValues,
+        pressStateChanged: @escaping (Bool) -> Void,
         action: @escaping () -> Void
     ) {
         todo()

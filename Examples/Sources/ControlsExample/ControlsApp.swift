@@ -26,6 +26,21 @@ enum BuiltInPickerStyle: CaseIterable, Equatable {
     }
 }
 
+enum ButtonStyle: String, CaseIterable {
+    case plain, bordered, borderless
+}
+
+extension View {
+    @ViewBuilder
+    func applyButtonStyle(_ style: ButtonStyle) -> some View {
+        switch style {
+            case .plain: self.buttonStyle(.plain)
+            case .bordered: self.buttonStyle(.bordered)
+            case .borderless: self.buttonStyle(.borderless)
+        }
+    }
+}
+
 @main
 @HotReloadable
 struct ControlsApp: App {
@@ -62,18 +77,14 @@ struct ControlsApp: App {
                                 Text("Default ButtonStyle: \(defaultButtonStyle)")
                                 #if !canImport(Gtk3Backend)
                                     Picker(
-                                        of: [
-                                            ButtonStyle.bordered,
-                                            ButtonStyle.plain,
-                                            ButtonStyle.borderless
-                                        ],
+                                        of: ButtonStyle.allCases,
                                         selection: $buttonStyle
                                     )
                                 #endif
                                 Button("Click me!") {
                                     count += 1
                                 }
-                                .buttonStyle(buttonStyle)
+                                .applyButtonStyle(buttonStyle ?? .bordered)
                             } else {
                                 Button("Click me!") {
                                     count += 1

@@ -54,6 +54,7 @@ extension BackendFeatures {
         func updateButton(
             _ button: Widget,
             environment: EnvironmentValues,
+            pressStateChanged: @escaping (Bool) -> Void,
             action: @escaping () -> Void
         )
 
@@ -92,7 +93,7 @@ extension BackendFeatures.ViewLabelButtons {
     ) -> EnvironmentValues {
         var labelEnvironment = environment
 
-        let buttonStyle = environment.resolvedButtonStyle.kind
+        let buttonStyle = environment.resolvedButtonStyle.baseButtonStyle.kind
         let deviceClass = environment.backend.deviceClass
 
         if
