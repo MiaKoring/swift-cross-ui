@@ -211,7 +211,7 @@ struct ControlsApp: App {
 
                                     Button("Reset date to now") {
                                         date = Date()
-                                    }
+                                    }.buttonStyle(InverseColorSchemeButtonStyle())
                                 }
                             #endif
                         #endif
@@ -241,4 +241,12 @@ struct ControlsApp: App {
 
 extension AppStorageValues {
     @Entry var count: Int = 0
+}
+
+struct InverseColorSchemeButtonStyle: SwiftCrossUI.ButtonStyle {
+    var baseButtonStyle: BaseButtonStyle { .bordered }
+    func makeBody(configuration: SwiftCrossUI.ButtonStyle.Configuration) -> some View {
+        configuration.label
+            .colorScheme(configuration.isPressed ? .dark: .light)
+    }
 }

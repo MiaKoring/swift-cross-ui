@@ -134,7 +134,6 @@ extension Button: TypeSafeView {
             environment: environment,
             pressStateChanged: { isPressed in
                 if self.isPressed != isPressed {
-                    print("called, \(isPressed)")
                     self.isPressed = isPressed
                 }
             },
