@@ -39,6 +39,18 @@ final class ColorButton: WinUI.Button {
     private var color: UWP.Color?
 
     var onChange: ((UWP.Color) -> Void)?
+    
+    override var width: Double = 48.0 {
+        didSet {
+            content.width = width - 6.0
+        }
+    }
+    
+    override var height: Double = 24.0 {
+        didSet {
+            content.height = height - 6.0
+        }
+    }
 
     override init() {
         super.init()
