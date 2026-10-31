@@ -493,6 +493,9 @@ extension EnvironmentValues {
 
     /// Whether to highlight a focused widget.
     @Entry public var focusEffectDisabled: Bool = false
+
+    /// Whether to hide separate labels of any control.
+    @Entry public var labelsHidden: Bool = false
 }
 
 extension EnvironmentValues {
