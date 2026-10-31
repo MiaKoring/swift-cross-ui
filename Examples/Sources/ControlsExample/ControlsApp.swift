@@ -210,7 +210,7 @@ struct ControlsApp: App {
                                 VStack {
                                     ColorPicker("Choose a color:", selection: $color)
                                         .resizable()
-                                        .frame(width: 200, height: 100)
+                                        .frame(width: 200, height: 300)
 
                                     HStack {
                                         Text("You chose:")

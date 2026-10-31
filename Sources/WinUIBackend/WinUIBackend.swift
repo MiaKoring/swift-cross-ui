@@ -767,8 +767,8 @@ public final class WinUIBackend:
             // Height is experimentally 29 which I don't see anywhere in that file.
             return SIMD2(296, 29)
         } else if widget is ColorButton {
-            // Same size as appkit
-            return SIMD2(48, 24)
+            // Same size rectangle as appkit rectangle size + button padding
+            return SIMD2(66, 35)
         }
 
         let oldWidth = widget.width

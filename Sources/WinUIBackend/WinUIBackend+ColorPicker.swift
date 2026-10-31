@@ -1,4 +1,5 @@
 import SwiftCrossUI
+import WindowsFoundation
 import WinUI
 import UWP
 
@@ -11,10 +12,13 @@ extension WinUIBackend: BackendFeatures.ColorPickers {
 
         let button = ColorButton()
         button.content = colorSwatch
-        let token = button.sizeChanged.addHandler({ [weak colorSwatch] _, args in
-            colorSwatch?.width = Double(args.newSize.width) - 6.0
-            colorSwatch?.height = Double(args.newSize.height) - 6.0
-        }).token
+        button.buttonSizeChangedEventCleanup = button.sizeChanged
+	.addHandler({ [weak colorSwatch, weak button] _, args in
+	    guard let args, let padding = button?.padding else { return }
+	    
+            colorSwatch?.width = Double(args.newSize.width) - padding.left - padding.right
+            colorSwatch?.height = Double(args.newSize.height) - padding.top - padding.bottom
+        })
         // TODO: remove on deinit
         return button
     }
@@ -38,6 +42,7 @@ extension WinUIBackend: BackendFeatures.ColorPickers {
 
 // WinUI's ColorPicker class is the control that goes inside the dialog, not the button that opens it.
 final class ColorButton: WinUI.Button {
+    var buttonSizeChangedEventCleanup: EventCleanup?
     var supportsOpacity = true
 
     private var dialog: ColorDialog?
@@ -47,6 +52,9 @@ final class ColorButton: WinUI.Button {
 
     override init() {
         super.init()
+
+	horizontalContentAlignment = HorizontalAlignment.center
+	verticalContentAlignment = VerticalAlignment.center
 
         self.click.addHandler { [unowned self] _, _ in
             if self.dialog != nil { return }
@@ -97,6 +105,10 @@ final class ColorButton: WinUI.Button {
         canvas.background = brush
 
         self.color = color
+    }
+
+    deinit {
+	buttonSizeChangedEventCleanup?.dispose()
     }
 }
 
