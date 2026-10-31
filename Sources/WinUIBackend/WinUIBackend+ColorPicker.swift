@@ -42,13 +42,13 @@ final class ColorButton: WinUI.Button {
     
     override var width: Double = 48.0 {
         didSet {
-            content.width = width - 6.0
+            (content as! Canvas).width = width - 6.0
         }
     }
     
     override var height: Double = 24.0 {
         didSet {
-            content.height = height - 6.0
+            (content as! Canvas).height = height - 6.0
         }
     }
 
