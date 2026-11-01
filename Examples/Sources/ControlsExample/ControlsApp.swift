@@ -209,7 +209,7 @@ struct ControlsApp: App {
                             if #available(iOS 14, macCatalyst 14, *) {
                                 VStack {
                                     ColorPicker("Choose a color:", selection: $color)
-                                        .resizable()
+                                        //.resizable()
                                         .frame(width: 200, height: 300)
 
                                     HStack {

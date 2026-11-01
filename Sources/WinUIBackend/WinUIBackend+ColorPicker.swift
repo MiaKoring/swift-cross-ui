@@ -12,6 +12,7 @@ extension WinUIBackend: BackendFeatures.ColorPickers {
 
         let button = ColorButton()
         button.content = colorSwatch
+
         button.buttonSizeChangedEventCleanup = button.sizeChanged
 	.addHandler({ [weak colorSwatch, weak button] _, args in
 	    guard let args, let padding = button?.padding else { return }
@@ -52,9 +53,6 @@ final class ColorButton: WinUI.Button {
 
     override init() {
         super.init()
-
-	horizontalContentAlignment = HorizontalAlignment.center
-	verticalContentAlignment = VerticalAlignment.center
 
         self.click.addHandler { [unowned self] _, _ in
             if self.dialog != nil { return }
