@@ -28,6 +28,7 @@ extension AppKitBackend: BackendFeatures.DatePickers {
     public func createDatePicker() -> NSView {
         let datePicker = CustomDatePicker()
         datePicker.delegate = datePicker.strongDelegate
+        datePicker.locale = Locale(identifier: "en_US")
         return datePicker
     }
 
